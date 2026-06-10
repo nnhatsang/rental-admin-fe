@@ -7,6 +7,39 @@ export const SUCCESS_MESSAGES = {
     PASSWORD_CHANGED: 'Đổi mật khẩu thành công.',
     FORGOT_PASSWORD: 'Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.',
     RESET_PASSWORD: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay bây giờ.',
-    CHANGE_PASSWORD: 'Thay đổi mật khẩu thành công',
+    CHANGE_PASSWORD: 'Thay đổi mật khẩu thành công.',
   },
-};
+  USERS: {
+    CREATE: 'Tạo người dùng thành công.',
+    UPDATE: 'Cập nhật người dùng thành công.',
+    UPDATE_STATUS: 'Cập nhật trạng thái người dùng thành công.',
+    UPDATE_ROLES: 'Cập nhật vai trò người dùng thành công.',
+    RESET_PASSWORD: 'Reset mật khẩu người dùng thành công.',
+    DELETE: 'Xóa người dùng thành công.',
+  },
+  CUSTOMERS: {
+    CREATE: 'Tạo khách hàng thành công.',
+    UPDATE: 'Cập nhật khách hàng thành công.',
+    UPDATE_STATUS: 'Cập nhật trạng thái khách hàng thành công.',
+    DELETE: 'Xóa khách hàng thành công.',
+  },
+  PRODUCTS: {
+    CREATE: 'Tạo sản phẩm thành công.',
+    UPDATE: 'Cập nhật sản phẩm thành công.',
+    UPDATE_STATUS: 'Cập nhật trạng thái sản phẩm thành công.',
+    DELETE: 'Xóa sản phẩm thành công.',
+  },
+  ASSET_UNITS: {
+    CREATE: 'Tạo thiết bị thành công.',
+    UPDATE: 'Cập nhật thiết bị thành công.',
+    UPDATE_STATUS: 'Cập nhật tình trạng thiết bị thành công.',
+    DELETE: 'Xóa thiết bị thành công.',
+  },
+  ROLES: {
+    CREATE: 'Tạo vai trò thành công.',
+    UPDATE: 'Cập nhật vai trò thành công.',
+    UPDATE_PERMISSIONS: 'Cập nhật quyền của vai trò thành công.',
+    ASSIGN_USERS: 'Gán vai trò cho người dùng thành công.',
+    DELETE: 'Xóa vai trò thành công.',
+  },
+} as const;

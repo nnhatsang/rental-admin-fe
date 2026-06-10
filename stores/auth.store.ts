@@ -17,7 +17,8 @@ type AuthStore = {
   clearAuth: () => void;
   login: (data: ILoginReq) => Promise<IUser>;
   logout: () => Promise<void>;
-  fetchProfile: () => Promise<IUser | null>;
+  fetchProfile: () => Promise<void>;
+
   updateProfile: (data: Partial<IUpdateProfileReq>) => Promise<IUser>;
 
   hasPermission: (permission: string) => boolean;
@@ -99,11 +100,9 @@ export const useAuthStore = create<AuthStore>()(
           const user = response.data.data;
 
           get().setUser(user);
-          return user;
         } catch (error) {
           get().clearAuth();
           set({ error: getErrorMessage(error) });
-          return null;
         } finally {
           set({ isLoading: false });
         }

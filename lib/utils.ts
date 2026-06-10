@@ -1,6 +1,61 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
+
+export const getInitials = (str: string): string => {
+  if (typeof str !== 'string' || !str.trim()) return '?';
+
+  return (
+    str
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase() || '?'
+  );
+};
+
+export function formatCurrency(
+  amount: number,
+  opts?: {
+    currency?: string;
+    locale?: string;
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+    noDecimals?: boolean;
+  },
+) {
+  const { currency = 'vi-VN', locale = 'đ', minimumFractionDigits, maximumFractionDigits, noDecimals } = opts ?? {};
+
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: noDecimals ? 0 : minimumFractionDigits,
+    maximumFractionDigits: noDecimals ? 0 : maximumFractionDigits,
+  };
+
+  return new Intl.NumberFormat(locale, formatOptions).format(amount);
+}
+export const LOCALE = {
+  dateFormats: {
+    datetime: 'dd/MM/yyyy HH:mm',
+    datetimeFull: "EEEE, 'ngày' dd 'tháng' MM 'năm' yyyy, 'lúc' HH:mm",
+    datetimeLong: "dd/MM/yyyy 'lúc' HH:mm",
+    long: "EEEE, 'ngày' dd 'tháng' MM 'năm' yyyy",
+    medium: 'dd MMM yyyy',
+    rentalSchedule: 'HH:mm EEEE dd/MM',
+    short: 'dd/MM/yyyy',
+    shortDateTime: 'dd/MM HH:mm',
+    time: 'HH:mm',
+  },
+} as const;
+export const formatDate = (date: Date | string, formatType: keyof typeof LOCALE.dateFormats = 'short'): string => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return format(d, LOCALE.dateFormats[formatType], { locale: vi });
+};

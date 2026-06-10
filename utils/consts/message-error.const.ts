@@ -1,13 +1,46 @@
 export const ERROR_MESSAGES = {
-  DEFAULT: 'Xây ra lỗi, vui lồng thu lại sau',
+  DEFAULT: 'Xảy ra lỗi, vui lòng thử lại sau',
   AUTH: {
     REGISTER: 'Tài khoản đăng ký không thành công',
     LOGIN: 'Đăng nhập không thành công',
     LOGOUT: 'Đăng xuất không thành công',
     VERIFIED: 'Tài khoản chưa kích hoạt',
-    PASSWORD_CHANGED: 'Đổi mật hàng không thành công',
-    FORGOT_PASSWORD: 'Gửi Email khôi phục gửi thất bại',
-    RESET_PASSWORD: 'Đăt lại mật khẩu thất bại',
+    PASSWORD_CHANGED: 'Đổi mật khẩu không thành công',
+    FORGOT_PASSWORD: 'Gửi email khôi phục mật khẩu thất bại',
+    RESET_PASSWORD: 'Đặt lại mật khẩu thất bại',
     CHANGE_PASSWORD: 'Thay đổi mật khẩu thất bại',
   },
-};
+  USERS: {
+    CREATE: 'Tạo người dùng thất bại',
+    UPDATE: 'Cập nhật người dùng thất bại',
+    UPDATE_STATUS: 'Cập nhật trạng thái người dùng thất bại',
+    UPDATE_ROLES: 'Cập nhật vai trò người dùng thất bại',
+    RESET_PASSWORD: 'Reset mật khẩu người dùng thất bại',
+    DELETE: 'Xóa người dùng thất bại',
+  },
+  CUSTOMERS: {
+    CREATE: 'Tạo khách hàng thất bại',
+    UPDATE: 'Cập nhật khách hàng thất bại',
+    UPDATE_STATUS: 'Cập nhật trạng thái khách hàng thất bại',
+    DELETE: 'Xóa khách hàng thất bại',
+  },
+  PRODUCTS: {
+    CREATE: 'Tạo sản phẩm thất bại',
+    UPDATE: 'Cập nhật sản phẩm thất bại',
+    UPDATE_STATUS: 'Cập nhật trạng thái sản phẩm thất bại',
+    DELETE: 'Xóa sản phẩm thất bại',
+  },
+  ASSET_UNITS: {
+    CREATE: 'Tạo thiết bị thất bại',
+    UPDATE: 'Cập nhật thiết bị thất bại',
+    UPDATE_STATUS: 'Cập nhật tình trạng thiết bị thất bại',
+    DELETE: 'Xóa thiết bị thất bại',
+  },
+  ROLES: {
+    CREATE: 'Tạo vai trò thất bại',
+    UPDATE: 'Cập nhật vai trò thất bại',
+    UPDATE_PERMISSIONS: 'Cập nhật quyền của vai trò thất bại',
+    ASSIGN_USERS: 'Gán vai trò cho người dùng thất bại',
+    DELETE: 'Xóa vai trò thất bại',
+  },
+} as const;
