@@ -1,6 +1,19 @@
+'use client';
+
+import { useAuthStore } from '@/stores/auth.store';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Image from 'next/image';
 
 const AuthLayout: React.FC<Readonly<{ children: React.ReactNode }>> = ({ children }) => {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, router]);
   return (
     <div className="grid min-h-screen grid-cols-1 overflow-x-hidden lg:grid-cols-2">
       <main className="flex flex-col justify-center bg-background px-4 py-24 md:px-12 lg:px-24">
