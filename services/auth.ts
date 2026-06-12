@@ -47,7 +47,7 @@ const requestResetPassword = (data: IResetPasswordReq): Promise<AxiosResponse<De
   return apiClient(config);
 };
 
-const requestRefreshToken = (): Promise<AxiosResponse<DefaultResponse<{ success: true }>>> => {
+const requestRefreshToken = (): Promise<AxiosResponse<DefaultResponse<IAuthRes>>> => {
   const config: AxiosRequestConfig = {
     method: 'POST',
     url: `${url}/refresh`,

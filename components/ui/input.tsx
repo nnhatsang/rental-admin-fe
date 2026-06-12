@@ -11,14 +11,13 @@ const inputVariants = cva(
       size: {
         sm: 'h-8',
         md: 'h-9',
-        lg: 'h-11',
       },
       variant: {
         default: ' focus-visible:ring-0 focus-visible:ring-offset-0 ',
       },
     },
     defaultVariants: {
-      size: 'lg',
+      size: 'md',
       variant: 'default',
     },
   },
@@ -28,7 +27,7 @@ export interface InputProps extends Omit<React.ComponentProps<'input'>, 'size'>,
   asChild?: boolean;
 }
 
-function Input({ className, variant = 'default', asChild = false, size = 'lg', ...props }: InputProps) {
+function Input({ className, variant = 'default', asChild = false, size = 'md', ...props }: InputProps) {
   const Comp = asChild ? Slot.Root : 'input';
 
   return (

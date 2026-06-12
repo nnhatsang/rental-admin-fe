@@ -14,7 +14,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<'i
           className={cn('pr-10', className)}
           ref={ref}
           {...props}
-          size="lg"
+          size="md"
         />
         <button
           type="button"

@@ -3,7 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from './AuthProvider';
 import { QueryProvider } from './QueryProvider';
-import { ThemeProvider } from './theme-provider';
+// import { ThemeProvider } from './theme-provider';
 import { PREFERENCE_DEFAULTS } from '@/lib/preferences/preferences-config';
 import { PreferencesStoreProvider } from './preferences-provider';
 

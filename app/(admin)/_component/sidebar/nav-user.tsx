@@ -14,8 +14,11 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
+import { ERROR_MESSAGES } from '@/utils/consts/message-error.const';
+import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
 import { IconLogout, IconMessage2, IconUserCircle } from '@tabler/icons-react';
 import type { ComponentProps } from 'react';
+import { toast } from 'sonner';
 
 type NavUserVariant = 'sidebar' | 'header';
 type DropdownSide = ComponentProps<typeof DropdownMenuContent>['side'];
@@ -32,13 +35,21 @@ type NavUserProps = {
 export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, className }: NavUserProps) {
   const { isMobile } = useSidebar();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   if (!user) return null;
 
   const isSidebar = variant === 'sidebar';
   const shouldShowEmail = showEmail ?? isSidebar;
   const dropdownSide = side ?? (isSidebar ? (isMobile ? 'bottom' : 'right') : 'bottom');
-
+  const handleLogout = () => {
+    try {
+      logout();
+      toast.success(SUCCESS_MESSAGES.AUTH.LOGOUT);
+    } catch {
+      toast.error(ERROR_MESSAGES.AUTH.LOGOUT);
+    }
+  };
   const userInfo = (
     <>
       <Avatar className={cn('h-8 w-8 rounded-lg', isSidebar && 'grayscale')}>
@@ -67,11 +78,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
             {userInfo}
           </SidebarMenuButton>
         ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            className={cn('h-9 gap-2 px-2 data-[state=open]:bg-accent', className)}
-          >
+          <Button type="button" variant="ghost" className={cn('h-9 gap-2 px-2 data-[state=open]:bg-accent', className)}>
             {userInfo}
           </Button>
         )}
@@ -105,7 +112,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <IconLogout /> Đăng xuất
         </DropdownMenuItem>
       </DropdownMenuContent>

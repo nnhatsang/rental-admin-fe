@@ -7,11 +7,16 @@ import { NavUser } from './_component/sidebar/nav-user';
 import { SearchDialog } from './_component/sidebar/search-dialog';
 import { LayoutControls } from './_component/sidebar/layout-controls';
 import { ThemeSwitcher } from './_component/sidebar/theme-switcher';
+import { getPreference } from '@/server/server-actions';
+import { SIDEBAR_COLLAPSIBLE_VALUES, SIDEBAR_VARIANT_VALUES } from '@/lib/preferences/layout';
 
 const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ children }) => {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
-
+  const [variant, collapsible] = await Promise.all([
+    getPreference('sidebar_variant', SIDEBAR_VARIANT_VALUES, 'inset'),
+    getPreference('sidebar_collapsible', SIDEBAR_COLLAPSIBLE_VALUES, 'icon'),
+  ]);
   return (
     <SidebarProvider
       defaultOpen={defaultOpen}
@@ -21,9 +26,7 @@ const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ 
         } as React.CSSProperties
       }
     >
-      <AppSidebar
-      //    variant={variant} collapsible={collapsible}
-      />
+      <AppSidebar variant={variant} collapsible={collapsible} />
       <SidebarInset
         className={cn(
           '[html[data-content-layout=centered]_&>*]:mx-auto',

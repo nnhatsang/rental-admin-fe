@@ -34,7 +34,7 @@ const Login: React.FC = () => {
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel>Email</FieldLabel>
-              <Input placeholder="admin@rental.local" {...field} type="email" />
+              <Input placeholder="admin@rental.local" {...field} type="email" className="h-11" />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel>Mật khẩu</FieldLabel>
-              <PasswordInput placeholder="Mật khẩu" {...field} />
+              <PasswordInput placeholder="Mật khẩu" {...field} className="h-11" />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -60,7 +60,7 @@ const Login: React.FC = () => {
           </Button>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full h-11" disabled={isPending}>
           {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
           Đăng nhập
         </Button>

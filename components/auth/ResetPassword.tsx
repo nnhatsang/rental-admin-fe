@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 import { Button } from '../ui/button';
 import { Field, FieldError, FieldLabel } from '../ui/field';
-import { Input } from '../ui/input';
 import { PasswordInput } from '../ui/password-input';
+import { useSearchParams } from 'next/navigation';
 
 const ResetPassword: React.FC = () => {
-  const { form, onSubmit, isPending } = useResetPassword();
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
+  const { form, onSubmit, isPending } = useResetPassword(token as string);
   const {
     control,
     handleSubmit,
@@ -25,18 +27,6 @@ const ResetPassword: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Controller
-          control={control}
-          name="token"
-          render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Mã xác thực</FieldLabel>
-              <Input placeholder="Token" {...field} />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
         <Controller
           control={control}
           name="newPassword"

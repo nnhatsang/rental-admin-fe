@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Roboto } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/providers';
+import { PREFERENCE_DEFAULTS } from '@/lib/preferences/preferences-config';
+import { ThemeBootScript } from '@/scripts/theme-boot';
 
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -34,12 +36,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { theme_mode, theme_preset, content_layout, navbar_style, sidebar_variant, sidebar_collapsible } =
+    PREFERENCE_DEFAULTS;
   return (
     <html
       lang="en"
       className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans', roboto.variable)}
+      data-theme-mode={theme_mode}
+      data-theme-preset={theme_preset}
+      data-content-layout={content_layout}
+      data-navbar-style={navbar_style}
+      data-sidebar-variant={sidebar_variant}
+      data-sidebar-collapsible={sidebar_collapsible}
+      // data-font={font}
+      suppressHydrationWarning
     >
-      <body className="min-h-full">
+      <head>
+        {/* Applies theme and layout preferences on load to avoid flicker and unnecessary server rerenders. */}
+        <ThemeBootScript />
+      </head>
+      <body className="min-h-screen antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

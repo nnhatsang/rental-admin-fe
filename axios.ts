@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth.store';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './utils/consts/token.const';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';
+const AUTH_REFRESH_URL = '/admin/auth/refresh';
 
 type RetryableAxiosRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
@@ -76,12 +77,16 @@ apiAuth.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as RetryableAxiosRequestConfig | undefined;
+    const isRefreshRequest = originalRequest?.url?.includes(AUTH_REFRESH_URL);
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true;
 
       try {
-        return await requestRefreshToken();
+        const refreshResponse = await requestRefreshToken();
+        useAuthStore.getState().setUser(refreshResponse.data.data.user);
+
+        return apiAuth(originalRequest);
       } catch (refreshError) {
         const { clearAuth } = useAuthStore.getState();
         clearAuth();

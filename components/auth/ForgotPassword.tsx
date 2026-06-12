@@ -14,7 +14,6 @@ const ForgotPassword: React.FC = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors },
   } = form;
 
   return (
@@ -33,13 +32,11 @@ const ForgotPassword: React.FC = () => {
           render={({ field, fieldState }) => (
             <Field>
               <FieldLabel>Email</FieldLabel>
-              <Input placeholder="admin@rental.local" {...field} type="email" />
+              <Input placeholder="admin@rental.local" {...field} type="email" className="h-11" />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
-
-        {/* {errors.root && <FieldError errors={[errors.root]} />} */}
 
         {isSuccess && (
           <p className="text-sm text-muted-foreground">
@@ -47,7 +44,7 @@ const ForgotPassword: React.FC = () => {
           </p>
         )}
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full h-11" disabled={isPending}>
           {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
           Đặt lại mật khẩu
         </Button>
