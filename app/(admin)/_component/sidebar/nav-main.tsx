@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
-import { IconChevronRight, IconCirclePlus, IconMail } from "@tabler/icons-react";
+import { IconChevronRight, IconCirclePlus, IconMail } from '@tabler/icons-react';
 
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -24,8 +24,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import type { NavGroup, NavMainItem } from "@/navigation/sidebar/sidebar-items";
+} from '@/components/ui/sidebar';
+import type { NavGroup, NavMainItem } from '@/navigation/sidebar/sidebar-items';
 
 interface NavMainProps {
   readonly items: readonly NavGroup[];
@@ -41,8 +41,8 @@ const NavItemExpanded = ({
   isSubmenuOpen,
 }: {
   item: NavMainItem;
-  isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
-  isSubmenuOpen: (subItems?: NavMainItem["subItems"]) => boolean;
+  isActive: (url: string, subItems?: NavMainItem['subItems']) => boolean;
+  isSubmenuOpen: (subItems?: NavMainItem['subItems']) => boolean;
 }) => {
   return (
     <Collapsible key={item.title} asChild defaultOpen={isSubmenuOpen(item.subItems)} className="group/collapsible">
@@ -66,7 +66,7 @@ const NavItemExpanded = ({
               isActive={isActive(item.url)}
               tooltip={item.title}
             >
-              <Link prefetch={false} href={item.url} target={item.newTab ? "_blank" : undefined}>
+              <Link prefetch={false} href={item.url} target={item.newTab ? '_blank' : undefined}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
                 {item.comingSoon && <IsComingSoon />}
@@ -80,7 +80,7 @@ const NavItemExpanded = ({
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.title}>
                   <SidebarMenuSubButton aria-disabled={subItem.comingSoon} isActive={isActive(subItem.url)} asChild>
-                    <Link prefetch={false} href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
+                    <Link prefetch={false} href={subItem.url} target={subItem.newTab ? '_blank' : undefined}>
                       {subItem.icon && <subItem.icon />}
                       <span>{subItem.title}</span>
                       {subItem.comingSoon && <IsComingSoon />}
@@ -101,7 +101,7 @@ const NavItemCollapsed = ({
   isActive,
 }: {
   item: NavMainItem;
-  isActive: (url: string, subItems?: NavMainItem["subItems"]) => boolean;
+  isActive: (url: string, subItems?: NavMainItem['subItems']) => boolean;
 }) => {
   return (
     <SidebarMenuItem key={item.title}>
@@ -127,7 +127,7 @@ const NavItemCollapsed = ({
                 aria-disabled={subItem.comingSoon}
                 isActive={isActive(subItem.url)}
               >
-                <Link prefetch={false} href={subItem.url} target={subItem.newTab ? "_blank" : undefined}>
+                <Link prefetch={false} href={subItem.url} target={subItem.newTab ? '_blank' : undefined}>
                   {subItem.icon && <subItem.icon className="[&>svg]:text-sidebar-foreground" />}
                   <span>{subItem.title}</span>
                   {subItem.comingSoon && <IsComingSoon />}
@@ -145,14 +145,14 @@ export function NavMain({ items }: NavMainProps) {
   const path = usePathname();
   const { state, isMobile } = useSidebar();
 
-  const isItemActive = (url: string, subItems?: NavMainItem["subItems"]) => {
+  const isItemActive = (url: string, subItems?: NavMainItem['subItems']) => {
     if (subItems?.length) {
       return subItems.some((sub) => path.startsWith(sub.url));
     }
     return path === url;
   };
 
-  const isSubmenuOpen = (subItems?: NavMainItem["subItems"]) => {
+  const isSubmenuOpen = (subItems?: NavMainItem['subItems']) => {
     return subItems?.some((sub) => path.startsWith(sub.url)) ?? false;
   };
 
@@ -169,14 +169,14 @@ export function NavMain({ items }: NavMainProps) {
                 <IconCirclePlus />
                 <span>Quick Create</span>
               </SidebarMenuButton>
-              <Button
+              {/* <Button
                 size="icon"
                 className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
                 variant="outline"
               >
                 <IconMail />
                 <span className="sr-only">Inbox</span>
-              </Button>
+              </Button> */}
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
@@ -187,7 +187,7 @@ export function NavMain({ items }: NavMainProps) {
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
               {group.items.map((item) => {
-                if (state === "collapsed" && !isMobile) {
+                if (state === 'collapsed' && !isMobile) {
                   // If no subItems, just render the button as a link
                   if (!item.subItems) {
                     return (
@@ -198,7 +198,7 @@ export function NavMain({ items }: NavMainProps) {
                           tooltip={item.title}
                           isActive={isItemActive(item.url)}
                         >
-                          <Link prefetch={false} href={item.url} target={item.newTab ? "_blank" : undefined}>
+                          <Link prefetch={false} href={item.url} target={item.newTab ? '_blank' : undefined}>
                             {item.icon && <item.icon />}
                             <span>{item.title}</span>
                           </Link>

@@ -106,8 +106,8 @@ export function LayoutControls() {
       <PopoverContent align="end">
         <div className="flex flex-col gap-5">
           <div className="space-y-1.5">
-            <h4 className="font-medium text-sm leading-none">Preferences</h4>
-            <p className="text-muted-foreground text-xs">Customize your dashboard layout preferences.</p>
+            <h4 className="font-medium text-sm leading-none">Tùy chỉnh giao diện</h4>
+            <p className="text-muted-foreground text-xs">Thiết lập cách hiển thị bảng quản trị.</p>
           </div>
           <div className="space-y-3 **:data-[slot=toggle-group]:w-full **:data-[slot=toggle-group-item]:flex-1 **:data-[slot=toggle-group-item]:text-xs">
             {/* <div className="space-y-1">
@@ -154,7 +154,7 @@ export function LayoutControls() {
             </div> */}
 
             <div className="space-y-1">
-              <Label className="font-medium text-xs">Theme Mode</Label>
+              <Label className="font-medium text-xs">Chế độ màu</Label>
               <ToggleGroup
                 size="sm"
                 variant="outline"
@@ -162,20 +162,20 @@ export function LayoutControls() {
                 value={themeMode}
                 onValueChange={onThemeModeChange}
               >
-                <ToggleGroupItem value="light" aria-label="Toggle light">
-                  Light
+                <ToggleGroupItem value="light" aria-label="Chọn giao diện sáng">
+                  Sáng
                 </ToggleGroupItem>
-                <ToggleGroupItem value="dark" aria-label="Toggle dark">
-                  Dark
+                <ToggleGroupItem value="dark" aria-label="Chọn giao diện tối">
+                  Tối
                 </ToggleGroupItem>
-                <ToggleGroupItem value="system" aria-label="Toggle system">
-                  System
+                <ToggleGroupItem value="system" aria-label="Chọn theo hệ thống">
+                  Hệ thống
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="font-medium text-xs">Page Layout</Label>
+              <Label className="font-medium text-xs">Bố cục trang</Label>
               <ToggleGroup
                 size="sm"
                 variant="outline"
@@ -183,17 +183,17 @@ export function LayoutControls() {
                 value={contentLayout}
                 onValueChange={onContentLayoutChange}
               >
-                <ToggleGroupItem value="centered" aria-label="Toggle centered">
-                  Centered
+                <ToggleGroupItem value="centered" aria-label="Chọn bố cục căn giữa">
+                  Căn giữa
                 </ToggleGroupItem>
-                <ToggleGroupItem value="full-width" aria-label="Toggle full-width">
-                  Full Width
+                <ToggleGroupItem value="full-width" aria-label="Chọn bố cục toàn chiều rộng">
+                  Toàn rộng
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="font-medium text-xs">Navbar Behavior</Label>
+              <Label className="font-medium text-xs">Thanh điều hướng</Label>
               <ToggleGroup
                 size="sm"
                 variant="outline"
@@ -201,17 +201,17 @@ export function LayoutControls() {
                 value={navbarStyle}
                 onValueChange={onNavbarStyleChange}
               >
-                <ToggleGroupItem value="sticky" aria-label="Toggle sticky">
-                  Sticky
+                <ToggleGroupItem value="sticky" aria-label="Ghim thanh điều hướng">
+                  Ghim
                 </ToggleGroupItem>
-                <ToggleGroupItem value="scroll" aria-label="Toggle scroll">
-                  Scroll
+                <ToggleGroupItem value="scroll" aria-label="Cuộn thanh điều hướng theo trang">
+                  Cuộn
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="font-medium text-xs">Sidebar Style</Label>
+              <Label className="font-medium text-xs">Kiểu sidebar</Label>
               <ToggleGroup
                 size="sm"
                 variant="outline"
@@ -219,20 +219,20 @@ export function LayoutControls() {
                 value={variant}
                 onValueChange={onSidebarStyleChange}
               >
-                <ToggleGroupItem value="inset" aria-label="Toggle inset">
-                  Inset
+                <ToggleGroupItem value="inset" aria-label="Chọn sidebar lùi vào">
+                  Lùi vào
                 </ToggleGroupItem>
-                <ToggleGroupItem value="sidebar" aria-label="Toggle sidebar">
+                <ToggleGroupItem value="sidebar" aria-label="Chọn sidebar mặc định">
                   Sidebar
                 </ToggleGroupItem>
-                <ToggleGroupItem value="floating" aria-label="Toggle floating">
-                  Floating
+                <ToggleGroupItem value="floating" aria-label="Chọn sidebar nổi">
+                  Nổi
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-1">
-              <Label className="font-medium text-xs">Sidebar Collapse Mode</Label>
+              <Label className="font-medium text-xs">Chế độ thu gọn sidebar</Label>
               <ToggleGroup
                 size="sm"
                 variant="outline"
@@ -240,17 +240,17 @@ export function LayoutControls() {
                 value={collapsible}
                 onValueChange={onSidebarCollapseModeChange}
               >
-                <ToggleGroupItem value="icon" aria-label="Toggle icon">
+                <ToggleGroupItem value="icon" aria-label="Thu gọn thành biểu tượng">
                   Icon
                 </ToggleGroupItem>
-                <ToggleGroupItem value="offcanvas" aria-label="Toggle offcanvas">
-                  OffCanvas
+                <ToggleGroupItem value="offcanvas" aria-label="Ẩn sidebar khỏi màn hình">
+                  Ẩn bên ngoài
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <Button type="button" size="sm" variant="outline" className="w-full text-xs" onClick={handleRestore}>
-              Restore Defaults
+              Khôi phục mặc định
             </Button>
           </div>
         </div>

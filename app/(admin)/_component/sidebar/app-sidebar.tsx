@@ -50,7 +50,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={visibleSidebarItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <NavUser variant="sidebar" />
       </SidebarFooter>
     </Sidebar>
   );

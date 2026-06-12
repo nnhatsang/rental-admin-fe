@@ -6,6 +6,7 @@ import { AppSidebar } from './_component/sidebar/app-sidebar';
 import { NavUser } from './_component/sidebar/nav-user';
 import { SearchDialog } from './_component/sidebar/search-dialog';
 import { LayoutControls } from './_component/sidebar/layout-controls';
+import { ThemeSwitcher } from './_component/sidebar/theme-switcher';
 
 const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ children }) => {
   const cookieStore = await cookies();
@@ -50,9 +51,9 @@ const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ 
             </div>
             <div className="flex items-center gap-2">
               <LayoutControls />
-              {/* <ThemeSwitcher /> */}
+              <ThemeSwitcher />
 
-              <NavUser />
+              <NavUser variant="header" side="bottom" align="end" showEmail={false} />
             </div>
           </div>
         </header>
