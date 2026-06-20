@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { NavGroup, NavMainItem } from '@/components/layout/types';
+import { PermissionCode } from '@/utils/consts/rbac.const';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -55,7 +57,41 @@ export const LOCALE = {
     time: 'HH:mm',
   },
 } as const;
+
 export const formatDate = (date: Date | string, formatType: keyof typeof LOCALE.dateFormats = 'short'): string => {
   const d = typeof date === 'string' ? new Date(date) : date;
   return format(d, LOCALE.dateFormats[formatType], { locale: vi });
+};
+
+const canAccess = (requiredPermissions: PermissionCode[] | undefined, userPermissions: string[]) => {
+  if (!requiredPermissions?.length) return true;
+
+  return requiredPermissions.some((permission) => userPermissions.includes(permission));
+};
+
+export const filterSidebarItemsByPermissions = (items: NavGroup[], userPermissions: string[]): NavGroup[] => {
+  return items
+    .map((group) => {
+      const filteredItems = group.items
+        .map((item) => {
+          const subItems = item.subItems?.filter((subItem) => canAccess(subItem.requiredPermissions, userPermissions));
+          const hasVisibleSubItems = Boolean(subItems?.length);
+
+          if (!canAccess(item.requiredPermissions, userPermissions) && !hasVisibleSubItems) {
+            return null;
+          }
+
+          return {
+            ...item,
+            ...(subItems ? { subItems } : {}),
+          };
+        })
+        .filter((item): item is NavMainItem => Boolean(item));
+
+      return {
+        ...group,
+        items: filteredItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
 };

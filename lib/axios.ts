@@ -1,6 +1,6 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
-import { requestRefreshToken } from '@/modules/auth/service';
-import { useAuthStore } from '@/stores/auth.store';
+import { requestRefreshToken } from '@/modules/auth/services';
+import { useAuthStore } from '@/modules/auth/store';
 import { ApiError, type ApiErrorResponse } from '@/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';

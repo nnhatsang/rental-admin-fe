@@ -1,4 +1,4 @@
-import Login from '@/components/auth/Login';
+import Login from '@/modules/auth/components/Login';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 

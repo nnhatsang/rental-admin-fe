@@ -10,7 +10,7 @@ import { PREFERENCE_DEFAULTS, PREFERENCE_PERSISTENCE } from "@/lib/preferences/p
 
 export function ThemeBootScript() {
   const persistence = JSON.stringify({
-    theme_mode: PREFERENCE_PERSISTENCE.theme_mode,
+    theme_mode: 'client-cookie',
     theme_preset: PREFERENCE_PERSISTENCE.theme_preset,
     // font: PREFERENCE_PERSISTENCE.font,
     content_layout: PREFERENCE_PERSISTENCE.content_layout,
@@ -20,7 +20,7 @@ export function ThemeBootScript() {
   });
 
   const defaults = JSON.stringify({
-    theme_mode: PREFERENCE_DEFAULTS.theme_mode,
+    theme_mode: 'system',
     theme_preset: PREFERENCE_DEFAULTS.theme_preset,
     // font: PREFERENCE_DEFAULTS.font,
     content_layout: PREFERENCE_DEFAULTS.content_layout,

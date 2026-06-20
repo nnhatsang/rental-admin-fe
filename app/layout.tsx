@@ -36,13 +36,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { theme_mode, theme_preset, content_layout, navbar_style, sidebar_variant, sidebar_collapsible } =
+  const { theme_preset, content_layout, navbar_style, sidebar_variant, sidebar_collapsible } =
     PREFERENCE_DEFAULTS;
   return (
     <html
       lang="en"
       className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans', roboto.variable)}
-      data-theme-mode={theme_mode}
+      data-theme-mode="system"
       data-theme-preset={theme_preset}
       data-content-layout={content_layout}
       data-navbar-style={navbar_style}
@@ -52,7 +52,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Applies theme and layout preferences on load to avoid flicker and unnecessary server rerenders. */}
         <ThemeBootScript />
       </head>
       <body className="min-h-screen antialiased">

@@ -1,4 +1,4 @@
-import ResetPassword from '@/components/auth/ResetPassword';
+import ResetPassword from '@/modules/auth/components/ResetPassword';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';

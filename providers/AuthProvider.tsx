@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuthStore } from '@/modules/auth/store';
 import { canAccessRoute } from '@/utils/consts/route-permission.const';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -17,6 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
   const permissions = useAuthStore((state) => state.permissions);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isProfileChecked, setIsProfileChecked] = useState(false);
 
   const isPublic = useMemo(() => isPublicRoute(pathname), [pathname]);
@@ -48,12 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile, isPublic, pathname, router]);
 
   useEffect(() => {
+    if (isPublic && isAuthenticated) {
+      router.replace('/');
+      return;
+    }
+
     if (isPublic || !isProfileChecked) return;
 
     if (!canAccessRoute(pathname, permissions)) {
       router.replace('/');
     }
-  }, [isProfileChecked, isPublic, pathname, permissions, router]);
+  }, [isProfileChecked, isPublic, isAuthenticated, pathname, permissions, router]);
 
   if (!isPublic && (!isProfileChecked || isLoading)) {
     return (

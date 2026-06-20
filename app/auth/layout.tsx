@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuthStore } from '@/modules/auth/store';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Image from 'next/image';
@@ -21,7 +21,7 @@ const AuthLayout: React.FC<Readonly<{ children: React.ReactNode }>> = ({ childre
       </main>
 
       <aside className="relative hidden bg-background lg:block">
-        <div className="absolute inset-0 z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
+        <div className="absolute inset-0 z-10 bg-linear-to-br from-primary/30 via-primary/10 to-transparent" />
         <Image
           src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=2187&auto=format&fit=crop"
           alt="Rental equipment workspace"
@@ -30,7 +30,7 @@ const AuthLayout: React.FC<Readonly<{ children: React.ReactNode }>> = ({ childre
           priority
           sizes="50vw"
         />
-        <div className="absolute inset-0 z-10 bg-gradient-to-l from-transparent via-background/50 to-background" />
+        <div className="absolute inset-0 z-10 bg-linear-to-l from-transparent via-background/50 to-background" />
       </aside>
     </div>
   );
