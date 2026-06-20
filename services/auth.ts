@@ -1,14 +1,14 @@
 import { apiAuth, apiClient } from '@/axios';
 import { DefaultResponse } from '@/types/api';
 import {
-  IAuthRes,
-  IChangePasswordReq,
-  IForgotPasswordReq,
-  ILoginReq,
-  IResetPasswordReq,
-  IUpdateProfileReq,
+    IAuthRes,
+    IChangePasswordReq,
+    IForgotPasswordReq,
+    ILoginReq,
+    IResetPasswordReq,
+    IUpdateProfileReq,
+    IUser,
 } from '@/types/aurh';
-import { IUser } from '@/types/user';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 const url = '/admin/auth';
@@ -82,12 +82,12 @@ const requestChangePassword = (data: IChangePasswordReq): Promise<AxiosResponse<
 };
 
 export {
-  requestLogin,
-  requestLogout,
-  requestForgotPassword,
-  requestResetPassword,
-  requestRefreshToken,
-  requestGetProfile,
-  requestUpdateProfile,
-  requestChangePassword,
+    requestChangePassword,
+    requestForgotPassword,
+    requestGetProfile,
+    requestLogin,
+    requestLogout,
+    requestRefreshToken,
+    requestResetPassword,
+    requestUpdateProfile
 };

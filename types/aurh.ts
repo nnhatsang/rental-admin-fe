@@ -1,5 +1,3 @@
-import { IUser } from './user';
-
 export interface ILoginReq {
   email: string;
   password: string;
@@ -7,6 +5,16 @@ export interface ILoginReq {
 
 export interface IAuthRes {
   user: IUser;
+}
+export interface IUser {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string | null;
+  avatar: string | null;
+  sessionId: string;
+  roles: string[];
+  permissions: string[];
 }
 
 export interface IUpdateProfileReq {

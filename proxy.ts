@@ -1,21 +1,23 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { CSRF_COOKIE_NAME, CSRF_REFRESH_COOKIE_NAME } from './utils/consts/token.const';
-const publicRoutes = ['/auth/login', '/auth/forgot-password', '/auth/reset-password'];
+import { NextResponse } from 'next/server';
+import { AUTH_REFRESH_COOKIE } from './utils/consts/token.const';
+const PUBLIC_ROUTES = ['/auth/login', '/auth/forgot-password', '/auth/reset-password'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
-  const refreshToken = request.cookies.get(CSRF_REFRESH_COOKIE_NAME)?.value;
-  const isLoggedIn = Boolean(accessToken || refreshToken);
-  const isPublicRoute = publicRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  // 1. Kiểm tra xem route có phải public không
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  // 2. Lấy token từ cookie (Tên cookie tuỳ thuộc vào backend của bạn set)
+  const token = request.cookies.get(AUTH_REFRESH_COOKIE)?.value;
 
-  if (isPublicRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // 3. Nếu chưa đăng nhập và muốn vào trang admin -> redirect về login
+  if (!isPublicRoute && !token) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  if (!isPublicRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+  // 4. Nếu đã đăng nhập mà muốn vào trang login -> redirect về trang chủ admin
+  if (isPublicRoute && token) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();

@@ -1,8 +1,6 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
-import { getCookie } from 'cookies-next/client';
 import { requestRefreshToken } from './services/auth';
 import { useAuthStore } from './stores/auth.store';
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './utils/consts/token.const';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';
 const AUTH_REFRESH_URL = '/admin/auth/refresh';
@@ -64,12 +62,6 @@ const apiAuth: AxiosInstance = axios.create({
 });
 
 apiAuth.interceptors.request.use((config) => {
-  const csrfToken = getCookie(CSRF_COOKIE_NAME);
-
-  if (typeof csrfToken === 'string' && csrfToken) {
-    config.headers.set(CSRF_HEADER_NAME, csrfToken);
-  }
-
   return config;
 });
 
