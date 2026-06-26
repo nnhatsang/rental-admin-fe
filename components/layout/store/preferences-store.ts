@@ -1,9 +1,9 @@
 import { createStore } from "zustand/vanilla";
 
 // import type { FontKey } from "@/lib/fonts/registry";
-import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from "@/lib/preferences/layout";
-import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config";
-import type { ThemeMode, ThemePreset } from "@/lib/preferences/theme";
+import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from "../lib/layout";
+import { PREFERENCE_DEFAULTS } from "../lib/preferences-config";
+import type { ThemeMode, ThemePreset } from "../lib/theme";
 export type ResolvedThemeMode = "light" | "dark";
 
 export type PreferencesState = {

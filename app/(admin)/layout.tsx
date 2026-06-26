@@ -1,7 +1,7 @@
 import { AdminHeader } from '@/components/layout/admin-header';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { getLayoutPreferences } from '@/server/layout-preferences';
+import { getLayoutPreferences } from '@/components/layout/server/layout-preferences';
 
 const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ children }) => {
   const { defaultOpen, variant, collapsible } = await getLayoutPreferences();

@@ -13,7 +13,7 @@ import { useAuthStore } from '@/modules/auth/store';
 import { IconCamera } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useShallow } from 'zustand/react/shallow';
-import { usePreferencesStore } from '@/providers/preferences-provider';
+import { usePreferencesStore } from './providers/preferences-provider';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 import { filterSidebarItemsByPermissions } from '@/lib/utils';

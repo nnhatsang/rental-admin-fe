@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
-import { getPreference } from '@/server/server-actions';
-import { SIDEBAR_COLLAPSIBLE_VALUES, SIDEBAR_VARIANT_VALUES } from '@/lib/preferences/layout';
+import { getPreference } from './server-actions';
+import { SIDEBAR_COLLAPSIBLE_VALUES, SIDEBAR_VARIANT_VALUES } from '../lib/layout';
 
 export async function getLayoutPreferences() {
   const cookieStore = await cookies();

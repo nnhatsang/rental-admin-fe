@@ -9,9 +9,9 @@ import {
   NAVBAR_STYLE_VALUES,
   SIDEBAR_COLLAPSIBLE_VALUES,
   SIDEBAR_VARIANT_VALUES,
-} from '@/lib/preferences/layout';
-import { THEME_PRESET_VALUES } from '@/lib/preferences/theme';
-import { createPreferencesStore, PreferencesState } from '@/stores/preferences/preferences-store';
+} from '../lib/layout';
+import { THEME_PRESET_VALUES } from '../lib/theme';
+import { createPreferencesStore, PreferencesState } from '../store/preferences-store';
 
 const PreferencesStoreContext = createContext<StoreApi<PreferencesState> | null>(null);
 

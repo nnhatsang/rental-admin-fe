@@ -37,20 +37,21 @@ When adding or updating a feature flow, build the logic in this order:
 
 Do not start by putting API calls or validation directly in components.
 
-Recommended structure:
+Recommended structure (feature modularization):
 
 ```txt
-types/<domain>.ts
-schema/<domain>.schema.ts
-services/<domain>.ts
-hooks/<domain>/use<Action>.hook.ts
-components/<domain>/<Feature>.tsx
+modules/<domain>/types.ts
+modules/<domain>/schema.ts
+modules/<domain>/services.ts
+modules/<domain>/store.ts
+modules/<domain>/hooks/use<Action>.hook.ts
+modules/<domain>/components/<Feature>.tsx
 app/<route>/page.tsx
 ```
 
 ## Types
 
-Define request/response interfaces in `types/`.
+Define request/response interfaces in `modules/<domain>/types.ts`.
 
 Use names that match the action:
 
@@ -69,7 +70,7 @@ Do not type API request bodies inline inside services or hooks if the shape is r
 
 ## Zod Schemas
 
-Input validation belongs in `schema/*.schema.ts`.
+Input validation belongs in `modules/<domain>/schema.ts`.
 
 Each schema should export both the schema and inferred input type:
 
@@ -92,7 +93,7 @@ path: ['confirmPassword']
 
 ## Services
 
-Services live in `services/` and should only describe API calls.
+Services live in `modules/<domain>/services.ts` and should only describe API calls.
 
 Use `apiClient` for public auth endpoints and unauthenticated requests. Use `apiAuth` for authenticated admin requests.
 
@@ -118,7 +119,7 @@ const requestLogin = (data: ILoginReq): Promise<AxiosResponse<DefaultResponse<IA
 
 ## Hooks
 
-Feature hooks live in `hooks/<domain>/`.
+Feature hooks live in `modules/<domain>/hooks/`.
 
 Hooks should connect:
 
@@ -274,11 +275,11 @@ Current auth routes:
 Auth form logic should remain in:
 
 ```txt
-hooks/auth/
-schema/auth.schema.ts
-services/auth.ts
-types/aurh.ts
-components/auth/
+modules/auth/hooks/
+modules/auth/schema.ts
+modules/auth/services.ts
+modules/auth/types.ts
+modules/auth/components/
 ```
 
 Keep the shared auth visual shell in `app/auth/layout.tsx`. Do not duplicate the two-column auth layout inside each auth form component.

@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { IconDeviceImac, IconMoon, IconSun } from '@tabler/icons-react';
-import { usePreferencesStore } from '@/providers/preferences-provider';
+import { usePreferencesStore } from './providers/preferences-provider';
 const THEME_CYCLE = ['light', 'dark', 'system'] as const;
 
 export function ThemeSwitcher() {

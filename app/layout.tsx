@@ -3,8 +3,8 @@ import { Geist, Geist_Mono, Roboto } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/providers';
-import { PREFERENCE_DEFAULTS } from '@/lib/preferences/preferences-config';
-import { ThemeBootScript } from '@/scripts/theme-boot';
+import { PREFERENCE_DEFAULTS } from '@/components/layout/lib/preferences-config';
+import { ThemeBootScript } from '@/components/layout/scripts/theme-boot';
 
 const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
 
