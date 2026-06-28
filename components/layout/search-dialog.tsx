@@ -17,8 +17,10 @@ import { IconSearch } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { NavGroup, NavMainItem } from './types';
-import { filterSidebarItemsByPermissions } from '@/lib/utils';
+import { filterSidebarItemsByPermissions, modKeyLabel } from '@/lib/utils';
 import { sidebarItems } from '@/utils/consts/sidebar.const';
+import { useHotkey } from '@tanstack/react-hotkeys';
+import { Kbd } from '../ui/kbd';
 
 type SearchItem = {
   group: string;
@@ -88,18 +90,22 @@ export function SearchDialog() {
   const searchItems = React.useMemo(() => buildSearchItems(visibleSidebarItems), [visibleSidebarItems]);
   const recommendations = React.useMemo(() => getAvailableItems(searchItems), [searchItems]);
 
-  React.useEffect(() => {
-    const down = (event: KeyboardEvent) => {
-      if (event.key === 'j' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        setOpen((prev) => !prev);
-      }
-    };
+  // React.useEffect(() => {
+  //   const down = (event: KeyboardEvent) => {
+  //     if (event.key === 'j' && (event.metaKey || event.ctrlKey)) {
+  //       event.preventDefault();
+  //       setOpen((prev) => !prev);
+  //     }
+  //   };
 
-    document.addEventListener('keydown', down);
+  //   document.addEventListener('keydown', down);
 
-    return () => document.removeEventListener('keydown', down);
-  }, []);
+  //   return () => document.removeEventListener('keydown', down);
+  // }, []);
+
+  useHotkey('Mod+J', () => {
+    setOpen((prev) => !prev);
+  });
 
   const handleOpenChange = (value: boolean) => {
     setOpen(value);
@@ -153,9 +159,7 @@ export function SearchDialog() {
       >
         <IconSearch data-icon="inline-start" />
         Tìm kiếm
-        <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium text-[10px]">
-          <span className="text-xs">⌘</span>J
-        </kbd>
+        <Kbd className="bg-muted">{`${modKeyLabel} J`}</Kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={handleOpenChange}>
         <Command>

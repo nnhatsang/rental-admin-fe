@@ -2,8 +2,9 @@
 
 import { useAuthStore } from '@/modules/auth/store';
 import { canAccessRoute } from '@/utils/consts/route-permission.const';
-import { usePathname, useRouter } from 'next/navigation';
+import { notFound, usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { useSocket } from '@/hooks/use-socket';
 
 const PUBLIC_ROUTES = ['/auth', '/auth/login', '/auth/forgot-password', '/auth/reset-password'];
 
@@ -12,55 +13,41 @@ const isPublicRoute = (pathname: string) => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  useSocket();
   const pathname = usePathname();
-  const router = useRouter();
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
   const permissions = useAuthStore((state) => state.permissions);
   const isLoading = useAuthStore((state) => state.isLoading);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const [isProfileChecked, setIsProfileChecked] = useState(false);
 
+  const [isProfileChecked, setIsProfileChecked] = useState(false);
   const isPublic = useMemo(() => isPublicRoute(pathname), [pathname]);
 
+  // 1. Đồng bộ profile khi vào trang private
   useEffect(() => {
-    let isMounted = true;
-
-    const syncProfile = async () => {
-      if (isPublic) {
-        setIsProfileChecked(true);
-        return;
+    const init = async () => {
+      if (!isPublic) {
+        try {
+          await fetchProfile();
+        } catch (err) {
+          console.error('Lỗi đồng bộ profile khi khởi tạo:', err);
+        }
       }
-
-      setIsProfileChecked(false);
-      await fetchProfile();
-
-      if (!isMounted) {
-        return;
-      }
-
       setIsProfileChecked(true);
     };
+    init();
+  }, [isPublic, fetchProfile]);
 
-    syncProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [fetchProfile, isPublic, pathname, router]);
-
+  // 2. Bảo vệ route và phân quyền truy cập
   useEffect(() => {
-    if (isPublic && isAuthenticated) {
-      router.replace('/');
-      return;
+    if (!isPublic && isProfileChecked && isAuthenticated) {
+      if (!canAccessRoute(pathname, permissions)) {
+        notFound();
+      }
     }
+  }, [isPublic, pathname, permissions, isAuthenticated, isProfileChecked]);
 
-    if (isPublic || !isProfileChecked) return;
-
-    if (!canAccessRoute(pathname, permissions)) {
-      router.replace('/');
-    }
-  }, [isProfileChecked, isPublic, isAuthenticated, pathname, permissions, router]);
-
+  // Loading spinner chặn hiển thị trang bảo mật cho đến khi check xong
   if (!isPublic && (!isProfileChecked || isLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">

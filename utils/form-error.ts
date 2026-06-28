@@ -2,6 +2,7 @@
 import { ApiClientError } from '@/axios';
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { ERROR_MESSAGES } from './consts/message-error.const';
+import { toast } from 'sonner';
 
 type ApplyApiFormErrorsOptions<T extends FieldValues> = {
   fallbackMessage?: string;
@@ -16,19 +17,13 @@ export function applyApiFormErrors<T extends FieldValues>(
   const fallbackMessage = options.fallbackMessage ?? ERROR_MESSAGES.DEFAULT;
 
   if (!(error instanceof ApiClientError)) {
-    form.setError('root', {
-      type: 'server',
-      message: fallbackMessage,
-    });
+    toast.error(fallbackMessage);
 
     return false;
   }
 
   if (!error.fieldErrors.length) {
-    form.setError('root', {
-      type: 'server',
-      message: error.message || fallbackMessage,
-    });
+    toast.error(error.message || fallbackMessage);
 
     return true;
   }
@@ -44,32 +39,3 @@ export function applyApiFormErrors<T extends FieldValues>(
 
   return true;
 }
-
-// Sau đó trong useLogin dùng lại:
-
-// import { applyApiFormErrors } from '@/utils/form-error';
-
-// const { mutate, isPending } = useMutation({
-//   mutationFn: async (values: ILoginInput) => {
-//     await login(values);
-//   },
-
-//   onError: (error) => {
-//     applyApiFormErrors(form, error, {
-//       fallbackMessage: 'Đăng nhập thất bại',
-//     });
-//   },
-
-//   onSuccess: () => {
-//     toast.success('Đăng nhập thành công');
-//   },
-// });
-// Nếu backend trả field khác frontend, ví dụ BE trả passwordConfirm nhưng FE dùng confirmPassword, dùng fieldMap:
-
-// applyApiFormErrors(form, error, {
-//   fallbackMessage: 'Đặt lại mật khẩu thất bại',
-//   fieldMap: {
-//     passwordConfirm: 'confirmPassword',
-//   },
-// });
-// QueryProvider chỉ nên xử lý toast lỗi chung. Còn lỗi field thì để từng form gọi helper này, vì QueryProvider không biết form nào cần setError.

@@ -1,37 +1,39 @@
 'use client';
 
-import { requestGetProfile, requestLogin, requestLogout, requestUpdateProfile } from './services';
-import type { ILoginReq, IUpdateProfileReq, IUser } from './types';
+import { deleteCookie } from 'cookies-next';
+import { requestGetProfile, requestLogin, requestLogout } from './services';
+import type { ILoginReq, IUser } from './types';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from '@/utils/consts/token.const';
+import { PATHNAME } from '@/utils/consts/pathname.const';
+import { clearHttpOnlyCookiesAction } from '@/app/actions/auth';
 
-type AuthStore = {
+interface IAuthState {
   user: IUser | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
   permissions: string[];
   roles: string[];
-  setUser: (user: IUser | null) => void;
-  clearAuth: () => void;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface IAuthActions {
   login: (data: ILoginReq) => Promise<IUser>;
-  logout: () => Promise<void>;
+  logout: (redirect?: boolean, fetchLogout?: boolean) => void;
   fetchProfile: () => Promise<void>;
-
-  updateProfile: (data: Partial<IUpdateProfileReq>) => Promise<IUser>;
-
-  hasPermission: (permission: string) => boolean;
-  hasAnyPermission: (permissions: string[]) => boolean;
-};
-
-type PersistedAuthStore = Pick<AuthStore, 'user' | 'isAuthenticated' | 'permissions' | 'roles'>;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
+  clearAuth: () => void;
+}
+type IAuthStore = IAuthState & IAuthActions;
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Co loi xay ra';
 }
 
-export const useAuthStore = create<AuthStore>()(
-  persist<AuthStore, [], [], PersistedAuthStore>(
+export const useAuthStore = create<IAuthStore>()(
+  persist(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
@@ -40,53 +42,57 @@ export const useAuthStore = create<AuthStore>()(
       permissions: [],
       roles: [],
 
-      setUser: (user) => {
-        set({
-          user,
-          isAuthenticated: Boolean(user),
-          permissions: user?.permissions ?? [],
-          roles: user?.roles ?? [],
-          error: null,
-        });
-      },
-
-      clearAuth: () => {
-        set({
-          user: null,
-          isAuthenticated: false,
-          permissions: [],
-          roles: [],
-          error: null,
-        });
-        window.location.href = '/auth';
-      },
-
-      login: async (data) => {
+      login: async ({ email, password }: ILoginReq) => {
         set({ isLoading: true, error: null });
 
         try {
-          const response = await requestLogin(data);
-          const user = response.data.data.user;
+          const { data } = await requestLogin({ email, password });
 
-          get().setUser(user);
-          return user;
+          set({
+            user: data.data.user,
+            isAuthenticated: true,
+            permissions: data.data.user.permissions,
+            roles: data.data.user.roles,
+            isLoading: false,
+            error: null,
+          });
+
+          return data.data.user;
+        } catch (error) {
+          set({
+            error: getErrorMessage(error),
+            isLoading: false,
+            isAuthenticated: false,
+            user: null,
+            permissions: [],
+            roles: [],
+          });
+          throw error;
+        }
+      },
+
+      logout: async (redirect = true, fetchLogout = true) => {
+        set({ isLoading: true, error: null });
+        try {
+          if (fetchLogout) {
+            await requestLogout();
+          }
+          deleteCookie(AUTH_ACCESS_COOKIE);
+          deleteCookie(AUTH_REFRESH_COOKIE);
+          set({
+            user: null,
+            isAuthenticated: false,
+            error: null,
+            permissions: [],
+            roles: [],
+          });
+          if (redirect) {
+            window.location.href = PATHNAME.AUTH;
+          }
         } catch (error) {
           set({ error: getErrorMessage(error) });
           throw error;
         } finally {
-          set({ isLoading: false });
-        }
-      },
-
-      logout: async () => {
-        set({ isLoading: true, error: null });
-
-        try {
-          await requestLogout();
-        } catch (error) {
-          set({ error: getErrorMessage(error) });
-        } finally {
-          get().clearAuth();
           set({ isLoading: false });
         }
       },
@@ -98,35 +104,37 @@ export const useAuthStore = create<AuthStore>()(
           const response = await requestGetProfile();
           const user = response.data.data;
 
-          get().setUser(user);
+          set({
+            user,
+            isAuthenticated: true,
+            permissions: user.permissions,
+            roles: user.roles,
+            isLoading: false,
+            error: null,
+          });
         } catch (error) {
+          console.error('[Auth] Failed to fetch profile:', error);
           get().clearAuth();
           set({ error: getErrorMessage(error) });
-        } finally {
-          set({ isLoading: false });
-        }
-      },
 
-      updateProfile: async (data) => {
-        set({ isLoading: true, error: null });
-
-        try {
-          const response = await requestUpdateProfile(data);
-          const user = response.data.data;
-
-          get().setUser(user);
-          return user;
-        } catch (error) {
-          set({ error: getErrorMessage(error) });
           throw error;
-        } finally {
-          set({ isLoading: false });
         }
       },
 
-      hasPermission: (permission) => get().permissions.includes(permission),
+      clearError: () => set({ error: null }),
 
-      hasAnyPermission: (permissions) => permissions.some((permission) => get().permissions.includes(permission)),
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      clearAuth: () => {
+        clearHttpOnlyCookiesAction();
+        set({
+          user: null,
+          isAuthenticated: false,
+          error: null,
+          permissions: [],
+          roles: [],
+        });
+      },
     }),
     {
       name: 'rental-admin-auth',

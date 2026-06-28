@@ -1,21 +1,16 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from "./lib/layout";
-import {
-  applyContentLayout,
-  applyNavbarStyle,
-  applySidebarCollapsible,
-  applySidebarVariant,
-} from "./lib/layout-utils";
-import { PREFERENCE_DEFAULTS } from "./lib/preferences-config";
-import { persistPreference } from "./lib/preferences-storage";
-import { THEME_PRESET_OPTIONS, type ThemeMode, type ThemePreset } from "./lib/theme";
-import { usePreferencesStore } from "./providers/preferences-provider";
-import { IconSettings } from "@tabler/icons-react";
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { IconSettings } from '@tabler/icons-react';
+import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from './lib/layout';
+import { applyContentLayout, applyNavbarStyle, applySidebarCollapsible, applySidebarVariant } from './lib/layout-utils';
+import { PREFERENCE_DEFAULTS } from './lib/preferences-config';
+import { persistPreference } from './lib/preferences-storage';
+import { type ThemeMode } from './lib/theme';
+import { usePreferencesStore } from './providers/preferences-provider';
 
 export function LayoutControls() {
   const themeMode = usePreferencesStore((s) => s.themeMode);
@@ -30,42 +25,42 @@ export function LayoutControls() {
   const collapsible = usePreferencesStore((s) => s.sidebarCollapsible);
   const setSidebarCollapsible = usePreferencesStore((s) => s.setSidebarCollapsible);
 
-  const onThemeModeChange = (mode: ThemeMode | "") => {
+  const onThemeModeChange = (mode: ThemeMode | '') => {
     if (!mode) return;
     setThemeMode(mode);
     document.cookie = `theme_mode=${mode}; path=/; max-age=${60 * 60 * 24 * 365}`;
   };
 
-  const onContentLayoutChange = (layout: ContentLayout | "") => {
+  const onContentLayoutChange = (layout: ContentLayout | '') => {
     if (!layout) return;
     applyContentLayout(layout);
     setContentLayout(layout);
-    void persistPreference("content_layout", layout);
+    void persistPreference('content_layout', layout);
   };
 
-  const onNavbarStyleChange = (style: NavbarStyle | "") => {
+  const onNavbarStyleChange = (style: NavbarStyle | '') => {
     if (!style) return;
     applyNavbarStyle(style);
     setNavbarStyle(style);
-    void persistPreference("navbar_style", style);
+    void persistPreference('navbar_style', style);
   };
 
-  const onSidebarStyleChange = (value: SidebarVariant | "") => {
+  const onSidebarStyleChange = (value: SidebarVariant | '') => {
     if (!value) return;
     setSidebarVariant(value);
     applySidebarVariant(value);
-    void persistPreference("sidebar_variant", value);
+    void persistPreference('sidebar_variant', value);
   };
 
-  const onSidebarCollapseModeChange = (value: SidebarCollapsible | "") => {
+  const onSidebarCollapseModeChange = (value: SidebarCollapsible | '') => {
     if (!value) return;
     setSidebarCollapsible(value);
     applySidebarCollapsible(value);
-    void persistPreference("sidebar_collapsible", value);
+    void persistPreference('sidebar_collapsible', value);
   };
 
   const handleRestore = () => {
-    onThemeModeChange("system");
+    onThemeModeChange('system');
     onContentLayoutChange(PREFERENCE_DEFAULTS.content_layout);
     onNavbarStyleChange(PREFERENCE_DEFAULTS.navbar_style);
     onSidebarStyleChange(PREFERENCE_DEFAULTS.sidebar_variant);

@@ -1,27 +1,24 @@
 'use client';
 
 import { useForgotPassword } from '../hooks/useForgotPassword.hook';
-import { SITE_TITLE } from '@/utils/consts/token.const';
 import { IconArrowLeft, IconLoader } from '@tabler/icons-react';
 import Link from 'next/link';
 import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 
 const ForgotPassword: React.FC = () => {
   const { form, onSubmit, isPending, isSuccess } = useForgotPassword();
-  const {
-    control,
-    handleSubmit,
-  } = form;
+  const { control, handleSubmit } = form;
 
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Quên mật khẩu</h1>
         <p className="text-muted-foreground">
-          Nhập email quản trị của bạn để nhận hướng dẫn đặt lại mật khẩu cho {SITE_TITLE}.
+          Nhập email quản trị của bạn để nhận hướng dẫn đặt lại mật khẩu cho {TITLE_PAGE.SITE_TITLE}.
         </p>
       </div>
 

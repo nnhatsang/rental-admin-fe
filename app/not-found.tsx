@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { IconArrowLeft } from '@tabler/icons-react';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 
-import { SITE_TITLE } from '@/utils/consts/token.const';
 
 export default function NotFound() {
   return (
@@ -19,7 +19,7 @@ export default function NotFound() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <span className="text-xl font-bold">{SITE_TITLE}</span>
+          <span className="text-xl font-bold">{TITLE_PAGE.SITE_TITLE}</span>
         </div>
 
         <div className="mt-8 flex flex-1 flex-col items-center justify-center text-center xl:items-start xl:text-start">

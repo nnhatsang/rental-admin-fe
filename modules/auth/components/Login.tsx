@@ -1,14 +1,14 @@
 'use client';
 
-import { useLogin } from '../hooks/useLogin.hook';
-import { SITE_TITLE } from '@/utils/consts/token.const';
-import { IconLoader } from '@tabler/icons-react';
-import Link from 'next/link';
-import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
+import { IconLoader } from '@tabler/icons-react';
+import Link from 'next/link';
+import { Controller } from 'react-hook-form';
+import { useLogin } from '../hooks/useLogin.hook';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 
 const Login: React.FC = () => {
   const { form, onSubmit, isPending } = useLogin();
@@ -23,7 +23,7 @@ const Login: React.FC = () => {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Đăng nhập</h1>
         <p className="text-muted-foreground">
-          Chào mừng đến với {SITE_TITLE}. Đăng nhập để xác minh danh tính của bạn.
+          Chào mừng đến với {TITLE_PAGE.SITE_TITLE}. Đăng nhập để xác minh danh tính của bạn.
         </p>
       </div>
 

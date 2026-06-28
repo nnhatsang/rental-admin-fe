@@ -44,17 +44,17 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
   const dropdownSide = side ?? (isSidebar ? (isMobile ? 'bottom' : 'right') : 'bottom');
   const handleLogout = () => {
     try {
-      logout();
       toast.success(SUCCESS_MESSAGES.AUTH.LOGOUT);
+      logout();
     } catch {
       toast.error(ERROR_MESSAGES.AUTH.LOGOUT);
     }
   };
   const userInfo = (
     <>
-      <Avatar className={cn('h-8 w-8 rounded-lg', isSidebar && 'grayscale')}>
+      <Avatar className={cn('size-8')}>
         <AvatarImage src={user.avatar || undefined} alt={user.fullName} />
-        <AvatarFallback className="rounded-lg">{getInitials(user.fullName)}</AvatarFallback>
+        <AvatarFallback>{user.fullName}</AvatarFallback>
       </Avatar>
       <div className={cn('grid flex-1 text-left text-sm leading-tight', !shouldShowEmail && 'hidden sm:grid')}>
         <span className="truncate font-medium">{user.fullName}</span>
@@ -92,7 +92,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="h-8 w-8 rounded-lg">
               <AvatarImage src={user.avatar || undefined} alt={user.fullName} />
-              <AvatarFallback className="rounded-lg">{getInitials(user.fullName)}</AvatarFallback>
+              <AvatarFallback>{user.fullName}</AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.fullName}</span>

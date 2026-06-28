@@ -2,9 +2,10 @@ import ResetPassword from '@/modules/auth/components/ResetPassword';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 
 export const metadata: Metadata = {
-  title: 'Đặt lại mật khẩu',
+  title: TITLE_PAGE.AUTH.RESET_PASSWORD,
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';

@@ -1,6 +1,6 @@
-import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import { requestRefreshToken } from '@/modules/auth/services';
 import { useAuthStore } from '@/modules/auth/store';
+import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';
 const AUTH_REFRESH_URL = '/admin/auth/refresh';
@@ -73,19 +73,13 @@ apiAuth.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true;
-
+      console.log('sjfkjkfhksfk');
       try {
-        const refreshResponse = await requestRefreshToken();
-        useAuthStore.getState().setUser(refreshResponse.data.data.user);
-
+        await requestRefreshToken();
         return apiAuth(originalRequest);
-      } catch (refreshError) {
+      } catch {
         const { clearAuth } = useAuthStore.getState();
         clearAuth();
-
-        return Promise.reject(
-          axios.isAxiosError<ApiErrorResponse>(refreshError) ? new ApiClientError(refreshError) : refreshError,
-        );
       }
     }
 

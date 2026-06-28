@@ -16,6 +16,7 @@ export const SUCCESS_MESSAGES = {
     UPDATE_ROLES: 'Cập nhật vai trò người dùng thành công.',
     RESET_PASSWORD: 'Reset mật khẩu người dùng thành công.',
     DELETE: 'Xóa người dùng thành công.',
+    ACTIVITY_STATUS_UPDATE: 'Cập nhật trạng thái người dùng thành công.',
   },
   CUSTOMERS: {
     CREATE: 'Tạo khách hàng thành công.',

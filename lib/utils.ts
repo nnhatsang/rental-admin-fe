@@ -95,3 +95,27 @@ export const filterSidebarItemsByPermissions = (items: NavGroup[], userPermissio
     })
     .filter((group) => group.items.length > 0);
 };
+
+export const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
+export const modKeyLabel = isMac ? '⌘' : 'Ctrl';
+
+export function getAvatarColor(name: string): string {
+  const AVATAR_COLORS = [
+    '#D8B4FE', // Purple
+    '#BFDBFE', // Blue
+    '#BBF7D0', // Green
+    '#FDE68A', // Yellow
+    '#FECACA', // Red
+    '#A7F3D0', // Teal
+    '#C7D2FE', // Indigo
+    '#FBCFE8', // Pink
+    '#BAE6FD', // Sky
+  ];
+
+  if (!name.trim()) return '#CBD5E1';
+
+  const hash = [...name.toLowerCase()].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
