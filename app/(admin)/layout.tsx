@@ -5,6 +5,7 @@ import { getLayoutPreferences } from '@/components/layout/server/layout-preferen
 import { Metadata } from 'next';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { cn } from '@/lib/utils';
+import { PermissionProvider } from '@/components/layout/PermissionProvider';
 
 const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ children }) => {
   const { defaultOpen, variant, collapsible } = await getLayoutPreferences();
@@ -30,7 +31,7 @@ const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ 
       >
         <AdminHeader />
         <div className="h-full p-4 has-data-[content-padding=false]:p-0 md:p-6 md:has-data-[content-padding=false]:p-0">
-          {children}
+          <PermissionProvider>{children}</PermissionProvider>
         </div>
       </SidebarInset>
     </SidebarProvider>
