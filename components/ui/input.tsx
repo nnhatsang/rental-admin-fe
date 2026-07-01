@@ -1,44 +1,19 @@
-import * as React from 'react';
+import * as React from "react"
 
-import { cn } from '@/lib/utils';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { Slot } from 'radix-ui';
+import { cn } from "@/lib/utils"
 
-const inputVariants = cva(
-  'bg-input/40 dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/30 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 h-7 rounded-md border px-2 py-0.5 text-sm transition-colors file:h-6 file:text-xs/relaxed file:font-medium focus-visible:ring-[2px] aria-invalid:ring-[2px] md:text-xs/relaxed file:text-foreground placeholder:text-muted-foreground w-full min-w-0 outline-none file:inline-flex file:border-0 file:bg-transparent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-  {
-    variants: {
-      size: {
-        sm: 'h-8',
-        md: 'h-9',
-      },
-      variant: {
-        default: ' focus-visible:ring-0 focus-visible:ring-offset-0 ',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-      variant: 'default',
-    },
-  },
-);
-
-export interface InputProps extends Omit<React.ComponentProps<'input'>, 'size'>, VariantProps<typeof inputVariants> {
-  asChild?: boolean;
-}
-
-function Input({ className, variant = 'default', asChild = false, size = 'md', ...props }: InputProps) {
-  const Comp = asChild ? Slot.Root : 'input';
-
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
-    <Comp
+    <input
+      type={type}
       data-slot="input"
-      data-variant={variant}
-      data-size={size}
-      className={cn(inputVariants({ variant, size, className }))}
+      className={cn(
+        'h-8 w-full min-w-0 rounded-2xl border border-transparent bg-input/50 px-2.5 py-1 text-base transition-[color,box-shadow] duration-200 outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring  disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 focus-visible:ring-0 focus-visible:ring-offset-0',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export { Input };
+export { Input }

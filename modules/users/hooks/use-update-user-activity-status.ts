@@ -16,9 +16,9 @@ export const useUpdateUserActivityStatus = () => {
   return useMutation({
     mutationFn: ({ id, data }: UpdateStatusParams) => requestUpdateUserActivityStatus(id, data),
     onSuccess: (_, variables) => {
-      // toast.success(SUCCESS_MESSAGES.USERS.ACTIVITY_STATUS_UPDATE);
-      // queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
-      // queryClient.invalidateQueries({ queryKey: userQueryKeys.detail(variables.id) });
+      toast.success(SUCCESS_MESSAGES.USERS.ACTIVITY_STATUS_UPDATE);
+      queryClient.invalidateQueries({ queryKey: userQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userQueryKeys.detail(variables.id) });
     },
   });
 };

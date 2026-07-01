@@ -3,6 +3,7 @@ export type DefaultParamsRequest = {
   perPage: number;
   search?: string;
   sort?: string;
+  sortBy?: string;
 };
 
 export type DefaultResponse<T = unknown> = {

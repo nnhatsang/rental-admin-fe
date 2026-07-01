@@ -1,13 +1,11 @@
-import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Roboto } from 'next/font/google';
-import './globals.css';
-import { cn } from '@/lib/utils';
-import { Providers } from '@/providers';
 import { PREFERENCE_DEFAULTS } from '@/components/layout/lib/preferences-config';
 import { ThemeBootScript } from '@/components/layout/scripts/theme-boot';
+import { cn } from '@/lib/utils';
+import { Providers } from '@/providers';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-
-const roboto = Roboto({ subsets: ['latin'], variable: '--font-sans' });
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -40,7 +38,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans', roboto.variable)}
+      className={cn('h-full', 'antialiased', geistSans.variable, geistMono.variable, 'font-sans')}
       data-theme-mode="system"
       data-theme-preset={theme_preset}
       data-content-layout={content_layout}

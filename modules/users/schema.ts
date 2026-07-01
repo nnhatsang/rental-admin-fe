@@ -10,7 +10,6 @@ export const createUserSchema = z.object({
   fullName: z.string().min(1, { message: 'Vui lòng nhập họ tên' }),
   phone: z.string().optional(),
   password: z.string().min(8, { message: 'Mật khẩu phải có ít nhất 8 ký tự' }),
-  roleCodes: z.array(roleCodeSchema).optional(),
 });
 export type ICreateUserInput = z.infer<typeof createUserSchema>;
 

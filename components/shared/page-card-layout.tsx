@@ -6,6 +6,7 @@ export interface PageCardLayoutProps {
   title: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
+  filter?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   headerClassName?: string;
@@ -16,6 +17,7 @@ export function PageCardLayout({
   title,
   description,
   actions,
+  filter,
   children,
   className,
   headerClassName,
@@ -30,18 +32,13 @@ export function PageCardLayout({
         )}
       >
         <div className="grid auto-rows-min gap-1.5">
-          {typeof title === 'string' ? (
-            <CardTitle className="text-xl leading-none">{title}</CardTitle>
-          ) : (
-            title
-          )}
-          {description && (
-            typeof description === 'string' ? (
+          {typeof title === 'string' ? <CardTitle className="text-xl leading-none">{title}</CardTitle> : title}
+          {description &&
+            (typeof description === 'string' ? (
               <CardDescription className="max-w-sm leading-snug">{description}</CardDescription>
             ) : (
               description
-            )
-          )}
+            ))}
         </div>
         {actions && (
           <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch md:col-start-2 md:row-span-2 md:row-start-1 md:w-auto md:flex-nowrap md:justify-end md:justify-self-end">
@@ -50,6 +47,11 @@ export function PageCardLayout({
         )}
       </CardHeader>
       <CardContent className={cn('flex flex-col gap-4 px-0', contentClassName)}>
+        {filter && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4">
+            <div className="flex flex-wrap items-center gap-3">{filter}</div>
+          </div>
+        )}
         {children}
       </CardContent>
     </Card>

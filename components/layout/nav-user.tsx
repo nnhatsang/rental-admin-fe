@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
-import { cn, getInitials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/modules/auth/store';
 import { ERROR_MESSAGES } from '@/utils/consts/message-error.const';
 import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
@@ -52,7 +52,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
   };
   const userInfo = (
     <>
-      <Avatar className={cn('size-8')}>
+      <Avatar>
         <AvatarImage src={user.avatar || undefined} alt={user.fullName} />
         <AvatarFallback>{user.fullName}</AvatarFallback>
       </Avatar>
