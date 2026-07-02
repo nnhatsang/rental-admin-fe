@@ -1,35 +1,29 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getPaginationRowModel,
-  type PaginationState,
-  type RowSelectionState,
-  type Table,
-} from '@tanstack/react-table';
+import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
+import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { useGetUsers } from './use-get-users';
 import { useDeleteUser } from './use-delete-user';
 import { useUpdateUserActivityStatus } from './use-update-user-activity-status';
 import { IUserOut, UserActivityStatus } from '../type';
 import { userColumns, type ActionHandlers } from '../columns';
 
+const USER_COLUMN_FILTER_QUERY_PARAMS = { activityStatus: 'status' };
+
+function isUserActivityStatus(value: unknown): value is UserActivityStatus {
+  return typeof value === 'string' && Object.values(UserActivityStatus).includes(value as UserActivityStatus);
+}
+
 export interface IUsersState {
-  table: Table<IUserOut>;
+  table: DataTableInstance<IUserOut>;
   isLoading: boolean;
   isDeleting: boolean;
   isUpdatingStatus: boolean;
   totalCount: number;
-  search: string;
-  status: UserActivityStatus | undefined;
-  roleCode: string | undefined;
-  setSearch: (val: string) => void;
-  setStatus: (val: UserActivityStatus | undefined) => void;
-  setRoleCode: (val: string | undefined) => void;
   selectedUser: IUserOut | null;
   setSelectedUser: (user: IUserOut | null) => void;
-  // Single form dialog (create when selectedUser=null, edit when selectedUser set)
   isFormOpen: boolean;
   setIsFormOpen: (open: boolean) => void;
   isDeleteOpen: boolean;
@@ -41,26 +35,44 @@ export interface IUsersState {
   handleOpenDelete: (user: IUserOut) => void;
   handleOpenResetPassword: (user: IUserOut) => void;
   handleToggleStatus: (user: IUserOut) => void;
+  data: IUserOut[];
 }
 
 export const useUsersState = (): IUsersState => {
-  const [search, setSearchRaw] = useState('');
-  const [status, setStatusRaw] = useState<UserActivityStatus | undefined>(undefined);
-  const [roleCode, setRoleCodeRaw] = useState<string | undefined>(undefined);
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status');
+  const initialColumnFilters = useMemo(
+    () => (isUserActivityStatus(initialStatus) ? [{ id: 'activityStatus', value: initialStatus }] : []),
+    [initialStatus],
+  );
+
   const [selectedUser, setSelectedUser] = useState<IUserOut | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const { data, isLoading } = useGetUsers({
-    page: pagination.pageIndex + 1,
-    perPage: pagination.pageSize,
-    search: search || undefined,
-    status,
-    roleCode,
+  const tableQuery = useTableQueryState({
+    initialPageSize: 10,
+    initialColumnFilters,
+    columnFilterQueryParamMap: USER_COLUMN_FILTER_QUERY_PARAMS,
+    syncUrl: true,
   });
+  const { clearSelection } = tableQuery;
+
+  const statusFilter = useMemo(() => {
+    const value = tableQuery.columnFilters.find((filter) => filter.id === 'activityStatus')?.value;
+    return isUserActivityStatus(value) ? value : undefined;
+  }, [tableQuery.columnFilters]);
+
+  const params = useMemo(
+    () => ({
+      ...tableQuery.queryParams,
+      status: statusFilter,
+    }),
+    [statusFilter, tableQuery.queryParams],
+  );
+
+  const { data, isLoading, isFetching } = useGetUsers(params);
 
   const usersData = data?.data?.items ?? [];
   const totalCount = data?.data?.pagination?.total ?? 0;
@@ -69,55 +81,98 @@ export const useUsersState = (): IUsersState => {
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateUserActivityStatus();
 
-  const resetPage = () => setPagination((p) => ({ ...p, pageIndex: 0 }));
-  const setSearch = (val: string) => { setSearchRaw(val); resetPage(); };
-  const setStatus = (val: UserActivityStatus | undefined) => { setStatusRaw(val); resetPage(); };
-  const setRoleCode = (val: string | undefined) => { setRoleCodeRaw(val); resetPage(); };
+  const handleOpenEdit = useCallback((user: IUserOut) => {
+    setSelectedUser(user);
+    setIsFormOpen(true);
+  }, []);
 
-  // Open create: selectedUser=null, open edit: selectedUser=user
-  const handleOpenEdit = (user: IUserOut) => { setSelectedUser(user); setIsFormOpen(true); };
-  const handleOpenDelete = (user: IUserOut) => { setSelectedUser(user); setIsDeleteOpen(true); };
-  const handleOpenResetPassword = (user: IUserOut) => { setSelectedUser(user); setIsResetPasswordOpen(true); };
-  const handleToggleStatus = (user: IUserOut) => {
-    const newStatus: UserActivityStatus = user.activityStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
-    updateStatus({ id: user.id, data: { activityStatus: newStatus } });
-  };
-  const handleConfirmDelete = () => {
+  const handleOpenDelete = useCallback((user: IUserOut) => {
+    setSelectedUser(user);
+    setIsDeleteOpen(true);
+  }, []);
+
+  const handleOpenResetPassword = useCallback((user: IUserOut) => {
+    setSelectedUser(user);
+    setIsResetPasswordOpen(true);
+  }, []);
+
+  const handleToggleStatus = useCallback(
+    (user: IUserOut) => {
+      const activityStatus: UserActivityStatus = user.activityStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
+      updateStatus({ id: user.id, data: { activityStatus } });
+    },
+    [updateStatus],
+  );
+
+  const handleConfirmDelete = useCallback(() => {
     if (!selectedUser) return;
+
     deleteUser(selectedUser.id, {
-      onSuccess: () => { setIsDeleteOpen(false); setSelectedUser(null); },
+      onSuccess: () => {
+        setIsDeleteOpen(false);
+        setSelectedUser(null);
+        clearSelection();
+      },
     });
-  };
+  }, [clearSelection, deleteUser, selectedUser]);
 
   const handlers: ActionHandlers = useMemo(
     () => ({ handleOpenEdit, handleOpenDelete, handleOpenResetPassword, handleToggleStatus }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [handleOpenDelete, handleOpenEdit, handleOpenResetPassword, handleToggleStatus],
   );
 
-  const table = useReactTable<IUserOut>({
+  const table = useDataTable<IUserOut>({
     data: usersData,
     columns: userColumns,
     pageCount,
-    state: { pagination, rowSelection },
+    state: {
+      pagination: tableQuery.pagination,
+      rowSelection: tableQuery.rowSelection,
+      sorting: tableQuery.sorting,
+      columnFilters: tableQuery.columnFilters,
+      globalFilter: tableQuery.globalFilter,
+    },
     getRowId: (row) => row.id,
+    defaultGlobalFilterMode: 'fuzzy',
     manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
     enableRowSelection: true,
-    onPaginationChange: setPagination,
-    onRowSelectionChange: setRowSelection,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    enableColumnFilters: true,
+    enableColumnFilterModes: false,
+    enableGlobalFilter: true,
+    enableEditing: false,
+    enableExport: true,
+    exportFileName: 'users',
+    isLoading,
+    showLoadingOverlay: isFetching,
+    onPaginationChange: tableQuery.onPaginationChange,
+    onRowSelectionChange: tableQuery.onRowSelectionChange,
+    onSortingChange: tableQuery.onSortingChange,
+    onColumnFiltersChange: tableQuery.onColumnFiltersChange,
+    onGlobalFilterChange: tableQuery.onGlobalFilterChange,
     meta: { handlers },
   });
 
   return {
-    table, isLoading, isDeleting, isUpdatingStatus, totalCount,
-    search, status, roleCode, setSearch, setStatus, setRoleCode,
-    selectedUser, setSelectedUser,
-    isFormOpen, setIsFormOpen,
-    isDeleteOpen, setIsDeleteOpen,
-    isResetPasswordOpen, setIsResetPasswordOpen,
+    table,
+    isLoading,
+    isDeleting,
+    isUpdatingStatus,
+    totalCount,
+    selectedUser,
+    setSelectedUser,
+    isFormOpen,
+    setIsFormOpen,
+    isDeleteOpen,
+    setIsDeleteOpen,
+    isResetPasswordOpen,
+    setIsResetPasswordOpen,
     handleConfirmDelete,
-    handleOpenEdit, handleOpenDelete, handleOpenResetPassword, handleToggleStatus,
+    handleOpenEdit,
+    handleOpenDelete,
+    handleOpenResetPassword,
+    handleToggleStatus,
+    data: usersData,
   };
 };

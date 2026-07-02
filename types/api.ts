@@ -2,7 +2,7 @@ export type DefaultParamsRequest = {
   page: number;
   perPage: number;
   search?: string;
-  sort?: string;
+  sort?: number;
   sortBy?: string;
 };
 

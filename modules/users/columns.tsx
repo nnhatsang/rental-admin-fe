@@ -1,6 +1,8 @@
 'use client';
 
 import { IconDotsVertical, IconEdit, IconKey, IconLock, IconLockOpen, IconTrash } from '@tabler/icons-react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,11 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ColumnDef } from '@tanstack/react-table';
-import { IUserOut, UserActivityStatus } from './type';
 import { formatDate } from '@/lib/utils';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
+import { IUserOut, UserActivityStatus } from './type';
 
 export type ActionHandlers = {
   handleOpenEdit: (user: IUserOut) => void;
@@ -22,31 +22,36 @@ export type ActionHandlers = {
   handleToggleStatus: (user: IUserOut) => void;
 };
 
-// ---- Constants ----
-
-export const statusMeta: Record<UserActivityStatus, { label: string; color: string }> = {
+export const statusMeta: Record<UserActivityStatus, { label: string; color: string; textColor: string }> = {
   ACTIVE: {
     label: 'Hoạt động',
     color:
       'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-500/15 border-transparent',
+    textColor: 'text-emerald-600 dark:text-emerald-400',
   },
   BANNED: {
     label: 'Bị cấm',
     color: 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/15 border-transparent',
+    textColor: 'text-red-600 dark:text-red-400',
   },
   LOCKED: {
     label: 'Bị khóa',
     color:
       'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-500/15 border-transparent',
+    textColor: 'text-amber-600 dark:text-amber-400',
   },
   INACTIVE: {
     label: 'Chưa kích hoạt',
     color:
       'bg-zinc-500/10 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-400 hover:bg-zinc-500/15 border-transparent',
+    textColor: 'text-zinc-600 dark:text-zinc-400',
   },
 };
 
-// ---- Cell Components ----
+export const statusFilterOptions = Object.entries(statusMeta).map(([value, meta]) => ({
+  label: meta.label,
+  value,
+}));
 
 export function StatusBadge({ status }: { status: UserActivityStatus }) {
   return (
@@ -57,11 +62,12 @@ export function StatusBadge({ status }: { status: UserActivityStatus }) {
 }
 
 export function RolesCell({ roles }: { roles: IUserOut['roles'] }) {
-  if (roles.length === 0) return <span className="text-muted-foreground text-xs">—</span>;
+  if (roles.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
+
   return (
     <div className="flex flex-wrap gap-1">
       {roles.map((role) => (
-        <Badge key={role.id} variant="outline" className="text-[10px] font-medium h-5">
+        <Badge key={role.id} variant="outline" className="h-5 text-[10px] font-medium">
           {role.name}
         </Badge>
       ))}
@@ -70,6 +76,8 @@ export function RolesCell({ roles }: { roles: IUserOut['roles'] }) {
 }
 
 export function UserActionsCell({ user, handlers }: { user: IUserOut; handlers: ActionHandlers }) {
+  const actions = TITLE_PAGE.USERS.ACTIONS;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -80,90 +88,77 @@ export function UserActionsCell({ user, handlers }: { user: IUserOut; handlers: 
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={() => handlers.handleOpenEdit(user)}>
           <IconEdit className="mr-2 size-4" />
-          Chỉnh sửa
+          {actions.EDIT}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handlers.handleOpenResetPassword(user)}>
           <IconKey className="mr-2 size-4" />
-          Đổi mật khẩu
+          {actions.RESET_PASSWORD}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handlers.handleToggleStatus(user)}>
           {user.activityStatus === 'ACTIVE' ? (
             <>
               <IconLock className="mr-2 size-4 text-amber-500" />
-              <span className="text-amber-600 dark:text-amber-400">Khóa tài khoản</span>
+              <span className="text-amber-600 dark:text-amber-400">{actions.LOCK}</span>
             </>
           ) : (
             <>
               <IconLockOpen className="mr-2 size-4 text-emerald-500" />
-              <span className="text-emerald-600 dark:text-emerald-400">Kích hoạt lại</span>
+              <span className="text-emerald-600 dark:text-emerald-400">{actions.ACTIVATE}</span>
             </>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem variant="destructive" onClick={() => handlers.handleOpenDelete(user)}>
           <IconTrash className="mr-2 size-4" />
-          Xóa người dùng
+          {actions.DELETE}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-// ---- Column Definitions ----
-
 export const userColumns: ColumnDef<IUserOut>[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          aria-label="Select all users"
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          aria-label={`Select ${row.original.fullName}`}
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      </div>
-    ),
-    enableHiding: false,
-    enableSorting: false,
-  },
   {
     accessorKey: 'fullName',
     header: 'Họ và tên / Email',
+    meta: { label: 'Họ và tên' },
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <Avatar size="lg" className="font-medium">
           <AvatarFallback>{row.original.fullName}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <div className="truncate font-medium text-foreground text-sm">{row.original.fullName}</div>
-          <div className="truncate text-muted-foreground text-sm">{row.original.email}</div>
+          <div className="truncate text-sm font-medium text-foreground">{row.original.fullName}</div>
+          <div className="truncate text-sm text-muted-foreground">{row.original.email}</div>
         </div>
       </div>
     ),
+    enableColumnFilter: false,
   },
   {
     accessorKey: 'roles',
     header: 'Vai trò',
     cell: ({ row }) => <RolesCell roles={row.original.roles} />,
+    enableColumnFilter: false,
+    enableSorting: false,
   },
   {
     accessorKey: 'activityStatus',
     header: 'Trạng thái',
     cell: ({ row }) => <StatusBadge status={row.original.activityStatus} />,
+    meta: {
+      label: 'Trạng thái',
+      variant: 'select',
+      options: statusFilterOptions,
+    },
+    enableSorting: false,
   },
   {
     accessorKey: 'createdAt',
     header: 'Ngày tạo',
     accessorFn: (row) => formatDate(row.createdAt),
-    cell: ({ getValue }) => <span className="text-muted-foreground text-sm">{getValue<string>()}</span>,
+    meta: { label: 'Ngày tạo' },
+    cell: ({ getValue }) => <span className="text-sm text-muted-foreground">{getValue<string>()}</span>,
+    enableColumnFilter: false,
   },
   {
     id: 'actions',
@@ -171,12 +166,11 @@ export const userColumns: ColumnDef<IUserOut>[] = [
     cell: ({ row, table }) => {
       const handlers = (table.options.meta as { handlers?: ActionHandlers } | undefined)?.handlers;
       if (!handlers) return null;
-      return (
-        <div className="text-right">
-          <UserActionsCell user={row.original} handlers={handlers} />
-        </div>
-      );
+
+      return <UserActionsCell user={row.original} handlers={handlers} />;
     },
+    meta: { disableColumnActions: true },
+    enableColumnFilter: false,
     enableHiding: false,
     enableSorting: false,
   },

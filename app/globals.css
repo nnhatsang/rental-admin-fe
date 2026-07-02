@@ -19,7 +19,7 @@
   --muted-foreground: oklch(0.6059 0.0075 97.4233);
   --accent: oklch(0.9245 0.0138 92.9892);
   --accent-foreground: oklch(0.2671 0.0196 98.939);
-  --destructive: oklch(0.1908 0.002 106.5859);
+  --destructive: oklch(0.6368 0.2078 25.3313);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.8847 0.0069 97.3627);
   --input: oklch(0.7621 0.0156 98.3528);
@@ -62,6 +62,8 @@
   --shadow-offset-x: 0;
   --shadow-offset-y: 1px;
   --letter-spacing: 0em;
+  --highlight: oklch(0.905 0.158 96.5);
+  --highlight-foreground: oklch(0.35 0.07 72);
 }
 
 .dark {
@@ -121,6 +123,8 @@
   --shadow-offset-y: 1px;
   --letter-spacing: 0em;
   --spacing: 0.25rem;
+  --highlight: oklch(0.85 0.16 96.5);
+  --highlight-foreground: oklch(0.26 0.05 72);
 }
 
 @theme inline {
@@ -194,6 +198,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-highlight: var(--highlight, var(--accent));
+  --color-highlight-foreground: var(--highlight-foreground, var(--accent-foreground));
 }
 
 @layer base {
@@ -308,6 +314,7 @@ html {
 @layer utilities {
   ::-webkit-scrollbar {
     width: 6px !important;
+    height: 6px !important;
   }
 
   ::-webkit-scrollbar-track {

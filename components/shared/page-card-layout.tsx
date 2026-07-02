@@ -6,7 +6,6 @@ export interface PageCardLayoutProps {
   title: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
-  filter?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   headerClassName?: string;
@@ -17,7 +16,6 @@ export function PageCardLayout({
   title,
   description,
   actions,
-  filter,
   children,
   className,
   headerClassName,
@@ -46,14 +44,7 @@ export function PageCardLayout({
           </CardAction>
         )}
       </CardHeader>
-      <CardContent className={cn('flex flex-col gap-4 px-0', contentClassName)}>
-        {filter && (
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4">
-            <div className="flex flex-wrap items-center gap-3">{filter}</div>
-          </div>
-        )}
-        {children}
-      </CardContent>
+      <CardContent className={cn('flex flex-col gap-4 px-0', contentClassName)}>{children}</CardContent>
     </Card>
   );
 }
