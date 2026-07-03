@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Avatar as AvatarPrimitive } from 'radix-ui';
 
-import { cn, getAvatarColor, getInitials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 function Avatar({
   className,
@@ -35,30 +35,16 @@ function AvatarImage({ className, ...props }: React.ComponentProps<typeof Avatar
   );
 }
 
-function AvatarFallback({
-  className,
-  children,
-  style,
-  ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
-  const isNameString = typeof children === 'string' && children.trim().length > 0;
-
-  const displayContent = isNameString ? getInitials(children) : children;
-  const backgroundColor = isNameString ? getAvatarColor(children) : undefined;
-  const fallbackStyle = backgroundColor ? { backgroundColor, ...style } : style;
-
+function AvatarFallback({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
-      style={fallbackStyle}
       className={cn(
         'flex size-full items-center justify-center rounded-full bg-muted text-sm text-muted-foreground group-data-[size=sm]/avatar:text-xs',
         className,
       )}
       {...props}
-    >
-      {displayContent}
-    </AvatarPrimitive.Fallback>
+    />
   );
 }
 

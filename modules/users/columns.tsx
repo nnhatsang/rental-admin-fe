@@ -14,6 +14,7 @@ import {
 import { formatDate } from '@/lib/utils';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { IUserOut, UserActivityStatus } from './type';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 export type ActionHandlers = {
   handleOpenEdit: (user: IUserOut) => void;
@@ -123,9 +124,7 @@ export const userColumns: ColumnDef<IUserOut>[] = [
     meta: { label: 'Họ và tên' },
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <Avatar size="lg" className="font-medium">
-          <AvatarFallback>{row.original.fullName}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={row.original.fullName} src={row.original.avatar} className="font-medium" />
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-foreground">{row.original.fullName}</div>
           <div className="truncate text-sm text-muted-foreground">{row.original.email}</div>

@@ -112,10 +112,9 @@ export function DataTable<TData extends RowData>({
         ref={refs.tablePaperRef}
         data-slot="data-table"
         className={cn(
-          "flex w-full flex-col gap-2",
-          isFullscreen &&
-            "fixed inset-0 z-50 gap-2 overflow-auto bg-background p-4",
-          className
+          'flex w-full flex-col gap-2',
+          isFullscreen && 'fixed inset-0 z-50 gap-2 overflow-auto bg-background p-4',
+          className,
         )}
         data-density={density}
         {...props}
@@ -123,39 +122,23 @@ export function DataTable<TData extends RowData>({
         {renderTopToolbar
           ? renderTopToolbar({ table })
           : enableTopToolbar && (
-              <DataTableToolbar
-                table={table}
-                toolbarRef={refs.topToolbarRef}
-                searchInputRef={refs.searchInputRef}
-              />
+              <DataTableToolbar table={table} toolbarRef={refs.topToolbarRef} searchInputRef={refs.searchInputRef} />
             )}
-        {positionToolbarAlertBanner === "top" && (
-          <DataTableAlertBanner table={table} />
+        {positionToolbarAlertBanner === 'top' && <DataTableAlertBanner table={table} />}
+
+        {enablePagination && (positionPagination === 'top' || positionPagination === 'both') && (
+          <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
         )}
 
-        {enablePagination &&
-          (positionPagination === "top" || positionPagination === "both") && (
-            <DataTablePagination
-              table={table}
-              pageSizeOptions={pageSizeOptions}
-            />
+        <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={handleDragEnd}>
+          {enableGrouping && (positionToolbarDropZone === 'top' || positionToolbarDropZone === 'both') && (
+            <DataTableDropToGroupZone table={table} />
           )}
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={collisionDetection}
-          onDragEnd={handleDragEnd}
-        >
-          {enableGrouping &&
-            (positionToolbarDropZone === "top" ||
-              positionToolbarDropZone === "both") && (
-              <DataTableDropToGroupZone table={table} />
-            )}
 
           <div
             ref={(node) => {
-              gridRef.current = node
-              refs.tableContainerRef.current = node
+              gridRef.current = node;
+              refs.tableContainerRef.current = node;
             }}
             onKeyDown={onKeyDown}
             data-slot="data-table-surface"
@@ -165,9 +148,9 @@ export function DataTable<TData extends RowData>({
               // stays pinned to the visible bottom. Neutralize the shadcn
               // <Table> wrapper's own overflow so it doesn't become a second
               // (unbounded) scroll container that breaks sticky positioning.
-              "relative overflow-auto rounded-md border *:data-[slot=table-container]:overflow-visible",
-              enableRowVirtualization && "max-h-150",
-              surfaceClassName
+              'relative overflow-auto border-y *:data-[slot=table-container]:overflow-visible',
+              enableRowVirtualization && 'max-h-150',
+              surfaceClassName,
             )}
           >
             {showProgressBars && (
@@ -182,14 +165,14 @@ export function DataTable<TData extends RowData>({
                     animation itself is applied inline; reduced motion stops it. */}
                 <style>
                   {
-                    "@keyframes data-table-progress{from{transform:translateX(-100%)}to{transform:translateX(400%)}}@media (prefers-reduced-motion:reduce){[data-slot=data-table-progress-bar]{animation:none!important}}"
+                    '@keyframes data-table-progress{from{transform:translateX(-100%)}to{transform:translateX(400%)}}@media (prefers-reduced-motion:reduce){[data-slot=data-table-progress-bar]{animation:none!important}}'
                   }
                 </style>
                 <div
                   data-slot="data-table-progress-bar"
                   className="h-full w-1/3 bg-primary"
                   style={{
-                    animation: "data-table-progress 1.1s ease-in-out infinite",
+                    animation: 'data-table-progress 1.1s ease-in-out infinite',
                   }}
                 />
               </div>
@@ -205,20 +188,15 @@ export function DataTable<TData extends RowData>({
                 // layout distributes the slack proportionally so they fill it
                 // (no trailing empty space); when they outgrow the surface, the
                 // table exceeds 100% and scrolls horizontally.
-                ...(enableColumnResizing
-                  ? { width: `max(100%, ${table.getTotalSize()}px)` }
-                  : null),
+                ...(enableColumnResizing ? { width: `max(100%, ${table.getTotalSize()}px)` } : null),
               }}
-              className={cn(enableColumnResizing && "table-fixed")}
+              className={
+                (cn(enableColumnResizing && 'table-fixed'),
+                "**:data-[slot='table-cell']:px-4 **:data-[slot='table-head']:px-4")
+              }
             >
-              {renderCaption && (
-                <TableCaption>{renderCaption({ table })}</TableCaption>
-              )}
-              <DataTableHeader
-                table={table}
-                virtualColumns={virtualColumns}
-                withColumnSpacers={withColumnSpacers}
-              />
+              {renderCaption && <TableCaption>{renderCaption({ table })}</TableCaption>}
+              <DataTableHeader table={table} virtualColumns={virtualColumns} withColumnSpacers={withColumnSpacers} />
               <MemoizedDataTableBody
                 table={table}
                 rowVirtualizer={rowVirtualizer}
@@ -227,40 +205,24 @@ export function DataTable<TData extends RowData>({
                 withColumnSpacers={withColumnSpacers}
               />
               {showFooter && (
-                <DataTableFooter
-                  table={table}
-                  virtualColumns={virtualColumns}
-                  withColumnSpacers={withColumnSpacers}
-                />
+                <DataTableFooter table={table} virtualColumns={virtualColumns} withColumnSpacers={withColumnSpacers} />
               )}
             </Table>
 
-            {showLoadingOverlay && hasRows && (
-              <div
-                className="absolute inset-0 z-10 bg-background/40"
-                aria-hidden
-              />
-            )}
+            {showLoadingOverlay && hasRows && <div className="absolute inset-0 z-10 bg-background/40" aria-hidden />}
           </div>
 
-          {enableGrouping &&
-            (positionToolbarDropZone === "bottom" ||
-              positionToolbarDropZone === "both") && (
-              <DataTableDropToGroupZone table={table} />
-            )}
+          {enableGrouping && (positionToolbarDropZone === 'bottom' || positionToolbarDropZone === 'both') && (
+            <DataTableDropToGroupZone table={table} />
+          )}
         </DndContext>
 
-        {positionToolbarAlertBanner === "bottom" && (
-          <DataTableAlertBanner table={table} />
-        )}
+        {positionToolbarAlertBanner === 'bottom' && <DataTableAlertBanner table={table} />}
 
-        <DataTableBottomToolbar
-          table={table}
-          pageSizeOptions={pageSizeOptions}
-        />
+        <DataTableBottomToolbar table={table} pageSizeOptions={pageSizeOptions} />
 
         <DataTableEditModal table={table} />
       </div>
     </TooltipProvider>
-  )
+  );
 }

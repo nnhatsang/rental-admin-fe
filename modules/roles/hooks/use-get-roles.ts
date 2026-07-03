@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { requestGetRoles } from '../services';
 import { IGetRolesParams } from '../type';
-
-export const roleQueryKeys = {
-  all: ['roles'] as const,
-  lists: () => [...roleQueryKeys.all, 'list'] as const,
-  list: (params: IGetRolesParams) => [...roleQueryKeys.lists(), params] as const,
-};
+import { roleQueryKeys } from './keys';
 
 export const useGetRoles = (params: IGetRolesParams) => {
   return useQuery({

@@ -19,6 +19,7 @@ import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
 import { IconLogout, IconMessage2, IconUserCircle } from '@tabler/icons-react';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
+import { UserAvatar } from '../ui/user-avatar';
 
 type NavUserVariant = 'sidebar' | 'header';
 type DropdownSide = ComponentProps<typeof DropdownMenuContent>['side'];
@@ -52,10 +53,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
   };
   const userInfo = (
     <>
-      <Avatar>
-        <AvatarImage src={user.avatar || undefined} alt={user.fullName} />
-        <AvatarFallback>{user.fullName}</AvatarFallback>
-      </Avatar>
+      <UserAvatar name={user.fullName} src={user.avatar} />
       <div className={cn('grid flex-1 text-left text-sm leading-tight', !shouldShowEmail && 'hidden sm:grid')}>
         <span className="truncate font-medium">{user.fullName}</span>
         {shouldShowEmail && <span className="truncate text-muted-foreground text-xs">{user.email}</span>}
@@ -90,10 +88,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
       >
         <DropdownMenuLabel className="p-0 font-normal">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-            <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarImage src={user.avatar || undefined} alt={user.fullName} />
-              <AvatarFallback>{user.fullName}</AvatarFallback>
-            </Avatar>
+            <UserAvatar name={user.fullName} src={user.avatar} className="size-8 rounded-lg" />
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{user.fullName}</span>
               <span className="truncate text-muted-foreground text-xs">{user.email}</span>

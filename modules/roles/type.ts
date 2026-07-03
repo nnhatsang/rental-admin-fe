@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import { DefaultParamsRequest } from '@/types/api';
+import type { DefaultParamsRequest } from '@/types/api';
 
-export interface IPermission {
+export interface IPermissionInRoleOut {
   id: string;
   code: string;
   name: string;
@@ -9,21 +8,22 @@ export interface IPermission {
   module: string;
   action: string;
 }
-export interface User {
+
+export interface IUserInRoleOut {
   id: string;
   email: string;
   fullName: string;
 }
 
-export interface IRole {
+export interface IRoleOut {
   id: string;
   code: string;
   name: string;
   description: string | null;
   isSystem: boolean;
-  permissions: IPermission[];
+  permissions: IPermissionInRoleOut[];
   usersCount: number;
-  users?: User[];
+  users?: IUserInRoleOut[];
   createdAt: string;
   updatedAt: string;
 }
@@ -32,16 +32,20 @@ export interface IGetRolesParams extends DefaultParamsRequest {
   isSystem?: boolean;
 }
 
-export interface IRoleRequestCreate {
+export interface ICreateRoleReq {
   code: string;
   name: string;
   description?: string;
   permissionCodes: string[];
 }
-export interface IRoleRequestUpdate extends Partial<IRoleRequestCreate> {
-  //
-}
-export interface IRoleRequestAssign {
+
+export type IUpdateRoleReq = Partial<ICreateRoleReq>;
+
+export interface IAssignRoleUsersReq {
   roleId: string;
   userIds: string[];
+}
+
+export interface IDeleteRolesReq {
+  roleIds: string[];
 }

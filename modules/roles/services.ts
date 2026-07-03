@@ -2,13 +2,13 @@ import { apiAuth } from '@/axios';
 import type { DefaultResponse, DefaultResponseWithPagination } from '@/types/api';
 
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { IGetRolesParams, IRole, IRoleRequestAssign, IRoleRequestCreate, IRoleRequestUpdate } from './type';
+import type { IAssignRoleUsersReq, ICreateRoleReq, IDeleteRolesReq, IGetRolesParams, IRoleOut, IUpdateRoleReq } from './type';
 
 const url = '/roles';
 
 export const requestGetRoles = (
   params: IGetRolesParams,
-): Promise<AxiosResponse<DefaultResponseWithPagination<IRole>>> => {
+): Promise<AxiosResponse<DefaultResponseWithPagination<IRoleOut>>> => {
   const config: AxiosRequestConfig = {
     method: 'GET',
     url,
@@ -18,7 +18,7 @@ export const requestGetRoles = (
   return apiAuth(config);
 };
 
-export const requestGetRoleById = (id: string): Promise<AxiosResponse<DefaultResponse<IRole>>> => {
+export const requestGetRoleById = (id: string): Promise<AxiosResponse<DefaultResponse<IRoleOut>>> => {
   const config: AxiosRequestConfig = {
     method: 'GET',
     url: `${url}/${id}`,
@@ -27,7 +27,7 @@ export const requestGetRoleById = (id: string): Promise<AxiosResponse<DefaultRes
   return apiAuth(config);
 };
 
-export const requestCreateRole = (data: IRoleRequestCreate): Promise<AxiosResponse<DefaultResponse<IRole>>> => {
+export const requestCreateRole = (data: ICreateRoleReq): Promise<AxiosResponse<DefaultResponse<IRoleOut>>> => {
   const config: AxiosRequestConfig = {
     method: 'POST',
     url,
@@ -39,8 +39,8 @@ export const requestCreateRole = (data: IRoleRequestCreate): Promise<AxiosRespon
 
 export const requestUpdateRole = (
   id: string,
-  data: IRoleRequestUpdate,
-): Promise<AxiosResponse<DefaultResponse<IRole>>> => {
+  data: IUpdateRoleReq,
+): Promise<AxiosResponse<DefaultResponse<IRoleOut>>> => {
   const config: AxiosRequestConfig = {
     method: 'PATCH',
     url: `${url}/${id}`,
@@ -50,7 +50,7 @@ export const requestUpdateRole = (
   return apiAuth(config);
 };
 
-export const requestAssignRoleUsers = (data: IRoleRequestAssign): Promise<AxiosResponse> => {
+export const requestAssignRoleUsers = (data: IAssignRoleUsersReq): Promise<AxiosResponse<DefaultResponse<IRoleOut>>> => {
   const config: AxiosRequestConfig = {
     method: 'PUT',
     url: `${url}/assign`,
@@ -60,9 +60,10 @@ export const requestAssignRoleUsers = (data: IRoleRequestAssign): Promise<AxiosR
   return apiAuth(config);
 };
 
-export const requestDeleteRole = (data: { roleIds: string[] }): Promise<AxiosResponse> => {
+export const requestDeleteRole = (data: IDeleteRolesReq): Promise<AxiosResponse<DefaultResponse<null>>> => {
   const config: AxiosRequestConfig = {
     method: 'DELETE',
+    url,
     data,
   };
 

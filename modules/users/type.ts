@@ -27,6 +27,7 @@ export interface IUserOut {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  avatar?: string | null;
 }
 
 export interface IGetUsersParams extends DefaultParamsRequest {
