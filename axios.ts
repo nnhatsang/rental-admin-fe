@@ -73,7 +73,6 @@ apiAuth.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true;
-      console.log('sjfkjkfhksfk');
       try {
         await requestRefreshToken();
         return apiAuth(originalRequest);

@@ -1,36 +1,27 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import type { RowData } from "@tanstack/react-table"
+import * as React from 'react';
+import type { RowData } from '@tanstack/react-table';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-import type { GlobalFilterMode } from "../../fns/filter-fns"
-import type { DataTableInstance } from "../../core/types"
+import type { GlobalFilterMode } from '../../fns/filter-fns';
+import type { DataTableInstance } from '../../core/types';
 
-const GLOBAL_MODES: GlobalFilterMode[] = [
-  "fuzzy",
-  "contains",
-  "startsWith",
-  "endsWith",
-  "equals",
-]
+const GLOBAL_MODES: GlobalFilterMode[] = ['fuzzy', 'contains', 'startsWith', 'endsWith', 'equals'];
 
 /**
  * Expandable global search (MRT order: first in the toolbar icon cluster). The
@@ -42,44 +33,76 @@ export function DataTableGlobalFilter<TData extends RowData>({
   table,
   searchInputRef,
 }: {
-  table: DataTableInstance<TData>
+  table: DataTableInstance<TData>;
   /** Optional ref forwarded to the search input. Defaults to the instance's
    *  `searchInputRef` when rendered by `DataTable`. */
-  searchInputRef?: React.RefObject<HTMLInputElement | null>
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }) {
   const {
     localization,
     icons,
     enableGlobalFilter,
     enableGlobalFilterModes,
+    styleSearchInput,
     globalFilterMode,
     setGlobalFilterMode,
     renderGlobalFilterModeMenuItems,
-  } = table.cnTable
+    exportFileName,
+  } = table.cnTable;
 
-  const external = (table.getState().globalFilter ?? "") as string
-  const [expanded, setExpanded] = React.useState(external.length > 0)
-  const [value, setValue] = React.useState(external)
+  const external = (table.getState().globalFilter ?? '') as string;
+  // const [expanded, setExpanded] = React.useState(external.length > 0);
+  const [expanded, setExpanded] = React.useState(styleSearchInput === 'default' || external.length > 0);
+  const [value, setValue] = React.useState(external);
   // Drive focus-on-expand and let consumers focus the box. Use the forwarded
   // ref when provided (so `DataTable` shares its `searchInputRef`), else a
   // local one. React assigns it directly — no manual `.current` mutation.
-  const localRef = React.useRef<HTMLInputElement>(null)
-  const inputRef = searchInputRef ?? localRef
+  const localRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = searchInputRef ?? localRef;
 
-  const debounceMs = table.options.manualFiltering ? 300 : 0
+  const debounceMs = table.options.manualFiltering ? 300 : 0;
 
   React.useEffect(() => {
-    if (value === (table.getState().globalFilter ?? "")) return
-    const id = setTimeout(
-      () => table.setGlobalFilter(value || undefined),
-      debounceMs
-    )
-    return () => clearTimeout(id)
+    if (value === (table.getState().globalFilter ?? '')) return;
+    const id = setTimeout(() => table.setGlobalFilter(value || undefined), debounceMs);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, debounceMs])
+  }, [value, debounceMs]);
 
-  if (!enableGlobalFilter) return null
+  if (!enableGlobalFilter) return null;
 
+  if (styleSearchInput === 'default') {
+    return (
+      <div className="flex h-9 items-center gap-0.5 rounded-md border bg-background pr-1 pl-2 focus-within:border-ring">
+        <icons.search className="size-3.5 shrink-0 text-muted-foreground" />
+
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={`${localization.searchPlaceholder} ${exportFileName}`}
+          aria-label={localization.search}
+          className="h-7 w-56 border-0 px-1 text-xs shadow-none focus-visible:ring-0"
+        />
+
+        {value && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => {
+              setValue('');
+              table.setGlobalFilter(undefined);
+            }}
+          >
+            <icons.clear />
+          </Button>
+        )}
+
+        {/* Filter mode */}
+      </div>
+    );
+  }
   if (!expanded) {
     return (
       <Tooltip>
@@ -90,8 +113,8 @@ export function DataTableGlobalFilter<TData extends RowData>({
             aria-label={localization.search}
             className="size-8"
             onClick={() => {
-              setExpanded(true)
-              requestAnimationFrame(() => inputRef.current?.focus())
+              setExpanded(true);
+              requestAnimationFrame(() => inputRef.current?.focus());
             }}
           >
             <icons.search />
@@ -99,18 +122,18 @@ export function DataTableGlobalFilter<TData extends RowData>({
         </TooltipTrigger>
         <TooltipContent>{localization.search}</TooltipContent>
       </Tooltip>
-    )
+    );
   }
 
   const clear = () => {
-    setValue("")
-    table.setGlobalFilter(undefined)
-    setExpanded(false)
-  }
+    setValue('');
+    table.setGlobalFilter(undefined);
+    setExpanded(false);
+  };
 
   return (
-    <div className="flex h-9 items-center gap-0.5 rounded-[calc(var(--radius-3xl)-2px)] pl-2  border bg-background px-1 focus-within:border-ring">
-      {/* <icons.search className="size-3.5 shrink-0 text-muted-foreground" /> */}
+    <div className="flex h-9 items-center gap-0.5 rounded-md border bg-background pr-1 pl-2 focus-within:border-ring">
+      <icons.search className="size-3.5 shrink-0 text-muted-foreground" />
       <Input
         ref={inputRef}
         value={value}
@@ -121,7 +144,7 @@ export function DataTableGlobalFilter<TData extends RowData>({
         placeholder={localization.searchPlaceholder}
         aria-label={localization.search}
         className={cn(
-          'h-7 w-40 border-0 text-xs font-normal tracking-normal normal-case shadow-none focus-visible:ring-0 sm:w-56',
+          'h-7 w-40 border-0 px-1 text-xs font-normal tracking-normal normal-case shadow-none focus-visible:ring-0 sm:w-56',
         )}
       />
       {value && (
@@ -142,7 +165,11 @@ export function DataTableGlobalFilter<TData extends RowData>({
             <TooltipContent>{localization.globalFilterMode}</TooltipContent>
           </Tooltip>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>{localization.globalFilterMode}</DropdownMenuLabel>
+            {/* Base UI's GroupLabel requires a Group ancestor; Radix renders
+                the group as an inert wrapper. */}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{localization.globalFilterMode}</DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             {renderGlobalFilterModeMenuItems ? (
               renderGlobalFilterModeMenuItems({

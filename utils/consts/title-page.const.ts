@@ -19,6 +19,7 @@ export const TITLE_PAGE = {
       LOCK: 'Khóa tài khoản',
       ACTIVATE: 'Kích hoạt lại',
       DELETE: 'Xóa người dùng',
+      DELETE_MULTI: 'Xoá nhiều người dùng',
     },
     FORM: {
       FULL_NAME: 'Họ và tên',

@@ -97,12 +97,7 @@ export const sidebarItems: NavGroup[] = [
         icon: IconShieldLock,
         requiredPermissions: [Permission.RolesRead],
       },
-      {
-        title: 'Quyền',
-        url: '/permissions',
-        icon: IconKey,
-        requiredPermissions: [Permission.RolesRead],
-      },
+
       {
         title: 'Cài đặt',
         url: '/settings',

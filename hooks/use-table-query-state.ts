@@ -1,208 +1,182 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { DefaultParamsRequest } from '@/types/api';
+import type { ColumnFiltersState, OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useDebounceValue } from 'usehooks-ts';
-import type {
-  ColumnFiltersState,
-  OnChangeFn,
-  PaginationState,
-  RowSelectionState,
-  SortingState,
-  Updater,
-} from '@tanstack/react-table';
-import { DefaultParamsRequest } from '@/types/api';
+import { useCallback, useMemo } from 'react';
 
-export type TableQueryParams = DefaultParamsRequest;
+type QueryStateColumn = {
+  accessorKey?: unknown;
+  meta?: {
+    variant?: string;
+  };
+};
 
-export interface UseTableQueryStateOptions {
-  initialPageSize?: number;
-  initialSearch?: string;
-  initialColumnFilters?: ColumnFiltersState;
-  columnFilterQueryParamMap?: Record<string, string>;
-  searchDebounceMs?: number;
-  syncUrl?: boolean;
-  extraQueryParams?: Record<string, string | number | null | undefined>;
-}
+type UseTableQueryStateParams = {
+  columns?: QueryStateColumn[];
+  defaultPageSize?: number;
+};
 
-function parsePositiveInt(value: string | null, fallback: number): number {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
+type QueryValue = string | number | string[] | undefined | null;
 
-function parseInitialSorting(searchParams: Pick<URLSearchParams, 'get'>): SortingState {
-  const sortBy = searchParams.get('sortBy');
-  if (!sortBy) return [];
-  const sort = searchParams.get('sort');
+const getFilterIds = (columns: QueryStateColumn[] = []) => {
+  return columns
+    .map((column) => {
+      if (!column.meta?.variant || !('accessorKey' in column) || typeof column.accessorKey !== 'string') {
+        return null;
+      }
 
-  return [
-    {
-      id: sortBy,
-      desc: sort === 'desc' || sort === '-1',
-    },
-  ];
-}
+      return {
+        id: String(column.accessorKey),
+        isMulti: column.meta.variant === 'multi-select',
+      };
+    })
+    .filter((item): item is { id: string; isMulti: boolean } => item !== null);
+};
 
-function resolveUpdater<T>(updater: Updater<T>, previous: T): T {
-  return typeof updater === 'function' ? (updater as (old: T) => T)(previous) : updater;
-}
+const toQueryValue = (value: QueryValue) => {
+  if (Array.isArray(value)) return value.length ? value.join(',') : undefined;
+  return value;
+};
 
-function normalizeSearch(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
-
-export function useTableQueryState(options: UseTableQueryStateOptions = {}) {
-  const {
-    initialPageSize = 10,
-    initialSearch = '',
-    initialColumnFilters = [],
-    columnFilterQueryParamMap,
-    searchDebounceMs = 300,
-    syncUrl = false,
-    extraQueryParams,
-  } = options;
+export function useTableQueryState<
+  TParams extends DefaultParamsRequest = DefaultParamsRequest,
+>({ columns, defaultPageSize = 10 }: UseTableQueryStateParams = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const filters = useMemo(() => getFilterIds(columns), [columns]);
 
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: parsePositiveInt(searchParams.get('page'), 1) - 1,
-    pageSize: parsePositiveInt(searchParams.get('perPage'), initialPageSize),
-  });
-  const [sorting, setSorting] = useState<SortingState>(() => parseInitialSorting(searchParams));
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialColumnFilters);
-  const [searchInput, setSearchInput] = useState(searchParams.get('search') ?? initialSearch);
-  const [globalFilter, setGlobalFilter] = useDebounceValue(
-    normalizeSearch(searchParams.get('search') ?? initialSearch),
-    searchDebounceMs,
-  );
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const setParams = useCallback(
+    (updates: Record<string, QueryValue>, resetPage = false) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-  const resetPage = useCallback(() => {
-    setPagination((previous) => (previous.pageIndex === 0 ? previous : { ...previous, pageIndex: 0 }));
-  }, []);
+      if (resetPage) params.delete('page');
 
-  const onPaginationChange = useCallback<OnChangeFn<PaginationState>>((updater) => {
-    setPagination((previous) => resolveUpdater(updater, previous));
-  }, []);
+      Object.entries(updates).forEach(([key, value]) => {
+        const nextValue = toQueryValue(value);
 
-  const onSortingChange = useCallback<OnChangeFn<SortingState>>(
-    (updater) => {
-      setSorting((previous) => resolveUpdater(updater, previous));
-      resetPage();
+        if (nextValue === undefined || nextValue === null || nextValue === '') {
+          params.delete(key);
+          return;
+        }
+
+        params.set(key, String(nextValue));
+      });
+
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
-    [resetPage],
+    [pathname, router, searchParams],
   );
 
-  const onColumnFiltersChange = useCallback<OnChangeFn<ColumnFiltersState>>(
-    (updater) => {
-      setColumnFilters((previous) => resolveUpdater(updater, previous));
-      resetPage();
-    },
-    [resetPage],
-  );
+  const pagination: PaginationState = useMemo(() => {
+    const page = Number(searchParams.get('page'));
+    const perPage = Number(searchParams.get('perPage'));
 
-  const onGlobalFilterChange = useCallback<OnChangeFn<string | undefined>>(
-    (updater) => {
-      const next = normalizeSearch(resolveUpdater(updater, globalFilter));
-      setSearchInput(next ?? '');
-      setGlobalFilter(next);
-      resetPage();
-    },
-    [globalFilter, resetPage, setGlobalFilter],
-  );
+    return {
+      pageIndex: Number.isInteger(page) && page > 0 ? page - 1 : 0,
+      pageSize: Number.isInteger(perPage) && perPage > 0 ? perPage : defaultPageSize,
+    };
+  }, [defaultPageSize, searchParams]);
 
-  const onRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>((updater) => {
-    setRowSelection((previous) => resolveUpdater(updater, previous));
-  }, []);
+  const sorting: SortingState = useMemo(() => {
+    const sortBy = searchParams.get('sortBy');
+    if (!sortBy) return [];
 
-  const setSearch = useCallback(
-    (value: string) => {
-      setSearchInput(value);
-      setGlobalFilter(normalizeSearch(value));
-      resetPage();
-    },
-    [resetPage, setGlobalFilter],
-  );
+    return [{ id: sortBy, desc: searchParams.get('sort') === 'desc' }];
+  }, [searchParams]);
 
-  const clearSelection = useCallback(() => {
-    setRowSelection({});
-  }, []);
+  const globalFilter = searchParams.get('search') ?? '';
 
-  const queryParams = useMemo<TableQueryParams>(() => {
-    const firstSort = sorting[0];
+  const filterQueryParams = useMemo(() => {
+    const result: Partial<TParams> = {};
 
+    filters.forEach((filter) => {
+      const value = searchParams.get(filter.id);
+      if (!value) return;
+
+      result[filter.id as keyof TParams] = (filter.isMulti ? value.split(',').filter(Boolean) : value) as TParams[keyof TParams];
+    });
+
+    return result;
+  }, [filters, searchParams]);
+
+  const columnFilters: ColumnFiltersState = useMemo(() => {
+    const filterValues = filterQueryParams as Record<string, QueryValue>;
+
+    return filters
+      .map((filter) => {
+        const value = filterValues[filter.id];
+        return value ? { id: filter.id, value } : null;
+      })
+      .filter(Boolean) as ColumnFiltersState;
+  }, [filterQueryParams, filters]);
+
+  const queryParams = useMemo(() => {
     return {
       page: pagination.pageIndex + 1,
       perPage: pagination.pageSize,
-      search: normalizeSearch(globalFilter),
-      sortBy: firstSort?.id,
-      sort: firstSort ? (firstSort.desc ? -1 : 1) : undefined,
-    };
-  }, [globalFilter, pagination.pageIndex, pagination.pageSize, sorting]);
+      search: globalFilter || undefined,
+      sortBy: sorting[0]?.id,
+      sort: sorting[0] ? (sorting[0].desc ? 'desc' : 'asc') : undefined,
+      ...filterQueryParams,
+    } as TParams;
+  }, [filterQueryParams, globalFilter, pagination, sorting]);
 
-  useEffect(() => {
-    if (!syncUrl) return;
+  const onPaginationChange: OnChangeFn<PaginationState> = useCallback((updater) => {
+    const next = typeof updater === 'function' ? updater(pagination) : updater;
 
-    const nextParams = new URLSearchParams(searchParams.toString());
-    const setOrDelete = (key: string, value: string | number | null | undefined) => {
-      if (value == null || value === '') {
-        nextParams.delete(key);
-        return;
-      }
-      nextParams.set(key, String(value));
-    };
+    setParams({
+      page: next.pageIndex > 0 ? next.pageIndex + 1 : undefined,
+      perPage: next.pageSize !== defaultPageSize ? next.pageSize : undefined,
+    });
+  }, [defaultPageSize, pagination, setParams]);
 
-    setOrDelete('page', queryParams.page === 1 ? undefined : queryParams.page);
-    setOrDelete('perPage', queryParams.perPage === initialPageSize ? undefined : queryParams.perPage);
-    setOrDelete('search', queryParams.search);
-    setOrDelete('sortBy', queryParams.sortBy);
-    setOrDelete('sort', queryParams.sort);
+  const onSortingChange: OnChangeFn<SortingState> = useCallback((updater) => {
+    const next = typeof updater === 'function' ? updater(sorting) : updater;
+    const sort = next[0];
 
-    for (const [key, value] of Object.entries(extraQueryParams ?? {})) {
-      setOrDelete(key, value);
-    }
+    setParams(
+      {
+        sortBy: sort?.id,
+        sort: sort ? (sort.desc ? 'desc' : 'asc') : undefined,
+      },
+      true,
+    );
+  }, [setParams, sorting]);
 
-    for (const [columnId, paramName] of Object.entries(columnFilterQueryParamMap ?? {})) {
-      const value = columnFilters.find((filter) => filter.id === columnId)?.value;
-      setOrDelete(paramName, typeof value === 'string' || typeof value === 'number' ? value : undefined);
-    }
+  const onGlobalFilterChange: OnChangeFn<string | undefined> = useCallback((updater) => {
+    const next = typeof updater === 'function' ? updater(globalFilter) : updater;
+    setParams({ search: typeof next === 'string' ? next.trim() : undefined }, true);
+  }, [globalFilter, setParams]);
 
-    const queryString = nextParams.toString();
-    const nextUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+  const onColumnFiltersChange: OnChangeFn<ColumnFiltersState> = useCallback((updater) => {
+    const next = typeof updater === 'function' ? updater(columnFilters) : updater;
+    const updates: Record<string, QueryValue> = {};
 
-    if (nextUrl !== currentUrl) {
-      router.replace(nextUrl, { scroll: false });
-    }
-  }, [
-    columnFilterQueryParamMap,
-    columnFilters,
-    extraQueryParams,
-    initialPageSize,
-    pathname,
-    queryParams,
-    router,
-    searchParams,
-    syncUrl,
-  ]);
+    filters.forEach((filter) => {
+      updates[filter.id] = next.find((item) => item.id === filter.id)?.value as QueryValue;
+    });
+
+    setParams(updates, true);
+  }, [columnFilters, filters, setParams]);
+
+  const resetPage = useCallback(() => {
+    setParams({ page: undefined });
+  }, [setParams]);
 
   return {
     pagination,
     sorting,
-    columnFilters,
     globalFilter,
-    searchInput,
-    rowSelection,
+    columnFilters,
     queryParams,
-    resetPage,
-    setSearch,
-    clearSelection,
+    filterQueryParams,
     onPaginationChange,
     onSortingChange,
-    onColumnFiltersChange,
     onGlobalFilterChange,
-    onRowSelectionChange,
+    onColumnFiltersChange,
+    resetPage,
   };
 }

@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 import {
   getCoreRowModel,
   getExpandedRowModel,
@@ -12,35 +12,30 @@ import {
   getPaginationRowModel,
   useReactTable,
   type RowData,
-} from "@tanstack/react-table"
+} from '@tanstack/react-table';
 
-import { VALUELESS_MODES, type FilterMode } from "../fns/filter-fns"
-import { columnKey } from "../helpers/column-key"
-import { getColumnLabel } from "../helpers/column-label"
+import { VALUELESS_MODES, type FilterMode } from '../fns/filter-fns';
+import { columnKey } from '../helpers/column-key';
+import { getColumnLabel } from '../helpers/column-label';
 import {
   getColumnDefMinWidth,
   getColumnDefPreferredWidth,
   getHeaderControlsWidth,
   isDataColumnDef,
   type HeaderControlsOptions,
-} from "../helpers/header-controls"
-import { measureColumnWidth } from "../helpers/measure-column-width"
-import { useControllableState } from "../hooks/use-controllable-state"
-import { useEditingState } from "../hooks/use-editing-state"
-import { useColumnFilterModes } from "../hooks/use-column-filter-modes"
-import { useGlobalFilterMode } from "../hooks/use-global-filter-mode"
-import { useAdvancedFilter } from "../hooks/use-advanced-filter"
-import { useResolvedColumns } from "../hooks/use-resolved-columns"
-import { usePageResetOnFilterChange } from "../hooks/use-page-reset-on-filter-change"
-import { useDataTableConfigContext } from "./config-context"
-import { defaultIcons } from "./icons"
-import { defaultLocalization } from "./localization"
-import type {
-  DataTableConfig,
-  DataTableInstance,
-  Density,
-  UseDataTableOptions,
-} from "./types"
+} from '../helpers/header-controls';
+import { measureColumnWidth } from '../helpers/measure-column-width';
+import { useControllableState } from '../hooks/use-controllable-state';
+import { useEditingState } from '../hooks/use-editing-state';
+import { useColumnFilterModes } from '../hooks/use-column-filter-modes';
+import { useGlobalFilterMode } from '../hooks/use-global-filter-mode';
+import { useAdvancedFilter } from '../hooks/use-advanced-filter';
+import { useResolvedColumns } from '../hooks/use-resolved-columns';
+import { usePageResetOnFilterChange } from '../hooks/use-page-reset-on-filter-change';
+import { useDataTableConfigContext } from './config-context';
+import { defaultIcons } from './icons';
+import { defaultLocalization } from './localization';
+import type { DataTableConfig, DataTableInstance, Density, UseDataTableOptions } from './types';
 
 /**
  * Core hook. Wraps `useReactTable` with MRT-flavoured defaults (row models,
@@ -55,13 +50,11 @@ import type {
  * `use-resolved-columns`, `use-page-reset-on-filter-change`); this hook wires
  * them together and assembles the `cnTable` config.
  */
-export function useDataTable<TData extends RowData>(
-  options: UseDataTableOptions<TData>
-): DataTableInstance<TData> {
+export function useDataTable<TData extends RowData>(options: UseDataTableOptions<TData>): DataTableInstance<TData> {
   const {
     localization: localizationProp,
     icons: iconsProp,
-    defaultDensity = "comfortable",
+    defaultDensity = 'comfortable',
     defaultShowColumnFilters = false,
     isLoading = false,
     isSaving = false,
@@ -72,15 +65,15 @@ export function useDataTable<TData extends RowData>(
     enableColumnActions = true,
     enableStickyHeader = true,
     enablePagination = true,
-    positionPagination = "bottom",
-    paginationDisplayMode = "default",
-    columnFilterDisplayMode = "subheader",
-    positionGlobalFilter = "right",
-    positionToolbarAlertBanner = "top",
-    positionToolbarDropZone = "top",
-    positionActionsColumn = "last",
-    positionExpandColumn = "first",
-    selectAllMode = "page",
+    positionPagination = 'bottom',
+    paginationDisplayMode = 'pages',
+    columnFilterDisplayMode = 'custom',
+    positionGlobalFilter = 'left',
+    positionToolbarAlertBanner = 'top',
+    positionToolbarDropZone = 'top',
+    positionActionsColumn = 'last',
+    positionExpandColumn = 'first',
+    selectAllMode = 'page',
     enableSelectAll = true,
     enableTopToolbar = true,
     enableBottomToolbar = true,
@@ -90,10 +83,11 @@ export function useDataTable<TData extends RowData>(
     enableColumnFilterModes = true,
     enableFilterMatchHighlighting = true,
     enableGlobalFilter = true,
-    enableGlobalFilterModes = true,
+    enableGlobalFilterModes = false,
     enableGlobalFilterRankedResults = false,
-    defaultGlobalFilterMode = "fuzzy",
+    defaultGlobalFilterMode = 'fuzzy',
     density: densityProp,
+    positionToolbarActions = 'top-right',
     onDensityChange,
     isFullscreen: isFullscreenProp,
     onIsFullscreenChange,
@@ -112,15 +106,15 @@ export function useDataTable<TData extends RowData>(
     enableRowOrdering = false,
     enableRowPinning = false,
     enableRowNumbers = false,
-    rowNumberMode = "static",
+    rowNumberMode = 'static',
     onRowOrderChange,
     enableGrouping = false,
     enableExpanding: enableExpandingProp,
     enableStickyFooter = true,
     renderDetailPanel,
     enableEditing = false,
-    editDisplayMode = "cell",
-    createDisplayMode = "modal",
+    editDisplayMode = 'cell',
+    createDisplayMode = 'modal',
     createRowDefaults,
     enableClickToCopy = false,
     onEditCellSave,
@@ -149,6 +143,8 @@ export function useDataTable<TData extends RowData>(
     exportFileName,
     enableToolbarInternalActions = true,
     title,
+    description,
+    styleSearchInput = 'default',
     renderToolbarActions,
     renderTopToolbar,
     renderBottomToolbar,
@@ -157,54 +153,44 @@ export function useDataTable<TData extends RowData>(
     renderEmpty,
     columns,
     ...tableOptions
-  } = options
+  } = options;
 
   // App-wide defaults from a surrounding DataTableConfigProvider (if any) sit
   // between the built-in defaults and per-call options.
-  const configCtx = useDataTableConfigContext()
+  const configCtx = useDataTableConfigContext();
   const localization = React.useMemo(
     () => ({
       ...defaultLocalization,
       ...configCtx.localization,
       ...localizationProp,
     }),
-    [configCtx.localization, localizationProp]
-  )
+    [configCtx.localization, localizationProp],
+  );
   const icons = React.useMemo(
     () => ({ ...defaultIcons, ...configCtx.icons, ...iconsProp }),
-    [configCtx.icons, iconsProp]
-  )
+    [configCtx.icons, iconsProp],
+  );
 
   // Expansion turns on for tree data (getSubRows), detail panels, or grouping.
-  const enableExpanding =
-    enableExpandingProp ??
-    (!!renderDetailPanel || !!tableOptions.getSubRows || enableGrouping)
+  const enableExpanding = enableExpandingProp ?? (!!renderDetailPanel || !!tableOptions.getSubRows || enableGrouping);
   // An expand column is needed for tree sub-rows or detail panels (grouped
   // rows carry their own chevron in the grouping cell).
-  const needsExpandColumn = !!renderDetailPanel || !!tableOptions.getSubRows
+  const needsExpandColumn = !!renderDetailPanel || !!tableOptions.getSubRows;
 
   // Loading affordances: each can be forced on/off, else derived from the
   // loading/saving flags (progress bar for either; skeletons + overlay only
   // for the initial data load).
-  const showProgressBars = showProgressBarsProp ?? (isLoading || isSaving)
-  const showSkeletons = showSkeletonsProp ?? isLoading
-  const showLoadingOverlay = showLoadingOverlayProp ?? isLoading
+  const showProgressBars = showProgressBarsProp ?? (isLoading || isSaving);
+  const showSkeletons = showSkeletonsProp ?? isLoading;
+  const showLoadingOverlay = showLoadingOverlayProp ?? isLoading;
 
-  const [density, setDensity] = useControllableState<Density>(
-    densityProp,
-    defaultDensity,
-    onDensityChange
-  )
-  const [isFullscreen, setIsFullscreen] = useControllableState(
-    isFullscreenProp,
-    false,
-    onIsFullscreenChange
-  )
+  const [density, setDensity] = useControllableState<Density>(densityProp, defaultDensity, onDensityChange);
+  const [isFullscreen, setIsFullscreen] = useControllableState(isFullscreenProp, false, onIsFullscreenChange);
   const [showColumnFilters, setShowColumnFilters] = useControllableState(
     showColumnFiltersProp,
     defaultShowColumnFilters,
-    onShowColumnFiltersChange
-  )
+    onShowColumnFiltersChange,
+  );
 
   const {
     editingCell,
@@ -216,27 +202,22 @@ export function useDataTable<TData extends RowData>(
     beginRowEdit,
     beginCreate,
     cancelEdit,
-  } = useEditingState<TData>(createRowDefaults)
+  } = useEditingState<TData>(createRowDefaults);
 
-  const { columnFilterModes, setColumnFilterModes, dynamicFilterFn } =
-    useColumnFilterModes<TData>(columns)
+  const { columnFilterModes, setColumnFilterModes, dynamicFilterFn } = useColumnFilterModes<TData>(columns);
 
-  const isManualFiltering = !!tableOptions.manualFiltering
+  const isManualFiltering = !!tableOptions.manualFiltering;
 
-  const {
-    globalFilterMode,
-    setGlobalFilterMode,
-    dynamicGlobalFilterFn,
-    rankedSortedRowModel,
-  } = useGlobalFilterMode<TData>({
-    globalFilterMode: globalFilterModeProp,
-    defaultGlobalFilterMode,
-    onGlobalFilterModeChange,
-    enableGlobalFilterRankedResults,
-    manualSorting: !!tableOptions.manualSorting,
-    manualFiltering: isManualFiltering,
-    enableGrouping,
-  })
+  const { globalFilterMode, setGlobalFilterMode, dynamicGlobalFilterFn, rankedSortedRowModel } =
+    useGlobalFilterMode<TData>({
+      globalFilterMode: globalFilterModeProp,
+      defaultGlobalFilterMode,
+      onGlobalFilterModeChange,
+      enableGlobalFilterRankedResults,
+      manualSorting: !!tableOptions.manualSorting,
+      manualFiltering: isManualFiltering,
+      enableGrouping,
+    });
 
   const {
     advancedFilter,
@@ -249,23 +230,20 @@ export function useDataTable<TData extends RowData>(
     advancedFilter: advancedFilterProp,
     defaultAdvancedFilter,
     onAdvancedFilterChange,
-  })
+  });
 
-  const enableRowSelection =
-    tableOptions.enableRowSelection != null
-      ? !!tableOptions.enableRowSelection
-      : false
+  const enableRowSelection = tableOptions.enableRowSelection != null ? !!tableOptions.enableRowSelection : false;
 
   // Columns with a consumer-provided cell renderer are left untouched by
   // auto-highlighting (the consumer owns their markup).
   const columnsWithCustomCell = React.useMemo(() => {
-    const set = new Set<string>()
+    const set = new Set<string>();
     for (const def of columns) {
-      const key = columnKey(def as { id?: string; accessorKey?: unknown })
-      if (key && "cell" in def && def.cell != null) set.add(key)
+      const key = columnKey(def as { id?: string; accessorKey?: unknown });
+      if (key && 'cell' in def && def.cell != null) set.add(key);
     }
-    return set
-  }, [columns])
+    return set;
+  }, [columns]);
 
   const resolvedColumns = useResolvedColumns<TData>({
     columns,
@@ -285,7 +263,7 @@ export function useDataTable<TData extends RowData>(
     editDisplayMode,
     localization,
     icons,
-  })
+  });
 
   // Which header affordances render — shared by the column sizing below, the
   // autosize measurement, and the header components, so they can't diverge.
@@ -305,8 +283,8 @@ export function useDataTable<TData extends RowData>(
       enableColumnPinning,
       enableColumnVirtualization,
       columnFilterDisplayMode,
-    ]
-  )
+    ],
+  );
 
   // Size each data column so its header controls are never clipped. Under
   // `table-layout: fixed` a `<th>` is pinned to `getSize()` and clips overflow,
@@ -319,26 +297,20 @@ export function useDataTable<TData extends RowData>(
   // Done here as a pure transform (not a post-build mutation) so React Compiler
   // keeps it and the SSR and client size vars match — a mutation in a memo/effect
   // is dead-code-eliminated on the client and desyncs hydration.
-  const baseColumnSize = tableOptions.defaultColumn?.size ?? 150
+  const baseColumnSize = tableOptions.defaultColumn?.size ?? 150;
   const sizedColumns = React.useMemo(
     () =>
       resolvedColumns.map((def) => {
-        if (!isDataColumnDef(def)) return def
-        const minSize = Math.max(
-          def.minSize ?? 0,
-          getColumnDefMinWidth(def, headerControlsOptions)
-        )
+        if (!isDataColumnDef(def)) return def;
+        const minSize = Math.max(def.minSize ?? 0, getColumnDefMinWidth(def, headerControlsOptions));
         const size =
           def.size != null
             ? def.size
-            : Math.max(
-                baseColumnSize,
-                getColumnDefPreferredWidth(def, headerControlsOptions)
-              )
-        return { ...def, minSize, size }
+            : Math.max(baseColumnSize, getColumnDefPreferredWidth(def, headerControlsOptions));
+        return { ...def, minSize, size };
       }),
-    [resolvedColumns, headerControlsOptions, baseColumnSize]
-  )
+    [resolvedColumns, headerControlsOptions, baseColumnSize],
+  );
 
   const table = useReactTable<TData>({
     ...tableOptions,
@@ -355,15 +327,13 @@ export function useDataTable<TData extends RowData>(
     globalFilterFn: tableOptions.globalFilterFn ?? dynamicGlobalFilterFn,
     enableColumnPinning,
     enableColumnResizing,
-    columnResizeMode: tableOptions.columnResizeMode ?? "onChange",
+    columnResizeMode: tableOptions.columnResizeMode ?? 'onChange',
     enableRowPinning,
     keepPinnedRows: tableOptions.keepPinnedRows ?? true,
     enableGrouping,
     enableExpanding,
     // Detail panels expand arbitrary rows; tree data uses getSubRows' own logic.
-    getRowCanExpand:
-      tableOptions.getRowCanExpand ??
-      (renderDetailPanel ? () => true : undefined),
+    getRowCanExpand: tableOptions.getRowCanExpand ?? (renderDetailPanel ? () => true : undefined),
     getGroupedRowModel: enableGrouping
       ? (tableOptions.getGroupedRowModel ?? getGroupedRowModel())
       : tableOptions.getGroupedRowModel,
@@ -376,10 +346,7 @@ export function useDataTable<TData extends RowData>(
       : (tableOptions.getSortedRowModel ?? rankedSortedRowModel),
     getFilteredRowModel: isManualFiltering
       ? tableOptions.getFilteredRowModel
-      : (tableOptions.getFilteredRowModel ??
-        (enableAdvancedFilter
-          ? advancedFilteredRowModel
-          : getFilteredRowModel())),
+      : (tableOptions.getFilteredRowModel ?? (enableAdvancedFilter ? advancedFilteredRowModel : getFilteredRowModel())),
     // Client-side faceting powers select/multi-select option lists + counts and
     // range-slider bounds. Skipped in manual mode (server supplies facets) or
     // when `enableFacetedValues` is off.
@@ -399,37 +366,27 @@ export function useDataTable<TData extends RowData>(
       !enablePagination || tableOptions.manualPagination
         ? tableOptions.getPaginationRowModel
         : (tableOptions.getPaginationRowModel ?? getPaginationRowModel()),
-  }) as DataTableInstance<TData>
+  }) as DataTableInstance<TData>;
 
-  const enableColumnFilters = tableOptions.enableColumnFilters !== false
+  const enableColumnFilters = tableOptions.enableColumnFilters !== false;
 
   usePageResetOnFilterChange(table, {
     enablePagination,
     manualPagination: tableOptions.manualPagination,
     autoResetPageIndex: tableOptions.autoResetPageIndex,
-  })
+  });
 
   // Advanced filter edits can shrink the result set; jump back to the first
   // page so the user isn't stranded on an out-of-range page (mirrors the
   // column-filter reset above).
-  const advancedFilterResetRef = React.useRef(advancedFilter)
+  const advancedFilterResetRef = React.useRef(advancedFilter);
   React.useEffect(() => {
-    if (advancedFilterResetRef.current === advancedFilter) return
-    advancedFilterResetRef.current = advancedFilter
-    if (
-      enableAdvancedFilter &&
-      enablePagination &&
-      !tableOptions.manualPagination
-    ) {
-      table.setPageIndex(0)
+    if (advancedFilterResetRef.current === advancedFilter) return;
+    advancedFilterResetRef.current = advancedFilter;
+    if (enableAdvancedFilter && enablePagination && !tableOptions.manualPagination) {
+      table.setPageIndex(0);
     }
-  }, [
-    advancedFilter,
-    enableAdvancedFilter,
-    enablePagination,
-    tableOptions.manualPagination,
-    table,
-  ])
+  }, [advancedFilter, enableAdvancedFilter, enablePagination, tableOptions.manualPagination, table]);
 
   // Switching a column's mode resets its value so a stale value (e.g. a
   // numeric range left over from "between") can't break the new mode. Valueless
@@ -437,84 +394,84 @@ export function useDataTable<TData extends RowData>(
   // (not in useColumnFilterModes) because it needs the table instance.
   const setColumnFilterMode = React.useCallback(
     (columnId: string, mode: FilterMode) => {
-      setColumnFilterModes((prev) => ({ ...prev, [columnId]: mode }))
-      const column = table.getColumn(columnId)
-      if (!column) return
-      column.setFilterValue(VALUELESS_MODES.has(mode) ? mode : undefined)
+      setColumnFilterModes((prev) => ({ ...prev, [columnId]: mode }));
+      const column = table.getColumn(columnId);
+      if (!column) return;
+      column.setFilterValue(VALUELESS_MODES.has(mode) ? mode : undefined);
     },
-    [table, setColumnFilterModes]
-  )
+    [table, setColumnFilterModes],
+  );
 
   // Structural DOM refs, exposed on `table.cnTable.refs` and attached to the
   // corresponding elements in DataTable / toolbar / global-filter.
-  const tablePaperRef = React.useRef<HTMLDivElement>(null)
-  const tableContainerRef = React.useRef<HTMLDivElement>(null)
-  const topToolbarRef = React.useRef<HTMLDivElement>(null)
-  const bottomToolbarRef = React.useRef<HTMLDivElement>(null)
-  const tableHeadRef = React.useRef<HTMLTableSectionElement>(null)
-  const tableFooterRef = React.useRef<HTMLTableSectionElement>(null)
-  const searchInputRef = React.useRef<HTMLInputElement>(null)
+  const tablePaperRef = React.useRef<HTMLDivElement>(null);
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+  const topToolbarRef = React.useRef<HTMLDivElement>(null);
+  const bottomToolbarRef = React.useRef<HTMLDivElement>(null);
+  const tableHeadRef = React.useRef<HTMLTableSectionElement>(null);
+  const tableFooterRef = React.useRef<HTMLTableSectionElement>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   // Double-clicking a resize handle (or calling this imperatively) fits a column
   // to its widest value. Defaults on when resizing is enabled.
-  const enableColumnAutosize = enableColumnAutosizeProp ?? enableColumnResizing
+  const enableColumnAutosize = enableColumnAutosizeProp ?? enableColumnResizing;
 
   const autoSizeColumn = React.useCallback(
     (columnId: string) => {
-      const column = table.getColumn(columnId)
-      if (!column || !column.getCanResize()) return
+      const column = table.getColumn(columnId);
+      if (!column || !column.getCanResize()) return;
 
       // Font + horizontal padding come from a real rendered cell so measurement
       // matches the actual type scale and density; fall back to sane defaults.
-      const containerEl = tableContainerRef.current
+      const containerEl = tableContainerRef.current;
       const sampleCell =
-        containerEl?.querySelector<HTMLElement>("tbody td") ??
-        containerEl?.querySelector<HTMLElement>("thead th") ??
-        null
-      let font = "14px sans-serif"
-      let padding = 24
+        containerEl?.querySelector<HTMLElement>('tbody td') ??
+        containerEl?.querySelector<HTMLElement>('thead th') ??
+        null;
+      let font = '14px sans-serif';
+      let padding = 24;
       if (sampleCell) {
-        const cs = getComputedStyle(sampleCell)
-        if (cs.font) font = cs.font
-        padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+        const cs = getComputedStyle(sampleCell);
+        if (cs.font) font = cs.font;
+        padding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
       }
 
       // Measure the full dataset (not just virtualized-visible rows) from raw
       // values. Headers render uppercase, so match that for measurement.
       const values = table.getRowModel().rows.map((row) => {
-        const value = row.getValue(columnId)
-        return value == null ? "" : String(value)
-      })
-      const headerText = getColumnLabel(column).toUpperCase()
+        const value = row.getValue(columnId);
+        return value == null ? '' : String(value);
+      });
+      const headerText = getColumnLabel(column).toUpperCase();
 
       // Reserve room beside the label for the header affordances that actually
       // render (sort indicator, drag grip, column-actions trigger, popover
       // filter button). Shared with the per-column minSize floor below so
       // measurement and the floor can never disagree — see helpers/header-controls.
-      const extraWidth = getHeaderControlsWidth(column, headerControlsOptions)
+      const extraWidth = getHeaderControlsWidth(column, headerControlsOptions);
 
       const width = measureColumnWidth(values, headerText, {
         font,
         padding,
         extraWidth,
-      })
+      });
 
       // Respect any per-column size bounds from the column def.
-      const { minSize, maxSize } = column.columnDef
-      let clamped = width
-      if (typeof minSize === "number") clamped = Math.max(clamped, minSize)
-      if (typeof maxSize === "number") clamped = Math.min(clamped, maxSize)
+      const { minSize, maxSize } = column.columnDef;
+      let clamped = width;
+      if (typeof minSize === 'number') clamped = Math.max(clamped, minSize);
+      if (typeof maxSize === 'number') clamped = Math.min(clamped, maxSize);
 
-      table.setColumnSizing((prev) => ({ ...prev, [columnId]: clamped }))
+      table.setColumnSizing((prev) => ({ ...prev, [columnId]: clamped }));
     },
-    [table, headerControlsOptions]
-  )
+    [table, headerControlsOptions],
+  );
 
   const autoSizeAllColumns = React.useCallback(() => {
     for (const column of table.getVisibleLeafColumns()) {
-      if (column.getCanResize()) autoSizeColumn(column.id)
+      if (column.getCanResize()) autoSizeColumn(column.id);
     }
-  }, [table, autoSizeColumn])
+  }, [table, autoSizeColumn]);
 
   const config: DataTableConfig<TData> = {
     localization,
@@ -619,7 +576,10 @@ export function useDataTable<TData extends RowData>(
     enableToolbarInternalActions,
     enableKeyboardNavigation,
     title,
+    description,
+    positionToolbarActions,
     renderToolbarActions,
+    styleSearchInput,
     renderTopToolbar,
     renderBottomToolbar,
     renderToolbarInternalActions,
@@ -630,9 +590,9 @@ export function useDataTable<TData extends RowData>(
     renderGlobalFilterModeMenuItems,
     renderCaption,
     renderEmpty,
-  }
+  };
 
-  table.cnTable = config
+  table.cnTable = config;
 
-  return table
+  return table;
 }

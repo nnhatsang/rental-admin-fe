@@ -4,6 +4,12 @@ Tài liệu này hướng dẫn cách dùng bộ `components/ui/data-table`. Đ�
 
 > Lưu ý: repo hiện cũng có `components/shared/data-table`. Wrapper đó đang được một số màn cũ dùng với `useReactTable` trực tiếp. Khi build màn mới cần tính năng nâng cao, ưu tiên dùng cặp `useDataTable` + `DataTable` từ `@/components/ui/data-table`.
 
+Tài liệu liên quan:
+
+- `use-data-table-config.md`: reference đầy đủ các config trong `useDataTable`.
+- `module-table-questionnaire.md`: bộ câu hỏi cần trả lời trước khi tạo module mới có table.
+- `data-table-feature-audit.md`: bản đồ tính năng và gợi ý phần có thể tắt/tách/bỏ.
+
 ## Public API
 
 Import từ entrypoint:
@@ -287,19 +293,20 @@ Hook này quản lý:
 - `sorting`
 - `columnFilters`
 - `globalFilter`
-- `rowSelection`
 - `queryParams`: `{ page, perPage, search, sortBy, sort }`
-- các handler chuẩn cho `useDataTable`: `onPaginationChange`, `onSortingChange`, `onColumnFiltersChange`, `onGlobalFilterChange`, `onRowSelectionChange`
+- các handler query chuẩn cho `useDataTable`: `onPaginationChange`, `onSortingChange`, `onColumnFiltersChange`, `onGlobalFilterChange`
+
+`rowSelection` là UI state của từng module, không nằm trong `useTableQueryState`. Nếu cần chọn nhiều dòng, tạo local state riêng bằng `useState<RowSelectionState>({})`.
 
 `search` trong `queryParams` được debounce mặc định `300ms`. UI input vẫn update ngay qua `globalFilter`, nhưng API query không bị gọi theo từng phím. Có thể đổi bằng `searchDebounceMs`.
 
 Nếu muốn params nằm trên URL, bật `syncUrl: true`. Hook sẽ đọc initial state từ URL và tự `router.replace()` khi state đổi:
 
 ```txt
-?page=2&perPage=20&search=abc&sortBy=fullName&sort=1
+?page=2&perPage=20&search=abc&sortBy=fullName&sort=asc
 ```
 
-Trong project hiện tại, `sort` dùng number theo `DefaultParamsRequest`: `1` là ascending, `-1` là descending.
+Trong project hiện tại, `sort` dùng string theo `DefaultParamsRequest`: `asc` là ascending, `desc` là descending.
 
 Pattern khuyến nghị:
 
@@ -318,6 +325,7 @@ const tableQuery = useTableQueryState({
   syncUrl: true,
   extraQueryParams,
 })
+const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
 const params = useMemo(
   () => ({
@@ -339,13 +347,13 @@ const table = useDataTable({
     sorting: tableQuery.sorting,
     columnFilters: tableQuery.columnFilters,
     globalFilter: tableQuery.globalFilter,
-    rowSelection: tableQuery.rowSelection,
+    rowSelection,
   },
   onPaginationChange: tableQuery.onPaginationChange,
   onSortingChange: tableQuery.onSortingChange,
   onColumnFiltersChange: tableQuery.onColumnFiltersChange,
   onGlobalFilterChange: tableQuery.onGlobalFilterChange,
-  onRowSelectionChange: tableQuery.onRowSelectionChange,
+  onRowSelectionChange: setRowSelection,
   manualPagination: true,
   manualSorting: true,
   manualFiltering: true,
@@ -897,6 +905,7 @@ const tableQuery = useTableQueryState({
   columnFilterQueryParamMap: { activityStatus: "status" },
   syncUrl: true,
 })
+const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
 const statusFilter = tableQuery.columnFilters.find(
   (filter) => filter.id === "activityStatus"
@@ -913,7 +922,7 @@ const table = useDataTable({
   pageCount,
   state: {
     pagination: tableQuery.pagination,
-    rowSelection: tableQuery.rowSelection,
+    rowSelection,
     sorting: tableQuery.sorting,
     columnFilters: tableQuery.columnFilters,
     globalFilter: tableQuery.globalFilter,
@@ -931,6 +940,7 @@ const table = useDataTable({
   onSortingChange: tableQuery.onSortingChange,
   onColumnFiltersChange: tableQuery.onColumnFiltersChange,
   onGlobalFilterChange: tableQuery.onGlobalFilterChange,
+  onRowSelectionChange: setRowSelection,
 })
 ```
 

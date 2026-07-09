@@ -13,7 +13,6 @@ export const ADMIN_ROUTE_PERMISSION_RULES: RoutePermissionRule[] = [
   { path: '/products', requiredPermissions: [PermissionCode.ProductsRead] },
   { path: '/asset-units', requiredPermissions: [PermissionCode.AssetsRead] },
   { path: '/users', requiredPermissions: [PermissionCode.UsersRead] },
-  { path: '/roles', requiredPermissions: [PermissionCode.RolesRead] },
   { path: '/permissions', requiredPermissions: [PermissionCode.RolesRead] },
   { path: '/reports', requiredPermissions: [PermissionCode.ReportsRead] },
   { path: '/settings', requiredPermissions: [PermissionCode.SettingsRead] },

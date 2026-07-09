@@ -1,51 +1,55 @@
 'use client';
 
-import { IconDotsVertical, IconEdit, IconKey, IconLock, IconLockOpen, IconTrash } from '@tabler/icons-react';
-import type { ColumnDef } from '@tanstack/react-table';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatDate } from '@/lib/utils';
-import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import { IUserOut, UserActivityStatus } from './type';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { cn, formatDate } from '@/lib/utils';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
+import { IconDots, IconEdit, IconKey, IconKeyOff, IconLock, IconLockOpen, IconTrash } from '@tabler/icons-react';
+import type { ColumnDef, Row } from '@tanstack/react-table';
+import type { ComponentType } from 'react';
+import type { IUserOut, UserActivityStatus as UserActivityStatusType } from './type';
+import { useUsers } from './users-provider';
+import { useUpdateUserActivityStatus } from './hooks/use-update-user-activity-status';
 
-export type ActionHandlers = {
-  handleOpenEdit: (user: IUserOut) => void;
-  handleOpenDelete: (user: IUserOut) => void;
-  handleOpenResetPassword: (user: IUserOut) => void;
-  handleToggleStatus: (user: IUserOut) => void;
-};
-
-export const statusMeta: Record<UserActivityStatus, { label: string; color: string; textColor: string }> = {
+export const statusMeta: Record<
+  UserActivityStatusType,
+  { label: string; color: string; textColor: string; icon: ComponentType<{ className?: string }> }
+> = {
   ACTIVE: {
     label: 'Hoạt động',
     color:
-      'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-500/15 border-transparent',
+      'bg-teal-100/30 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-500/15 border-transparent',
     textColor: 'text-emerald-600 dark:text-emerald-400',
+    icon: IconLockOpen,
   },
   BANNED: {
     label: 'Bị cấm',
     color: 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/15 border-transparent',
     textColor: 'text-red-600 dark:text-red-400',
+    icon: IconLock,
   },
   LOCKED: {
     label: 'Bị khóa',
     color:
       'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-500/15 border-transparent',
     textColor: 'text-amber-600 dark:text-amber-400',
+    icon: IconLock,
   },
   INACTIVE: {
     label: 'Chưa kích hoạt',
     color:
       'bg-zinc-500/10 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-400 hover:bg-zinc-500/15 border-transparent',
     textColor: 'text-zinc-600 dark:text-zinc-400',
+    icon: IconKeyOff,
   },
 };
 
@@ -54,14 +58,48 @@ export const statusFilterOptions = Object.entries(statusMeta).map(([value, meta]
   value,
 }));
 
-export function StatusBadge({ status }: { status: UserActivityStatus }) {
+export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
+  const update = useUpdateUserActivityStatus();
+
   return (
-    <Badge variant="outline" className={statusMeta[status].color}>
-      {statusMeta[status].label}
-    </Badge>
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Badge variant="outline" className={cn('cursor-pointer', statusMeta[row.original.activityStatus].color)}>
+          {statusMeta[row.original.activityStatus].label}
+        </Badge>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>Thay đổi trạng thái</DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        {Object.entries(statusMeta).map(([key, item]) => {
+          const ItemIcon = item.icon;
+          const isActive = key === row.original.activityStatus;
+
+          return (
+            <DropdownMenuItem
+              key={key}
+              disabled={isActive}
+              className={cn('flex items-center gap-2 mt-1 cursor-pointer', isActive && 'cursor-not-allowed', item.color)}
+              onClick={() => {
+                update.mutate({ data: { activityStatus: key as UserActivityStatusType }, id: row.original.id });
+              }}
+            >
+              <ItemIcon className={`size-4 ${isActive ? item.textColor : ''}`} />
+
+              <div className="flex flex-col">
+                <span>{item.label}</span>
+
+                {isActive && <span className="text-xs text-muted-foreground">Trạng thái hiện tại</span>}
+              </div>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
-
 export function RolesCell({ roles }: { roles: IUserOut['roles'] }) {
   if (roles.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
 
@@ -76,39 +114,48 @@ export function RolesCell({ roles }: { roles: IUserOut['roles'] }) {
   );
 }
 
-export function UserActionsCell({ user, handlers }: { user: IUserOut; handlers: ActionHandlers }) {
+type DataTableRowActionsProps = {
+  row: Row<IUserOut>;
+};
+
+export function UserActionsRow({ row }: DataTableRowActionsProps) {
   const actions = TITLE_PAGE.USERS.ACTIONS;
+  const { setOpen, setCurrentRow } = useUsers();
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-muted/80">
-          <IconDotsVertical className="size-4 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
+          <IconDots className="size-4 " />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => handlers.handleOpenEdit(user)}>
+        <DropdownMenuItem
+          onClick={() => {
+            setCurrentRow(row.original);
+            setOpen('edit');
+          }}
+        >
           <IconEdit className="mr-2 size-4" />
           {actions.EDIT}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handlers.handleOpenResetPassword(user)}>
+        <DropdownMenuItem
+          onClick={() => {
+            setCurrentRow(row.original);
+            setOpen('reset-password');
+          }}
+        >
           <IconKey className="mr-2 size-4" />
           {actions.RESET_PASSWORD}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handlers.handleToggleStatus(user)}>
-          {user.activityStatus === 'ACTIVE' ? (
-            <>
-              <IconLock className="mr-2 size-4 text-amber-500" />
-              <span className="text-amber-600 dark:text-amber-400">{actions.LOCK}</span>
-            </>
-          ) : (
-            <>
-              <IconLockOpen className="mr-2 size-4 text-emerald-500" />
-              <span className="text-emerald-600 dark:text-emerald-400">{actions.ACTIVATE}</span>
-            </>
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem variant="destructive" onClick={() => handlers.handleOpenDelete(user)}>
+
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => {
+            setCurrentRow(row.original);
+            setOpen('delete');
+          }}
+        >
           <IconTrash className="mr-2 size-4" />
           {actions.DELETE}
         </DropdownMenuItem>
@@ -117,7 +164,7 @@ export function UserActionsCell({ user, handlers }: { user: IUserOut; handlers: 
   );
 }
 
-export const userColumns: ColumnDef<IUserOut>[] = [
+export const columns: ColumnDef<IUserOut>[] = [
   {
     accessorKey: 'fullName',
     header: 'Họ và tên / Email',
@@ -137,19 +184,19 @@ export const userColumns: ColumnDef<IUserOut>[] = [
     accessorKey: 'roles',
     header: 'Vai trò',
     cell: ({ row }) => <RolesCell roles={row.original.roles} />,
-    enableColumnFilter: false,
     enableSorting: false,
+    enableColumnFilter: false,
   },
   {
     accessorKey: 'activityStatus',
     header: 'Trạng thái',
-    cell: ({ row }) => <StatusBadge status={row.original.activityStatus} />,
+    cell: StatusBadgeRow,
     meta: {
       label: 'Trạng thái',
       variant: 'select',
       options: statusFilterOptions,
     },
-    enableSorting: false,
+    // enableSorting: false,
   },
   {
     accessorKey: 'createdAt',
@@ -161,16 +208,7 @@ export const userColumns: ColumnDef<IUserOut>[] = [
   },
   {
     id: 'actions',
-    header: () => <div className="text-right">Thao tác</div>,
-    cell: ({ row, table }) => {
-      const handlers = (table.options.meta as { handlers?: ActionHandlers } | undefined)?.handlers;
-      if (!handlers) return null;
-
-      return <UserActionsCell user={row.original} handlers={handlers} />;
-    },
+    cell: UserActionsRow,
     meta: { disableColumnActions: true },
-    enableColumnFilter: false,
-    enableHiding: false,
-    enableSorting: false,
   },
 ];

@@ -97,12 +97,14 @@ export const requestResetUserPassword = (
   return apiAuth(config);
 };
 
-export const requestDeleteUser = (id: string): Promise<AxiosResponse<DefaultResponse<IUserActionRes | null>>> => {
+export const requestDeleteMultiUser = (
+  userIds: string[],
+): Promise<AxiosResponse<DefaultResponse<IUserActionRes | null>>> => {
   const config: AxiosRequestConfig = {
     method: 'DELETE',
     url,
     data: {
-      userIds: [id],
+      userIds,
     },
   };
 

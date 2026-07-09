@@ -9,6 +9,7 @@ export const ERROR_MESSAGES = {
     FORGOT_PASSWORD: 'Gửi email khôi phục mật khẩu thất bại',
     RESET_PASSWORD: 'Đặt lại mật khẩu thất bại',
     CHANGE_PASSWORD: 'Thay đổi mật khẩu thất bại',
+    SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn',
   },
   USERS: {
     CREATE: 'Tạo người dùng thất bại',

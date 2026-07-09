@@ -1,35 +1,28 @@
 'use client';
 
-import { IconPlus } from '@tabler/icons-react';
-import { PageCardLayout } from '@/components/shared/page-card-layout';
-import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { UserDialogs } from './dialog';
-import { useUsersState } from './hooks/use-users-state';
+import { useUsersState } from './hooks/user-logic';
+import { UsersProvider } from './users-provider';
+import { BulkActions } from './bulk-action';
 
-export default function Users() {
+function UsersContent() {
   const state = useUsersState();
 
   return (
-    <PageCardLayout
-      title={TITLE_PAGE.USERS.INDEX}
-      description={TITLE_PAGE.USERS.DESCRIPTION}
-      actions={
-        <Button
-          size="lg"
-          onClick={() => {
-            state.setSelectedUser(null);
-            state.setIsFormOpen(true);
-          }}
-        >
-          <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.USERS.ACTIONS.CREATE}
-        </Button>
-      }
-    >
-      <DataTable table={state.table} pageSizeOptions={[10, 20, 30, 50]} />
-      <UserDialogs state={state} />
-    </PageCardLayout>
+    <>
+      <DataTable table={state.table} />
+      <BulkActions table={state.table} />
+      <UserDialogs table={state.table} />
+    </>
+  );
+}
+
+export default function Users() {
+  return (
+    <UsersProvider>
+      <UsersContent />
+    </UsersProvider>
   );
 }
 

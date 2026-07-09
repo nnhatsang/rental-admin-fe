@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 import type { DataTableFilterOption, EditVariant } from "../../core/types"
 
 const FIELD_CLASS =
-  "h-8 rounded-sm text-xs font-normal tracking-normal normal-case"
+  "h-10 rounded-sm text-xs font-normal tracking-normal normal-case"
 
 /**
  * A controlled inline edit field (text / number / select). The parent owns the

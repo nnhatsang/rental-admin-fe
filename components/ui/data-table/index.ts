@@ -7,6 +7,7 @@
 
 export { DataTable } from "./core/data-table"
 export { useDataTable } from "./core/use-data-table"
+export { DataTableFacetedFilter } from "./components/toolbar/data-table-faceted-filter"
 
 export {
   DataTableConfigProvider,

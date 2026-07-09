@@ -77,17 +77,12 @@ export function DataTableEditModal<TData extends RowData>({
     <Dialog open onOpenChange={(next) => !next && cancelEdit()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {isCreating ? localization.createNewRow : localization.editRow}
-          </DialogTitle>
+          <DialogTitle className="text-xl">{isCreating ? localization.createNewRow : localization.editRow}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           {editableColumns.map((column) => {
-            const meta = column.columnDef.meta
-            const value =
-              column.id in rowDraft
-                ? rowDraft[column.id]
-                : editingRow?.getValue(column.id)
+            const meta = column.columnDef.meta;
+            const value = column.id in rowDraft ? rowDraft[column.id] : editingRow?.getValue(column.id);
             return (
               <div key={column.id} className="flex flex-col gap-1.5">
                 <Label className="text-xs">{getColumnLabel(column)}</Label>
@@ -100,7 +95,7 @@ export function DataTableEditModal<TData extends RowData>({
                   onChange={(next) => setRowDraftValue(column.id, next)}
                 />
               </div>
-            )
+            );
           })}
         </div>
         <DialogFooter>
@@ -113,5 +108,5 @@ export function DataTableEditModal<TData extends RowData>({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,8 +1,9 @@
+export type SortOrder = 'asc' | 'desc';
 export type DefaultParamsRequest = {
   page: number;
   perPage: number;
   search?: string;
-  sort?: number;
+  sort?: SortOrder;
   sortBy?: string;
 };
 
@@ -46,12 +47,7 @@ export class ApiError<TFields = Record<string, unknown>> extends Error {
   readonly code?: string;
   readonly fieldErrors: ApiFieldError<TFields>[];
 
-  constructor(
-    message: string,
-    status?: number,
-    code?: string,
-    fieldErrors: ApiFieldError<TFields>[] = []
-  ) {
+  constructor(message: string, status?: number, code?: string, fieldErrors: ApiFieldError<TFields>[] = []) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
@@ -59,4 +55,3 @@ export class ApiError<TFields = Record<string, unknown>> extends Error {
     this.fieldErrors = fieldErrors;
   }
 }
-

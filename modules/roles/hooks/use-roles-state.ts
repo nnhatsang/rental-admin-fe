@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
+import type { RowSelectionState } from '@tanstack/react-table';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { roleColumns, type RoleActionHandlers } from '../columns';
@@ -29,12 +30,15 @@ export const useRolesState = (): IRolesState => {
   const [selectedRole, setSelectedRole] = useState<IRoleOut | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // Module UI state stays local. `useTableQueryState` only owns URL/API query
+  // state, so selection is kept here for bulk/delete flows.
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+  // TODO(use-table-url): when the URL-state hook is finalized, this module only
+  // needs to remap query/filter config here; table UI state should remain local.
   const tableQuery = useTableQueryState({
-    initialPageSize: 10,
-    syncUrl: true,
+    defaultPageSize: 10,
   });
-  const { clearSelection } = tableQuery;
 
   const { data, isLoading, isFetching } = useGetRoles(tableQuery.queryParams);
   const rolesData = data?.data?.items ?? [];
@@ -62,10 +66,10 @@ export const useRolesState = (): IRolesState => {
       onSuccess: () => {
         setIsDeleteOpen(false);
         setSelectedRole(null);
-        clearSelection();
+        setRowSelection({});
       },
     });
-  }, [clearSelection, deleteRole, selectedRole]);
+  }, [deleteRole, selectedRole]);
 
   const handlers: RoleActionHandlers = useMemo(
     () => ({ handleOpenEdit, handleOpenDelete }),
@@ -78,7 +82,7 @@ export const useRolesState = (): IRolesState => {
     pageCount,
     state: {
       pagination: tableQuery.pagination,
-      rowSelection: tableQuery.rowSelection,
+      rowSelection,
       sorting: tableQuery.sorting,
       columnFilters: tableQuery.columnFilters,
       globalFilter: tableQuery.globalFilter,
@@ -97,7 +101,7 @@ export const useRolesState = (): IRolesState => {
     isLoading,
     showLoadingOverlay: isFetching,
     onPaginationChange: tableQuery.onPaginationChange,
-    onRowSelectionChange: tableQuery.onRowSelectionChange,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: tableQuery.onSortingChange,
     onColumnFiltersChange: tableQuery.onColumnFiltersChange,
     onGlobalFilterChange: tableQuery.onGlobalFilterChange,

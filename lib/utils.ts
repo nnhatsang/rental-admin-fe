@@ -9,8 +9,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function sleep(ms: number = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export const getInitials = (str: string): string => {
-  if (typeof str !== 'string' || !str.trim()) return 'Anonymous';
+  if (typeof str !== 'string' || !str.trim()) return '?';
 
   return (
     str
@@ -51,14 +55,13 @@ export const LOCALE = {
     datetimeLong: "dd/MM/yyyy 'lúc' HH:mm",
     long: "EEEE, 'ngày' dd 'tháng' MM 'năm' yyyy",
     medium: 'dd MMM yyyy',
-    rentalSchedule: 'HH:mm EEEE dd/MM',
     short: 'dd/MM/yyyy',
     shortDateTime: 'dd/MM HH:mm',
     time: 'HH:mm',
   },
 } as const;
 
-export const formatDate = (date: Date | string, formatType: keyof typeof LOCALE.dateFormats = 'short'): string => {
+export const formatDate = (date: Date | string, formatType: keyof typeof LOCALE.dateFormats = 'datetime'): string => {
   const d = typeof date === 'string' ? new Date(date) : date;
   return format(d, LOCALE.dateFormats[formatType], { locale: vi });
 };

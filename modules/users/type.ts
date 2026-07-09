@@ -8,8 +8,13 @@ export const UserActivityStatus = {
   Inactive: 'INACTIVE',
 } as const;
 
+export enum UserSortBy {
+  CREATED_AT = 'createdAt',
+  FULL_NAME = 'fullName',
+  EMAIL = 'email',
+  ACTIVITY_STATUS = 'activityStatus',
+}
 export type UserActivityStatus = (typeof UserActivityStatus)[keyof typeof UserActivityStatus];
-
 
 export interface IUserRoleOut {
   id: string;
@@ -17,7 +22,7 @@ export interface IUserRoleOut {
   name: string;
 }
 
-export interface IUserOut {
+export type IUserOut = {
   id: string;
   email: string;
   fullName: string;
@@ -28,11 +33,13 @@ export interface IUserOut {
   updatedAt: string;
   deletedAt: string | null;
   avatar?: string | null;
-}
+};
 
 export interface IGetUsersParams extends DefaultParamsRequest {
-  status?: UserActivityStatus;
+  activityStatus?: UserActivityStatus;
   roleCode?: string;
+  excludeRoleCode?: string;
+  sortBy?: UserSortBy;
 }
 
 export interface ICreateUserReq {

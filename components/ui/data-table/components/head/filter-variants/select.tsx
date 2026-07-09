@@ -29,7 +29,7 @@ export function SelectFilterField<TData extends RowData, TValue>({
   return (
     <div className="flex items-center gap-1">
       <Select
-        value={value || undefined}
+        value={value}
         onValueChange={(next) => column.setFilterValue(next || undefined)}
       >
         <SelectTrigger

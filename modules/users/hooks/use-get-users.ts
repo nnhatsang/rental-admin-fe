@@ -8,7 +8,7 @@ export const useGetUsers = (params: IGetUsersParams) => {
     queryKey: userQueryKeys.list(params),
     queryFn: async () => {
       const { data } = await requestGetUsers(params);
-      return data;
+      return data.data;
     },
     placeholderData: (previousData) => previousData, // Giữ UI mượt khi đổi trang
   });

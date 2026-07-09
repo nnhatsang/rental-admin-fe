@@ -1,19 +1,20 @@
-"use client"
+'use client';
 
-import type * as React from "react"
-import type { RowData } from "@tanstack/react-table"
+import type { RowData } from '@tanstack/react-table';
+import type * as React from 'react';
 
-import { DataTableExportMenu } from "../menus/data-table-export-menu"
-import { DataTableFilterPanel } from "../menus/data-table-filter-panel"
-import { DataTableGlobalFilter } from "./data-table-global-filter"
+import type { DataTableInstance } from '../../core/types';
+import { DataTableExportMenu } from '../menus/data-table-export-menu';
+import { DataTableFilterPanel } from '../menus/data-table-filter-panel';
 import {
   DataTableAdvancedFilterToggle,
   DataTableDensityToggle,
   DataTableFilterToggle,
   DataTableFullscreenToggle,
-} from "./controls"
-import { DataTableViewOptions } from "./data-table-view-options"
-import type { DataTableInstance } from "../../core/types"
+} from './controls';
+import { DataTableFacetedFilter } from './data-table-faceted-filter';
+import { DataTableGlobalFilter } from './data-table-global-filter';
+import { DataTableViewOptions } from './data-table-view-options';
 
 /**
  * Top toolbar. Left region: title slot + consumer toolbar actions. Right
@@ -25,16 +26,15 @@ export function DataTableToolbar<TData extends RowData>({
   toolbarRef,
   searchInputRef,
 }: {
-  table: DataTableInstance<TData>
+  table: DataTableInstance<TData>;
   /** Optional ref forwarded to the toolbar root. Defaults to the instance's
    *  `topToolbarRef` when rendered by `DataTable`. */
-  toolbarRef?: React.Ref<HTMLDivElement>
+  toolbarRef?: React.Ref<HTMLDivElement>;
   /** Optional ref forwarded to the global-search input. Defaults to the
    *  instance's `searchInputRef` when rendered by `DataTable`. */
-  searchInputRef?: React.RefObject<HTMLInputElement | null>
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 }) {
   const {
-    title,
     renderToolbarActions,
     renderToolbarInternalActions,
     enableToolbarInternalActions,
@@ -48,70 +48,52 @@ export function DataTableToolbar<TData extends RowData>({
     enableDensityToggle,
     enableFullscreenToggle,
     exportFileName,
-  } = table.cnTable
+    positionToolbarActions,
+  } = table.cnTable;
 
-  const anyFilterable = table
-    .getAllColumns()
-    .some((column) => column.getCanFilter())
+  const anyFilterable = table.getAllColumns().some((column) => column.getCanFilter());
+  const facetedFilterColumns = table.getAllLeafColumns().filter((column) => {
+    const variant = column.columnDef.meta?.variant;
+    return column.getCanFilter() && (variant === 'select' || variant === 'multi-select');
+  });
 
-  const showGlobalFilter = enableGlobalFilter && positionGlobalFilter !== "none"
+  const showGlobalFilter = enableGlobalFilter && positionGlobalFilter !== 'none';
 
   return (
     <>
-      <div
-        ref={toolbarRef}
-        data-slot="data-table-toolbar"
-        className="flex items-start justify-between gap-3 py-1 px-4"
-      >
-        <div className="flex min-h-9 flex-1 flex-wrap items-center gap-2">
-          {showGlobalFilter && positionGlobalFilter === "left" && (
-            <DataTableGlobalFilter
-              table={table}
-              searchInputRef={searchInputRef}
-            />
+      <div ref={toolbarRef} data-slot="data-table-toolbar" className="grid gap-3 px-4 py-1 md:grid-cols-[1fr_auto]">
+        <div className="flex min-h-9 flex-wrap items-center gap-2">
+          {showGlobalFilter && positionGlobalFilter === 'left' && (
+            <DataTableGlobalFilter table={table} searchInputRef={searchInputRef} />
           )}
-          {title != null && (
-            <div className="text-sm font-semibold tracking-wide">{title}</div>
-          )}
-          {renderToolbarActions?.({ table })}
+          {enableColumnFilters &&
+            columnFilterDisplayMode === 'custom' &&
+            facetedFilterColumns.map((column) => (
+              <DataTableFacetedFilter key={column.id} column={column} table={table} />
+            ))}
+          {positionToolbarActions === 'left' && renderToolbarActions && renderToolbarActions({ table })}
         </div>
 
         {enableToolbarInternalActions && (
           <div
             data-slot="data-table-toolbar-actions"
-            className="flex shrink-0 items-center gap-1.5"
+            className="flex flex-wrap items-center justify-start gap-1.5 md:justify-end"
           >
             {renderToolbarInternalActions ? (
               renderToolbarInternalActions({ table })
             ) : (
               <>
-                {showGlobalFilter && positionGlobalFilter === "right" && (
-                  <DataTableGlobalFilter
-                    table={table}
-                    searchInputRef={searchInputRef}
-                  />
+                {showGlobalFilter && positionGlobalFilter === 'right' && (
+                  <DataTableGlobalFilter table={table} searchInputRef={searchInputRef} />
                 )}
-                {enableColumnFilters &&
-                  anyFilterable &&
-                  columnFilterDisplayMode === "subheader" && (
-                    <DataTableFilterToggle table={table} />
-                  )}
-                {enableAdvancedFilter && (
-                  <DataTableAdvancedFilterToggle table={table} />
+                {enableColumnFilters && anyFilterable && columnFilterDisplayMode === 'subheader' && (
+                  <DataTableFilterToggle table={table} />
                 )}
+                {enableAdvancedFilter && <DataTableAdvancedFilterToggle table={table} />}
                 {enableColumnActions && <DataTableViewOptions table={table} />}
-                {enableExport && (
-                  <DataTableExportMenu
-                    table={table}
-                    fileName={exportFileName}
-                  />
-                )}
-                {enableDensityToggle && (
-                  <DataTableDensityToggle table={table} />
-                )}
-                {enableFullscreenToggle && (
-                  <DataTableFullscreenToggle table={table} />
-                )}
+                {enableExport && <DataTableExportMenu table={table} fileName={exportFileName} />}
+                {enableDensityToggle && <DataTableDensityToggle table={table} />}
+                {enableFullscreenToggle && <DataTableFullscreenToggle table={table} />}
               </>
             )}
           </div>
@@ -119,5 +101,5 @@ export function DataTableToolbar<TData extends RowData>({
       </div>
       {enableAdvancedFilter && <DataTableFilterPanel table={table} />}
     </>
-  )
+  );
 }

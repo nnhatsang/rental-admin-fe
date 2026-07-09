@@ -1,30 +1,28 @@
-"use client"
+'use client';
 
-import { DndContext } from "@dnd-kit/core"
-import { type RowData } from "@tanstack/react-table"
-import * as React from "react"
+import { DndContext } from '@dnd-kit/core';
+import { type RowData } from '@tanstack/react-table';
+import * as React from 'react';
 
-import { Table, TableCaption } from "@/components/ui/table"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { Table, TableCaption } from '@/components/ui/table';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-import { DataTableBody } from "../components/body/data-table-body"
-import {
-  DataTableFooter,
-  hasFooter,
-} from "../components/body/data-table-footer"
-import { DataTableEditModal } from "../components/editing/data-table-edit-modal"
-import { DataTableHeader } from "../components/head/data-table-header"
-import { DataTableAlertBanner } from "../components/toolbar/data-table-alert-banner"
-import { DataTableBottomToolbar } from "../components/toolbar/data-table-bottom-toolbar"
-import { DataTableDropToGroupZone } from "../components/toolbar/data-table-grouping"
-import { DataTablePagination } from "../components/toolbar/data-table-pagination"
-import { DataTableToolbar } from "../components/toolbar/data-table-toolbar"
-import { useGridNavigation } from "../hooks/use-grid-navigation"
-import { useTableDnd } from "../hooks/use-table-dnd"
-import { useTableVirtualizers } from "../hooks/use-table-virtualizers"
-import { getColumnSizeVars } from "../utils/column-styles"
-import { type DataTableInstance } from "./types"
+import { DataTableBody } from '../components/body/data-table-body';
+import { DataTableFooter, hasFooter } from '../components/body/data-table-footer';
+import { DataTableEditModal } from '../components/editing/data-table-edit-modal';
+import { DataTableHeader } from '../components/head/data-table-header';
+import { DataTableAlertBanner } from '../components/toolbar/data-table-alert-banner';
+import { DataTableBottomToolbar } from '../components/toolbar/data-table-bottom-toolbar';
+import { DataTableDropToGroupZone } from '../components/toolbar/data-table-grouping';
+import { DataTablePagination } from '../components/toolbar/data-table-pagination';
+import { DataTableToolbar } from '../components/toolbar/data-table-toolbar';
+import { useGridNavigation } from '../hooks/use-grid-navigation';
+import { useTableDnd } from '../hooks/use-table-dnd';
+import { useTableVirtualizers } from '../hooks/use-table-virtualizers';
+import { getColumnSizeVars } from '../utils/column-styles';
+import { type DataTableInstance } from './types';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../../card';
 
 /**
  * Body wrapper that freezes during an active column resize. With
@@ -35,19 +33,16 @@ import { type DataTableInstance } from "./types"
  */
 const MemoizedDataTableBody = React.memo(
   DataTableBody,
-  (_prev, next) =>
-    next.table.getState().columnSizingInfo.isResizingColumn !== false
-) as typeof DataTableBody
+  (_prev, next) => next.table.getState().columnSizingInfo.isResizingColumn !== false,
+) as typeof DataTableBody;
 
-interface DataTableProps<
-  TData extends RowData,
-> extends React.ComponentProps<"div"> {
-  table: DataTableInstance<TData>
+interface DataTableProps<TData extends RowData> extends React.ComponentProps<'div'> {
+  table: DataTableInstance<TData>;
   /** Page-size options for the bottom pagination control. */
-  pageSizeOptions?: number[]
+  pageSizeOptions?: number[];
   /** Extra classes for the scrollable table surface (e.g. a max-height to
    *  engage the sticky header/footer or to bound a virtualized list). */
-  surfaceClassName?: string
+  surfaceClassName?: string;
 }
 
 /**
@@ -80,35 +75,32 @@ export function DataTable<TData extends RowData>({
     enableKeyboardNavigation,
     renderCaption,
     renderTopToolbar,
+    positionToolbarActions,
+    renderToolbarActions,
     refs,
-  } = table.cnTable
+    title,
+    description,
+  } = table.cnTable;
 
-  const { ref: gridRef, onKeyDown } = useGridNavigation<HTMLDivElement>(
-    enableKeyboardNavigation
-  )
-  const { sensors, collisionDetection, handleDragEnd } = useTableDnd(table)
-  const { rowVirtualizer, virtualItems, virtualColumns, withColumnSpacers } =
-    useTableVirtualizers(table, gridRef)
+  const { ref: gridRef, onKeyDown } = useGridNavigation<HTMLDivElement>(enableKeyboardNavigation);
+  const { sensors, collisionDetection, handleDragEnd } = useTableDnd(table);
+  const { rowVirtualizer, virtualItems, virtualColumns, withColumnSpacers } = useTableVirtualizers(table, gridRef);
 
-  const hasRows =
-    table.getTopRows().length +
-      table.getCenterRows().length +
-      table.getBottomRows().length >
-    0
-  const showFooter = hasFooter(table)
+  const hasRows = table.getTopRows().length + table.getCenterRows().length + table.getBottomRows().length > 0;
+  const showFooter = hasFooter(table);
 
-  const columnSizing = table.getState().columnSizing
-  const columnSizingInfo = table.getState().columnSizingInfo
+  const columnSizing = table.getState().columnSizing;
+  const columnSizingInfo = table.getState().columnSizingInfo;
   const columnSizeVars = React.useMemo(
     () => (enableColumnResizing ? getColumnSizeVars(table) : {}),
     // columnSizing/Info are intentional triggers: recompute vars on resize.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [enableColumnResizing, table, columnSizing, columnSizingInfo]
-  )
+    [enableColumnResizing, table, columnSizing, columnSizingInfo],
+  );
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div
+      <Card
         ref={refs.tablePaperRef}
         data-slot="data-table"
         className={cn(
@@ -119,110 +111,136 @@ export function DataTable<TData extends RowData>({
         data-density={density}
         {...props}
       >
-        {renderTopToolbar
-          ? renderTopToolbar({ table })
-          : enableTopToolbar && (
-              <DataTableToolbar table={table} toolbarRef={refs.topToolbarRef} searchInputRef={refs.searchInputRef} />
-            )}
-        {positionToolbarAlertBanner === 'top' && <DataTableAlertBanner table={table} />}
+        <CardHeader
+          className={cn(
+            'border-b has-data-[slot=card-action]:grid-cols-1 md:has-data-[slot=card-action]:grid-cols-[1fr_auto]',
+          )}
+        >
+          <div className="grid auto-rows-min gap-1.5">
+            {typeof title === 'string' ? <CardTitle className="text-xl leading-none">{title}</CardTitle> : title}
+            {description &&
+              (typeof description === 'string' ? (
+                <CardDescription className="max-w-sm leading-snug">{description}</CardDescription>
+              ) : (
+                description
+              ))}
+          </div>
+          {positionToolbarActions === 'top-right' && renderToolbarActions && (
+            <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch md:col-start-2 md:row-span-2 md:row-start-1 md:w-auto md:flex-nowrap md:justify-end md:justify-self-end">
+              {renderToolbarActions({ table })}
+            </CardAction>
+          )}
+        </CardHeader>
+        <CardContent className={cn('flex flex-col gap-4 px-0')}>
+          {renderTopToolbar
+            ? renderTopToolbar({ table })
+            : enableTopToolbar && (
+                <DataTableToolbar table={table} toolbarRef={refs.topToolbarRef} searchInputRef={refs.searchInputRef} />
+              )}
+          {positionToolbarAlertBanner === 'top' && <DataTableAlertBanner table={table} />}
 
-        {enablePagination && (positionPagination === 'top' || positionPagination === 'both') && (
-          <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
-        )}
-
-        <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={handleDragEnd}>
-          {enableGrouping && (positionToolbarDropZone === 'top' || positionToolbarDropZone === 'both') && (
-            <DataTableDropToGroupZone table={table} />
+          {enablePagination && (positionPagination === 'top' || positionPagination === 'both') && (
+            <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
           )}
 
-          <div
-            ref={(node) => {
-              gridRef.current = node;
-              refs.tableContainerRef.current = node;
-            }}
-            onKeyDown={onKeyDown}
-            data-slot="data-table-surface"
-            className={cn(
-              // This surface is the single scroll container for both axes, so
-              // the sticky header/footer engage and the horizontal scrollbar
-              // stays pinned to the visible bottom. Neutralize the shadcn
-              // <Table> wrapper's own overflow so it doesn't become a second
-              // (unbounded) scroll container that breaks sticky positioning.
-              'relative overflow-auto border-y *:data-[slot=table-container]:overflow-visible',
-              enableRowVirtualization && 'max-h-150',
-              surfaceClassName,
+          <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragEnd={handleDragEnd}>
+            {enableGrouping && (positionToolbarDropZone === 'top' || positionToolbarDropZone === 'both') && (
+              <DataTableDropToGroupZone table={table} />
             )}
-          >
-            {showProgressBars && (
-              <div
-                data-slot="data-table-progress"
-                className="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-primary/20"
-                role="presentation"
-              >
-                {/* @keyframes can't go in an inline style attribute, so the rule
+
+            <div
+              ref={(node) => {
+                gridRef.current = node;
+                refs.tableContainerRef.current = node;
+              }}
+              onKeyDown={onKeyDown}
+              data-slot="data-table-surface"
+              className={cn(
+                // This surface is the single scroll container for both axes, so
+                // the sticky header/footer engage and the horizontal scrollbar
+                // stays pinned to the visible bottom. Neutralize the shadcn
+                // <Table> wrapper's own overflow so it doesn't become a second
+                // (unbounded) scroll container that breaks sticky positioning.
+                'relative overflow-auto border-y *:data-[slot=table-container]:overflow-visible',
+                enableRowVirtualization && 'max-h-150',
+                surfaceClassName,
+              )}
+            >
+              {showProgressBars && (
+                <div
+                  data-slot="data-table-progress"
+                  className="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-primary/20"
+                  role="presentation"
+                >
+                  {/* @keyframes can't go in an inline style attribute, so the rule
                     lives in this co-located <style> — keeping the table
                     self-contained (no globals.css / registry CSS needed). The
                     animation itself is applied inline; reduced motion stops it. */}
-                <style>
-                  {
-                    '@keyframes data-table-progress{from{transform:translateX(-100%)}to{transform:translateX(400%)}}@media (prefers-reduced-motion:reduce){[data-slot=data-table-progress-bar]{animation:none!important}}'
-                  }
-                </style>
-                <div
-                  data-slot="data-table-progress-bar"
-                  className="h-full w-1/3 bg-primary"
-                  style={{
-                    animation: 'data-table-progress 1.1s ease-in-out infinite',
-                  }}
-                />
-              </div>
-            )}
-
-            <Table
-              style={{
-                ...columnSizeVars,
-                // Fixed layout makes per-column widths authoritative (auto
-                // layout would stretch/redistribute them and ignore a resize).
-                // `max(100%, totalSize)` keeps the table at least as wide as the
-                // surface: when the columns are narrower than the surface, fixed
-                // layout distributes the slack proportionally so they fill it
-                // (no trailing empty space); when they outgrow the surface, the
-                // table exceeds 100% and scrolls horizontally.
-                ...(enableColumnResizing ? { width: `max(100%, ${table.getTotalSize()}px)` } : null),
-              }}
-              className={
-                (cn(enableColumnResizing && 'table-fixed'),
-                "**:data-[slot='table-cell']:px-4 **:data-[slot='table-head']:px-4")
-              }
-            >
-              {renderCaption && <TableCaption>{renderCaption({ table })}</TableCaption>}
-              <DataTableHeader table={table} virtualColumns={virtualColumns} withColumnSpacers={withColumnSpacers} />
-              <MemoizedDataTableBody
-                table={table}
-                rowVirtualizer={rowVirtualizer}
-                virtualItems={virtualItems}
-                virtualColumns={virtualColumns}
-                withColumnSpacers={withColumnSpacers}
-              />
-              {showFooter && (
-                <DataTableFooter table={table} virtualColumns={virtualColumns} withColumnSpacers={withColumnSpacers} />
+                  <style>
+                    {
+                      '@keyframes data-table-progress{from{transform:translateX(-100%)}to{transform:translateX(400%)}}@media (prefers-reduced-motion:reduce){[data-slot=data-table-progress-bar]{animation:none!important}}'
+                    }
+                  </style>
+                  <div
+                    data-slot="data-table-progress-bar"
+                    className="h-full w-1/3 bg-primary"
+                    style={{
+                      animation: 'data-table-progress 1.1s ease-in-out infinite',
+                    }}
+                  />
+                </div>
               )}
-            </Table>
 
-            {showLoadingOverlay && hasRows && <div className="absolute inset-0 z-10 bg-background/40" aria-hidden />}
-          </div>
+              <Table
+                style={{
+                  ...columnSizeVars,
+                  // Fixed layout makes per-column widths authoritative (auto
+                  // layout would stretch/redistribute them and ignore a resize).
+                  // `max(100%, totalSize)` keeps the table at least as wide as the
+                  // surface: when the columns are narrower than the surface, fixed
+                  // layout distributes the slack proportionally so they fill it
+                  // (no trailing empty space); when they outgrow the surface, the
+                  // table exceeds 100% and scrolls horizontally.
+                  ...(enableColumnResizing ? { width: `max(100%, ${table.getTotalSize()}px)` } : null),
+                }}
+                className={
+                  (cn(enableColumnResizing && 'table-fixed'),
+                  "**:data-[slot='table-cell']:px-4 **:data-[slot='table-head']:px-4")
+                }
+              >
+                {renderCaption && <TableCaption>{renderCaption({ table })}</TableCaption>}
+                <DataTableHeader table={table} virtualColumns={virtualColumns} withColumnSpacers={withColumnSpacers} />
+                <MemoizedDataTableBody
+                  table={table}
+                  rowVirtualizer={rowVirtualizer}
+                  virtualItems={virtualItems}
+                  virtualColumns={virtualColumns}
+                  withColumnSpacers={withColumnSpacers}
+                />
+                {showFooter && (
+                  <DataTableFooter
+                    table={table}
+                    virtualColumns={virtualColumns}
+                    withColumnSpacers={withColumnSpacers}
+                  />
+                )}
+              </Table>
 
-          {enableGrouping && (positionToolbarDropZone === 'bottom' || positionToolbarDropZone === 'both') && (
-            <DataTableDropToGroupZone table={table} />
-          )}
-        </DndContext>
+              {showLoadingOverlay && hasRows && <div className="absolute inset-0 z-10 bg-background/40" aria-hidden />}
+            </div>
 
-        {positionToolbarAlertBanner === 'bottom' && <DataTableAlertBanner table={table} />}
+            {enableGrouping && (positionToolbarDropZone === 'bottom' || positionToolbarDropZone === 'both') && (
+              <DataTableDropToGroupZone table={table} />
+            )}
+          </DndContext>
 
-        <DataTableBottomToolbar table={table} pageSizeOptions={pageSizeOptions} />
+          {positionToolbarAlertBanner === 'bottom' && <DataTableAlertBanner table={table} />}
 
-        <DataTableEditModal table={table} />
-      </div>
+          <DataTableBottomToolbar table={table} pageSizeOptions={pageSizeOptions} />
+
+          <DataTableEditModal table={table} />
+        </CardContent>
+      </Card>
     </TooltipProvider>
   );
 }
