@@ -13,7 +13,8 @@ export function CheckboxFilterField<TData extends RowData, TValue>({
 }: FilterFieldProps<TData, TValue>) {
   const { localization } = table.cnTable
   const value = column.getFilterValue()
-  const checked = value === true
+  // const checked = value === true
+  const checked = value === true || value === 'true';
   return (
     <label className="flex h-8 items-center gap-2 text-xs text-muted-foreground">
       <Checkbox

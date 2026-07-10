@@ -90,6 +90,8 @@ const columns: ColumnDef<IRoleOut>[] = [
     cell: ({ row }) => <SystemBadge isSystem={row.original.isSystem} />,
     meta: {
       variant: 'checkbox',
+      label: 'Quyền hệ thống',
+
     },
   },
   {

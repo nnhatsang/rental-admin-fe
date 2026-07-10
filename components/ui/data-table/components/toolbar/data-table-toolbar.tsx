@@ -52,10 +52,7 @@ export function DataTableToolbar<TData extends RowData>({
   } = table.cnTable;
 
   const anyFilterable = table.getAllColumns().some((column) => column.getCanFilter());
-  const facetedFilterColumns = table.getAllLeafColumns().filter((column) => {
-    const variant = column.columnDef.meta?.variant;
-    return column.getCanFilter() && (variant === 'select' || variant === 'multi-select');
-  });
+  const facetedFilterColumns = table.getAllLeafColumns().filter((column) => column.getCanFilter());
 
   const showGlobalFilter = enableGlobalFilter && positionGlobalFilter !== 'none';
 
