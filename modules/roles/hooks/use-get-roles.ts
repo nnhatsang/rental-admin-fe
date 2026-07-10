@@ -8,7 +8,7 @@ export const useGetRoles = (params: IGetRolesParams) => {
     queryKey: roleQueryKeys.list(params),
     queryFn: async () => {
       const { data } = await requestGetRoles(params);
-      return data;
+      return data.data;
     },
     placeholderData: (previousData) => previousData,
   });

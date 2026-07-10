@@ -61,8 +61,12 @@ export function DataTableToolbar<TData extends RowData>({
 
   return (
     <>
-      <div ref={toolbarRef} data-slot="data-table-toolbar" className="grid gap-3 px-4 py-1 md:grid-cols-[1fr_auto]">
-        <div className="flex min-h-9 flex-wrap items-center gap-2">
+      <div
+        ref={toolbarRef}
+        data-slot="data-table-toolbar"
+        className="grid min-w-0 gap-3 px-4 py-1 md:grid-cols-[minmax(0,1fr)_auto]"
+      >
+        <div className="flex min-h-9 min-w-0 flex-wrap items-center gap-2">
           {showGlobalFilter && positionGlobalFilter === 'left' && (
             <DataTableGlobalFilter table={table} searchInputRef={searchInputRef} />
           )}
@@ -77,7 +81,7 @@ export function DataTableToolbar<TData extends RowData>({
         {enableToolbarInternalActions && (
           <div
             data-slot="data-table-toolbar-actions"
-            className="flex flex-wrap items-center justify-start gap-1.5 md:justify-end"
+            className="flex min-w-0 flex-wrap items-center justify-start gap-1.5 md:justify-end"
           >
             {renderToolbarInternalActions ? (
               renderToolbarInternalActions({ table })

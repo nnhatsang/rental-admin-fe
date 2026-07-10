@@ -1,19 +1,19 @@
 'use client';
 
-import { DataTable } from '@/components/ui/data-table';
-import { UserDialogs } from './dialog';
-import { useUsersState } from './hooks/user-logic';
-import { UsersProvider } from './users-provider';
-import { BulkActions } from './bulk-action';
+import { DataTable } from "@/components/ui/data-table";
+import { useUsersLogic } from "./hooks/user-logic";
+import { BulkActions } from "./bulk-action";
+import { UserDialogs } from "./dialog";
+import { UsersProvider } from "./users-provider";
 
-function UsersContent() {
-  const state = useUsersState();
+function Content() {
+  const { table } = useUsersLogic();
 
   return (
     <>
-      <DataTable table={state.table} />
-      <BulkActions table={state.table} />
-      <UserDialogs table={state.table} />
+      <DataTable table={table} />
+      <BulkActions table={table} />
+      <UserDialogs table={table} />
     </>
   );
 }
@@ -21,9 +21,7 @@ function UsersContent() {
 export default function Users() {
   return (
     <UsersProvider>
-      <UsersContent />
+      <Content />
     </UsersProvider>
   );
 }
-
-export { Users };

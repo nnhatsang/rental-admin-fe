@@ -1,4 +1,4 @@
-import { Roles } from '@/modules/roles';
+import Roles from '@/modules/roles';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import type { Metadata } from 'next';
 

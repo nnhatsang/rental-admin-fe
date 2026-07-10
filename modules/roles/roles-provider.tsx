@@ -1,4 +1,14 @@
-import React, { createContext, Dispatch, SetStateAction, useContext, useMemo, useState } from 'react';
+'use client';
+
+import {
+  createContext,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 import { IRoleOut } from './type';
 import useDialogState from '@/hooks/use-dialog-state';
 
@@ -10,14 +20,15 @@ type RolesContextValuse = {
   setCurrentRow: Dispatch<SetStateAction<IRoleOut | null>>;
 };
 const RolesContext = createContext<RolesContextValuse | null>(null);
-export function RolesProvider() {
+
+export function RolesProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useDialogState<RolesDialogType>(null);
   const [currentRow, setCurrentRow] = useState<IRoleOut | null>(null);
   const value = useMemo(
     () => ({ open, setOpen, currentRow, setCurrentRow }),
     [open, setOpen, currentRow, setCurrentRow],
   );
-  return <RolesContext.Provider value={value}></RolesContext.Provider>;
+  return <RolesContext value={value}>{children}</RolesContext>;
 }
 
 export function useRoles() {
