@@ -30,7 +30,7 @@ const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ 
         )}
       >
         <AdminHeader />
-        <div className="h-full p-4 has-data-[content-padding=false]:p-0 md:p-6 md:has-data-[content-padding=false]:p-0">
+        <div className="h-full min-w-0 p-4 has-data-[content-padding=false]:p-0 md:p-6 md:has-data-[content-padding=false]:p-0">
           <PermissionProvider>
             {children}
             </PermissionProvider>
