@@ -4,10 +4,10 @@ import { useCallback, useMemo, useState } from 'react';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
-import { roleColumns, type RoleActionHandlers } from '../columns';
 import { useDeleteRole } from './use-delete-role';
 import { useGetRoles } from './use-get-roles';
 import type { IRoleOut } from '../type';
+import columns from '../columns';
 
 export interface IRolesState {
   table: DataTableInstance<IRoleOut>;
@@ -34,16 +34,14 @@ export const useRolesState = (): IRolesState => {
   // state, so selection is kept here for bulk/delete flows.
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  // TODO(use-table-url): when the URL-state hook is finalized, this module only
-  // needs to remap query/filter config here; table UI state should remain local.
   const tableQuery = useTableQueryState({
     defaultPageSize: 10,
   });
 
   const { data, isLoading, isFetching } = useGetRoles(tableQuery.queryParams);
-  const rolesData = data?.data?.items ?? [];
-  const totalCount = data?.data?.pagination?.total ?? 0;
-  const pageCount = data?.data?.pagination?.totalPage ?? 1;
+  const rolesData = data?.items ?? [];
+  const totalCount = data?.pagination?.total ?? 0;
+  const pageCount = data?.pagination?.totalPage ?? 1;
 
   const { mutate: deleteRole, isPending: isDeleting } = useDeleteRole();
 
@@ -71,14 +69,9 @@ export const useRolesState = (): IRolesState => {
     });
   }, [deleteRole, selectedRole]);
 
-  const handlers: RoleActionHandlers = useMemo(
-    () => ({ handleOpenEdit, handleOpenDelete }),
-    [handleOpenDelete, handleOpenEdit],
-  );
-
   const table = useDataTable<IRoleOut>({
     data: rolesData,
-    columns: roleColumns,
+    columns: columns,
     pageCount,
     state: {
       pagination: tableQuery.pagination,
@@ -105,7 +98,6 @@ export const useRolesState = (): IRolesState => {
     onSortingChange: tableQuery.onSortingChange,
     onColumnFiltersChange: tableQuery.onColumnFiltersChange,
     onGlobalFilterChange: tableQuery.onGlobalFilterChange,
-    meta: { handlers },
   });
 
   return {

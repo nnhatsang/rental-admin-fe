@@ -1,5 +1,4 @@
 import { DefaultParamsRequest } from '@/types/api';
-import type { RoleCode } from '@/utils/consts/rbac.const';
 
 export const UserActivityStatus = {
   Active: 'ACTIVE',
@@ -61,7 +60,7 @@ export interface IUpdateUserActivityStatusReq {
 }
 
 export interface IUpdateUserRolesReq {
-  roleCodes: RoleCode[] | string[];
+  roleCodes: string[];
 }
 
 export interface IResetUserPasswordReq {

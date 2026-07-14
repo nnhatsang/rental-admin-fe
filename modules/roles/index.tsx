@@ -1,16 +1,18 @@
 'use client';
 
 import { DataTable } from '@/components/ui/data-table';
-import { useRoleLogic } from './hooks/role-logic';
+import { useRoleLogic } from './hooks/use-role-logic';
 import { RolesProvider } from './roles-provider';
+import { RoleDialogs } from './dialog';
+import { BulkActions } from './bulk-action';
 
 function Content() {
   const { table } = useRoleLogic();
   return (
     <>
       <DataTable table={table} />
-      {/* <BulkActions table={state.table} />
-      <UserDialogs table={state.table} /> */}
+      <BulkActions table={table} />
+      <RoleDialogs table={table} />
     </>
   );
 }

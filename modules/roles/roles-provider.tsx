@@ -12,7 +12,7 @@ import {
 import { IRoleOut } from './type';
 import useDialogState from '@/hooks/use-dialog-state';
 
-export type RolesDialogType = 'add' | 'edit' | 'delete' | 'delete-multi' | 'assgin';
+export type RolesDialogType = 'view' | 'add' | 'edit' | 'delete' | 'delete-multi' | 'assgin';
 type RolesContextValuse = {
   open: RolesDialogType | null;
   setOpen: (str: RolesDialogType | null) => void;

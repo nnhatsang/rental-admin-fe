@@ -15,6 +15,15 @@ import {
 import { DataTableFacetedFilter } from './data-table-faceted-filter';
 import { DataTableGlobalFilter } from './data-table-global-filter';
 import { DataTableViewOptions } from './data-table-view-options';
+import { Button } from '@/components/ui/button';
+import { IconX } from '@tabler/icons-react';
+
+function hasFilterValue(value: unknown) {
+  if (Array.isArray(value)) return value.some(hasFilterValue);
+  if (value == null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  return true;
+}
 
 /**
  * Top toolbar. Left region: title slot + consumer toolbar actions. Right
@@ -49,12 +58,15 @@ export function DataTableToolbar<TData extends RowData>({
     enableFullscreenToggle,
     exportFileName,
     positionToolbarActions,
+    readOnly,
+    localization,
   } = table.cnTable;
 
   const anyFilterable = table.getAllColumns().some((column) => column.getCanFilter());
   const facetedFilterColumns = table.getAllLeafColumns().filter((column) => column.getCanFilter());
 
   const showGlobalFilter = enableGlobalFilter && positionGlobalFilter !== 'none';
+  const isFiltered = table.getState().columnFilters.some((filter) => hasFilterValue(filter.value));
 
   return (
     <>
@@ -72,9 +84,33 @@ export function DataTableToolbar<TData extends RowData>({
             facetedFilterColumns.map((column) => (
               <DataTableFacetedFilter key={column.id} column={column} table={table} />
             ))}
-          {positionToolbarActions === 'left' && renderToolbarActions && renderToolbarActions({ table })}
+          {isFiltered && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                table.resetColumnFilters();
+              }}
+              className="h-8 px-2 lg:px-3"
+            >
+              {localization.clearFilter}
+              <IconX className="ms-2 h-4 w-4" />
+            </Button>
+          )}
+          {positionToolbarActions === 'left' && renderToolbarActions && !readOnly && renderToolbarActions({ table })}
         </div>
-
+        {/* {isFiltered && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                table.setColumnFilters([]);
+                table.setGlobalFilter(undefined);
+              }}
+              className="h-8 px-2 lg:px-3"
+            >
+              {localization.clearFilter}
+              <IconX className="ms-2 h-4 w-4" />
+            </Button>
+          )} */}
         {enableToolbarInternalActions && (
           <div
             data-slot="data-table-toolbar-actions"

@@ -29,6 +29,7 @@ interface UseResolvedColumnsParams<TData extends RowData> {
   renderRowActionMenuItems: UseDataTableOptions<TData>["renderRowActionMenuItems"]
   positionActionsColumn: "first" | "last"
   enableEditing: boolean
+  readOnly: boolean
   editDisplayMode: EditDisplayMode
   localization: DataTableLocalization
   icons: DataTableIcons
@@ -56,6 +57,7 @@ export function useResolvedColumns<TData extends RowData>({
   renderRowActionMenuItems,
   positionActionsColumn,
   enableEditing,
+  readOnly,
   editDisplayMode,
   localization,
   icons,
@@ -86,19 +88,28 @@ export function useResolvedColumns<TData extends RowData>({
         )
       )
     }
+    const visibleColumns = readOnly
+      ? columns.filter((column) => {
+          const id = "id" in column ? column.id : undefined
+          const meta = column.meta as { isActionsColumn?: boolean } | undefined
+          return id !== "actions" && meta?.isActionsColumn !== true
+        })
+      : columns
     const showRowActions =
-      !!renderRowActions ||
+      !readOnly &&
+      (!!renderRowActions ||
       !!renderRowActionMenuItems ||
       (enableEditing &&
         (editDisplayMode === "row" || editDisplayMode === "modal"))
+      )
     if (showRowActions) {
       const actions = createRowActionsColumn<TData>(positionActionsColumn)
       if (positionActionsColumn === "first") leading.unshift(actions)
       else trailing.push(actions)
     }
     return leading.length > 0 || trailing.length > 0
-      ? [...leading, ...columns, ...trailing]
-      : columns
+      ? [...leading, ...visibleColumns, ...trailing]
+      : visibleColumns
   }, [
     columns,
     enableRowOrdering,
@@ -114,6 +125,7 @@ export function useResolvedColumns<TData extends RowData>({
     renderRowActionMenuItems,
     positionActionsColumn,
     enableEditing,
+    readOnly,
     editDisplayMode,
     localization,
     icons,

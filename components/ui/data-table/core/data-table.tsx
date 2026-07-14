@@ -80,6 +80,7 @@ export function DataTable<TData extends RowData>({
     refs,
     title,
     description,
+    readOnly,
   } = table.cnTable;
 
   const { ref: gridRef, onKeyDown } = useGridNavigation<HTMLDivElement>(enableKeyboardNavigation);
@@ -98,6 +99,9 @@ export function DataTable<TData extends RowData>({
     [enableColumnResizing, table, columnSizing, columnSizingInfo],
   );
 
+  const hasHeader =
+    !!title || !!description || (positionToolbarActions === 'top-right' && !readOnly && !!renderToolbarActions);
+
   return (
     <TooltipProvider delayDuration={300}>
       <Card
@@ -111,7 +115,7 @@ export function DataTable<TData extends RowData>({
         data-density={density}
         {...props}
       >
-        <CardHeader
+        {/* <CardHeader
           className={cn(
             'border-b has-data-[slot=card-action]:grid-cols-1 md:has-data-[slot=card-action]:grid-cols-[1fr_auto]',
           )}
@@ -125,12 +129,36 @@ export function DataTable<TData extends RowData>({
                 description
               ))}
           </div>
-          {positionToolbarActions === 'top-right' && renderToolbarActions && (
+          {positionToolbarActions === 'top-right' && !readOnly && renderToolbarActions && (
             <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch md:col-start-2 md:row-span-2 md:row-start-1 md:w-auto md:flex-nowrap md:justify-end md:justify-self-end">
               {renderToolbarActions({ table })}
             </CardAction>
           )}
-        </CardHeader>
+        </CardHeader> */}
+        {hasHeader && (
+          <CardHeader
+            className={cn(
+              'border-b has-data-[slot=card-action]:grid-cols-1 md:has-data-[slot=card-action]:grid-cols-[1fr_auto]',
+            )}
+          >
+            <div className="grid auto-rows-min gap-1.5">
+              {typeof title === 'string' ? <CardTitle className="text-xl leading-none">{title}</CardTitle> : title}
+
+              {description &&
+                (typeof description === 'string' ? (
+                  <CardDescription className="max-w-sm leading-snug">{description}</CardDescription>
+                ) : (
+                  description
+                ))}
+            </div>
+
+            {positionToolbarActions === 'top-right' && !readOnly && renderToolbarActions && (
+              <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch md:col-start-2 md:row-span-2 md:row-start-1 md:w-auto md:flex-nowrap md:justify-end md:justify-self-end">
+                {renderToolbarActions({ table })}
+              </CardAction>
+            )}
+          </CardHeader>
+        )}
         <CardContent className={cn('flex flex-col gap-4 px-0')}>
           {renderTopToolbar
             ? renderTopToolbar({ table })

@@ -41,14 +41,3 @@ export const PermissionCode = {
 
 export type PermissionCode = (typeof PermissionCode)[keyof typeof PermissionCode];
 
-export const RoleCode = {
-  Admin: 'ADMIN',
-  Manager: 'MANAGER',
-  Staff: 'STAFF',
-  Viewer: 'VIEWER',
-} as const;
-
-export type RoleCode = (typeof RoleCode)[keyof typeof RoleCode];
-
-export const PERMISSION_CODES = Object.values(PermissionCode);
-export const ROLE_CODES = Object.values(RoleCode);

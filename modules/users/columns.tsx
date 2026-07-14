@@ -1,5 +1,6 @@
 'use client';
 
+import { ProtectedAction } from '@/components/shared/protected-action';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,13 +13,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn, formatDate } from '@/lib/utils';
+import { PermissionCode } from '@/utils/consts/rbac.const';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import { IconDots, IconEdit, IconKey, IconKeyOff, IconLock, IconLockOpen, IconTrash } from '@tabler/icons-react';
+import {
+  IconDots,
+  IconEdit,
+  IconEye,
+  IconKey,
+  IconKeyOff,
+  IconLock,
+  IconLockOpen,
+  IconTrash,
+} from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import type { ComponentType } from 'react';
+import { useUpdateUserActivityStatus } from './hooks/use-update-user-activity-status';
 import type { IUserOut, UserActivityStatus as UserActivityStatusType } from './type';
 import { useUsers } from './users-provider';
-import { useUpdateUserActivityStatus } from './hooks/use-update-user-activity-status';
 
 export const statusMeta: Record<
   UserActivityStatusType,
@@ -81,7 +92,11 @@ export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
             <DropdownMenuItem
               key={key}
               disabled={isActive}
-              className={cn('flex items-center gap-2 mt-1 cursor-pointer', isActive && 'cursor-not-allowed', item.color)}
+              className={cn(
+                'flex items-center gap-2 mt-1 cursor-pointer',
+                isActive && 'cursor-not-allowed',
+                item.color,
+              )}
               onClick={() => {
                 update.mutate({ data: { activityStatus: key as UserActivityStatusType }, id: row.original.id });
               }}
@@ -130,35 +145,51 @@ export function UserActionsRow({ row }: DataTableRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem
-          onClick={() => {
-            setCurrentRow(row.original);
-            setOpen('edit');
-          }}
-        >
-          <IconEdit className="mr-2 size-4" />
-          {actions.EDIT}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => {
-            setCurrentRow(row.original);
-            setOpen('reset-password');
-          }}
-        >
-          <IconKey className="mr-2 size-4" />
-          {actions.RESET_PASSWORD}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={() => {
-            setCurrentRow(row.original);
-            setOpen('delete');
-          }}
-        >
-          <IconTrash className="mr-2 size-4" />
-          {actions.DELETE}
-        </DropdownMenuItem>
+        <ProtectedAction permission={PermissionCode.UsersRead}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('view');
+            }}
+          >
+            <IconEye className="mr-2 size-4" />
+            {actions.VIEW}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        <ProtectedAction permission={PermissionCode.UsersUpdate}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('edit');
+            }}
+          >
+            <IconEdit className="mr-2 size-4" />
+            {actions.EDIT}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        <ProtectedAction permission={PermissionCode.UsersUpdate}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('reset-password');
+            }}
+          >
+            <IconKey className="mr-2 size-4" />
+            {actions.RESET_PASSWORD}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        <ProtectedAction permission={PermissionCode.UsersDelete}>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('delete');
+            }}
+          >
+            <IconTrash className="mr-2 size-4" />
+            {actions.DELETE}
+          </DropdownMenuItem>
+        </ProtectedAction>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -209,6 +240,6 @@ export const columns: ColumnDef<IUserOut>[] = [
   {
     id: 'actions',
     cell: UserActionsRow,
-    meta: { disableColumnActions: true },
+    meta: { disableColumnActions: true, isActionsColumn: true },
   },
 ];

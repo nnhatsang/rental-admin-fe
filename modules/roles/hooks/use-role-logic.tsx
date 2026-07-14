@@ -9,6 +9,9 @@ import { RowSelectionState } from '@tanstack/react-table';
 import { useGetRoles } from './use-get-roles';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import columns from '../columns';
+import { Button } from '@/components/ui/button';
+import { IconPlus } from '@tabler/icons-react';
+import { List } from '@/utils/enums/list.enum';
 
 export interface IRoleLogic {
   table: DataTableInstance<IRoleOut>;
@@ -45,7 +48,6 @@ export const useRoleLogic = (): IRoleLogic => {
     },
     getRowId: (row) => row.id,
     defaultGlobalFilterMode: 'fuzzy',
-
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
@@ -57,24 +59,29 @@ export const useRoleLogic = (): IRoleLogic => {
     description: TITLE_PAGE.ROLES.DESCRIPTION,
     isLoading,
     showLoadingOverlay: isFetching,
+    initialState: {
+      columnPinning: {
+        right: ['actions'],
+      },
+    },
     onPaginationChange,
     onRowSelectionChange: setRowSelection,
     onSortingChange,
     onColumnFiltersChange,
     onGlobalFilterChange,
     renderToolbarActions: () => (
-      <></>
-      // <Button
-      //   size="lg"
-      //   onClick={() => {
-      //     setCurrentRow(null);
-      //     setOpen('add');
-      //   }}
-      // >
-      //   <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.USERS.ACTIONS.CREATE}
-      // </Button>
+      <Button
+        size="lg"
+        onClick={() => {
+          setCurrentRow(null);
+          setOpen('add');
+        }}
+      >
+        <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.ROLES.ACTIONS.CREATE}
+      </Button>
     ),
   });
+
   return {
     table,
   };

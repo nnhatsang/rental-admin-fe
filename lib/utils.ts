@@ -3,7 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { NavGroup, NavMainItem } from '@/components/layout/types';
-import { PermissionCode } from '@/utils/consts/rbac.const';
+import { canAccessPermissions } from '@/utils/consts/sidebar.const';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -66,21 +66,17 @@ export const formatDate = (date: Date | string, formatType: keyof typeof LOCALE.
   return format(d, LOCALE.dateFormats[formatType], { locale: vi });
 };
 
-const canAccess = (requiredPermissions: PermissionCode[] | undefined, userPermissions: string[]) => {
-  if (!requiredPermissions?.length) return true;
-
-  return requiredPermissions.some((permission) => userPermissions.includes(permission));
-};
-
 export const filterSidebarItemsByPermissions = (items: NavGroup[], userPermissions: string[]): NavGroup[] => {
   return items
     .map((group) => {
       const filteredItems = group.items
         .map((item) => {
-          const subItems = item.subItems?.filter((subItem) => canAccess(subItem.requiredPermissions, userPermissions));
+          const subItems = item.subItems?.filter((subItem) =>
+            canAccessPermissions(subItem.requiredPermissions, userPermissions),
+          );
           const hasVisibleSubItems = Boolean(subItems?.length);
 
-          if (!canAccess(item.requiredPermissions, userPermissions) && !hasVisibleSubItems) {
+          if (!canAccessPermissions(item.requiredPermissions, userPermissions) && !hasVisibleSubItems) {
             return null;
           }
 

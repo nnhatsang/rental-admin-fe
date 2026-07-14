@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isPublic) {
         try {
           await fetchProfile();
-        } catch (err) {
+      } catch (err) {
           console.error('Lỗi đồng bộ profile khi khởi tạo:', err);
         }
       }

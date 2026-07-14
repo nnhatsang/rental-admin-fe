@@ -25,15 +25,15 @@ export const useResetPassword = (token: string) => {
     mutationFn: async (values: IResetPasswordInput) => {
       await requestResetPassword(values);
     },
-    onError: (error) => {
-      applyApiFormErrors(form, error, {
-        fallbackMessage: ERROR_MESSAGES.AUTH.RESET_PASSWORD,
-        fieldMap: {
-          passwordConfirm: 'confirmPassword',
-          newPasswordConfirm: 'confirmPassword',
-        },
-      });
-    },
+    // onError: (error) => {
+    //   applyApiFormErrors(form, error, {
+    //     fallbackMessage: ERROR_MESSAGES.AUTH.RESET_PASSWORD,
+    //     fieldMap: {
+    //       passwordConfirm: 'confirmPassword',
+    //       newPasswordConfirm: 'confirmPassword',
+    //     },
+    //   });
+    // },
     onSuccess: () => {
       toast.success(SUCCESS_MESSAGES.AUTH.RESET_PASSWORD);
       router.push('/auth/login');

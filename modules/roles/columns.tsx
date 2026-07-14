@@ -1,6 +1,6 @@
 'use client';
 
-import { IconDots, IconDotsVertical, IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconDots, IconEdit, IconEye, IconTrash, IconUserPlus } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { formatDate } from '@/lib/utils';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import type { IRoleOut } from './type';
 import { useRoles } from './roles-provider';
+import { ProtectedAction } from '@/components/shared/protected-action';
+import { PermissionCode } from '@/utils/consts/rbac.const';
 
 export type RoleActionHandlers = {
   handleOpenEdit: (role: IRoleOut) => void;
@@ -36,6 +38,7 @@ function SystemBadge({ isSystem }: { isSystem: boolean }) {
 function RoleActionsCell({ row }: { row: Row<IRoleOut> }) {
   const actions = TITLE_PAGE.ROLES.ACTIONS;
   const { setOpen, setCurrentRow } = useRoles();
+  const role = row.original;
 
   return (
     <DropdownMenu modal={false}>
@@ -45,18 +48,53 @@ function RoleActionsCell({ row }: { row: Row<IRoleOut> }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        {/* <DropdownMenuItem disabled={role.isSystem} onClick={() => handlers.handleOpenEdit(role)}>
-          <IconEdit className="mr-2 size-4" />
-          {actions.EDIT}
-        </DropdownMenuItem> */}
-        {/* <DropdownMenuItem
-          variant="destructive"
-          disabled={role.isSystem}
-          onClick={() => handlers.handleOpenDelete(role)}
-        >
-          <IconTrash className="mr-2 size-4" />
-          {actions.DELETE}
-        </DropdownMenuItem> */}
+        <ProtectedAction permission={PermissionCode.RolesRead}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('view');
+            }}
+          >
+            <IconEye className="mr-2 size-4" />
+            {actions.VIEW}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        <ProtectedAction permission={PermissionCode.RolesUpdate}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original);
+              setOpen('edit');
+            }}
+          >
+            <IconEdit className="mr-2 size-4" />
+            {actions.EDIT}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        <ProtectedAction permission={PermissionCode.RolesAssign}>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(role);
+              setOpen('assgin');
+            }}
+          >
+            <IconUserPlus className="mr-2 size-4" />
+            {actions.ASSIGN}
+          </DropdownMenuItem>
+        </ProtectedAction>
+        {!role.isSystem && (
+          <ProtectedAction permission={PermissionCode.RolesDelete}>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => {
+                setCurrentRow(role);
+                setOpen('delete');
+              }}
+            >
+              <IconTrash className="mr-2 size-4" />
+              {actions.DELETE}
+            </DropdownMenuItem>
+          </ProtectedAction>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -91,7 +129,6 @@ const columns: ColumnDef<IRoleOut>[] = [
     meta: {
       variant: 'checkbox',
       label: 'Quyền hệ thống',
-
     },
   },
   {
@@ -119,6 +156,7 @@ const columns: ColumnDef<IRoleOut>[] = [
     id: 'actions',
     cell: RoleActionsCell,
     meta: { disableColumnActions: true },
+    size: 80,
   },
 ];
 

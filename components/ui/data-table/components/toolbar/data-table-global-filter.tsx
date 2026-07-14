@@ -63,6 +63,13 @@ export function DataTableGlobalFilter<TData extends RowData>({
   const debounceMs = table.options.manualFiltering ? 300 : 0;
 
   React.useEffect(() => {
+    setValue(external);
+    if (styleSearchInput !== 'default') {
+      setExpanded(external.length > 0);
+    }
+  }, [external, styleSearchInput]);
+
+  React.useEffect(() => {
     if (value === (table.getState().globalFilter ?? '')) return;
     const id = setTimeout(() => table.setGlobalFilter(value || undefined), debounceMs);
     return () => clearTimeout(id);

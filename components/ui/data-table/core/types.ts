@@ -166,6 +166,8 @@ declare module '@tanstack/react-table' {
     disableHighlight?: boolean;
     /** Ẩn menu thao tác cột cho cột này. */
     disableColumnActions?: boolean;
+    /** Đánh dấu cột thao tác dòng tự viết để `readOnly` có thể ẩn cột này. */
+    isActionsColumn?: boolean;
     /** Nhãn dễ đọc dùng trong menu khi header không phải chuỗi đơn giản. */
     label?: string;
   }
@@ -348,6 +350,7 @@ export interface DataTableConfig<TData extends RowData> {
   description?: React.ReactNode;
   positionToolbarActions?: 'left' | 'top-right';
   styleSearchInput?: 'default' | 'expanded';
+  readOnly?: boolean;
 
   renderToolbarActions?: (props: DataTableSlotProps<TData>) => React.ReactNode;
   renderTopToolbar?: (props: DataTableSlotProps<TData>) => React.ReactNode;
@@ -576,6 +579,7 @@ export interface UseDataTableOptions<TData extends RowData> extends Omit<TableOp
   renderToolbarActions?: (props: DataTableSlotProps<TData>) => React.ReactNode;
   positionToolbarActions?: 'left' | 'top-right';
   styleSearchInput?: 'default' | 'expanded';
+  readOnly?: boolean;
 
   /** Thay toàn bộ top toolbar bằng nội dung custom. */
   renderTopToolbar?: (props: DataTableSlotProps<TData>) => React.ReactNode;

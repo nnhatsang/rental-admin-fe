@@ -3,7 +3,7 @@
 import type { DefaultParamsRequest } from '@/types/api';
 import type { ColumnFiltersState, OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 type QueryStateColumn = {
   accessorKey?: unknown;
@@ -15,9 +15,18 @@ type QueryStateColumn = {
 type UseTableQueryStateParams = {
   columns?: QueryStateColumn[];
   defaultPageSize?: number;
+  /** true: sync table state with URL query string. false: keep state local only. */
+  syncToUrl?: boolean;
 };
 
 type QueryValue = string | number | string[] | undefined | null;
+
+type LocalQueryState = {
+  pagination: PaginationState;
+  sorting: SortingState;
+  globalFilter: string;
+  columnFilters: ColumnFiltersState;
+};
 
 const getFilterIds = (columns: QueryStateColumn[] = []) => {
   return columns
@@ -39,16 +48,90 @@ const toQueryValue = (value: QueryValue) => {
   return value;
 };
 
-export function useTableQueryState<
-  TParams extends DefaultParamsRequest = DefaultParamsRequest,
->({ columns, defaultPageSize = 10 }: UseTableQueryStateParams = {}) {
+const paginationFromSearchParams = (searchParams: URLSearchParams, defaultPageSize: number): PaginationState => {
+  const page = Number(searchParams.get('page'));
+  const perPage = Number(searchParams.get('perPage'));
+
+  return {
+    pageIndex: Number.isInteger(page) && page > 0 ? page - 1 : 0,
+    pageSize: Number.isInteger(perPage) && perPage > 0 ? perPage : defaultPageSize,
+  };
+};
+
+const sortingFromSearchParams = (searchParams: URLSearchParams): SortingState => {
+  const sortBy = searchParams.get('sortBy');
+  if (!sortBy) return [];
+
+  return [{ id: sortBy, desc: searchParams.get('sort') === 'desc' }];
+};
+
+const filterParamsFromSearchParams = <TParams extends DefaultParamsRequest>(
+  searchParams: URLSearchParams,
+  filters: ReturnType<typeof getFilterIds>,
+) => {
+  const result: Partial<TParams> = {};
+
+  filters.forEach((filter) => {
+    const value = searchParams.get(filter.id);
+    if (!value) return;
+
+    result[filter.id as keyof TParams] = (
+      filter.isMulti ? value.split(',').filter(Boolean) : value
+    ) as TParams[keyof TParams];
+  });
+
+  return result;
+};
+
+const columnFiltersFromFilterParams = (
+  filterQueryParams: Record<string, QueryValue>,
+  filters: ReturnType<typeof getFilterIds>,
+): ColumnFiltersState => {
+  return filters
+    .map((filter) => {
+      const value = filterQueryParams[filter.id];
+      return value ? { id: filter.id, value } : null;
+    })
+    .filter(Boolean) as ColumnFiltersState;
+};
+
+const filterParamsFromColumnFilters = <TParams extends DefaultParamsRequest>(
+  columnFilters: ColumnFiltersState,
+  filters: ReturnType<typeof getFilterIds>,
+) => {
+  const result: Partial<TParams> = {};
+
+  filters.forEach((filter) => {
+    const value = columnFilters.find((item) => item.id === filter.id)?.value as QueryValue;
+    if (value !== undefined && value !== null && value !== '') {
+      result[filter.id as keyof TParams] = value as TParams[keyof TParams];
+    }
+  });
+
+  return result;
+};
+
+export function useTableQueryState<TParams extends DefaultParamsRequest = DefaultParamsRequest>({
+  columns,
+  defaultPageSize = 10,
+  syncToUrl = true,
+}: UseTableQueryStateParams = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const filters = useMemo(() => getFilterIds(columns), [columns]);
 
+  const [localState, setLocalState] = useState<LocalQueryState>(() => ({
+    pagination: { pageIndex: 0, pageSize: defaultPageSize },
+    sorting: [],
+    globalFilter: '',
+    columnFilters: [],
+  }));
+
   const setParams = useCallback(
     (updates: Record<string, QueryValue>, resetPage = false) => {
+      if (!syncToUrl) return;
+
       const params = new URLSearchParams(searchParams.toString());
 
       if (resetPage) params.delete('page');
@@ -67,51 +150,33 @@ export function useTableQueryState<
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, syncToUrl],
   );
 
-  const pagination: PaginationState = useMemo(() => {
-    const page = Number(searchParams.get('page'));
-    const perPage = Number(searchParams.get('perPage'));
+  const urlPagination = useMemo(
+    () => paginationFromSearchParams(searchParams, defaultPageSize),
+    [defaultPageSize, searchParams],
+  );
+  const urlSorting = useMemo(() => sortingFromSearchParams(searchParams), [searchParams]);
+  const urlGlobalFilter = searchParams.get('search') ?? '';
+  const urlFilterQueryParams = useMemo(
+    () => filterParamsFromSearchParams<TParams>(searchParams, filters),
+    [filters, searchParams],
+  );
+  const urlColumnFilters = useMemo(
+    () => columnFiltersFromFilterParams(urlFilterQueryParams as Record<string, QueryValue>, filters),
+    [filters, urlFilterQueryParams],
+  );
 
-    return {
-      pageIndex: Number.isInteger(page) && page > 0 ? page - 1 : 0,
-      pageSize: Number.isInteger(perPage) && perPage > 0 ? perPage : defaultPageSize,
-    };
-  }, [defaultPageSize, searchParams]);
-
-  const sorting: SortingState = useMemo(() => {
-    const sortBy = searchParams.get('sortBy');
-    if (!sortBy) return [];
-
-    return [{ id: sortBy, desc: searchParams.get('sort') === 'desc' }];
-  }, [searchParams]);
-
-  const globalFilter = searchParams.get('search') ?? '';
+  const pagination = syncToUrl ? urlPagination : localState.pagination;
+  const sorting = syncToUrl ? urlSorting : localState.sorting;
+  const globalFilter = syncToUrl ? urlGlobalFilter : localState.globalFilter;
+  const columnFilters = syncToUrl ? urlColumnFilters : localState.columnFilters;
 
   const filterQueryParams = useMemo(() => {
-    const result: Partial<TParams> = {};
-
-    filters.forEach((filter) => {
-      const value = searchParams.get(filter.id);
-      if (!value) return;
-
-      result[filter.id as keyof TParams] = (filter.isMulti ? value.split(',').filter(Boolean) : value) as TParams[keyof TParams];
-    });
-
-    return result;
-  }, [filters, searchParams]);
-
-  const columnFilters: ColumnFiltersState = useMemo(() => {
-    const filterValues = filterQueryParams as Record<string, QueryValue>;
-
-    return filters
-      .map((filter) => {
-        const value = filterValues[filter.id];
-        return value ? { id: filter.id, value } : null;
-      })
-      .filter(Boolean) as ColumnFiltersState;
-  }, [filterQueryParams, filters]);
+    if (syncToUrl) return urlFilterQueryParams;
+    return filterParamsFromColumnFilters<TParams>(localState.columnFilters, filters);
+  }, [filters, localState.columnFilters, syncToUrl, urlFilterQueryParams]);
 
   const queryParams = useMemo(() => {
     return {
@@ -124,47 +189,102 @@ export function useTableQueryState<
     } as TParams;
   }, [filterQueryParams, globalFilter, pagination, sorting]);
 
-  const onPaginationChange: OnChangeFn<PaginationState> = useCallback((updater) => {
-    const next = typeof updater === 'function' ? updater(pagination) : updater;
+  const onPaginationChange: OnChangeFn<PaginationState> = useCallback(
+    (updater) => {
+      const next = typeof updater === 'function' ? updater(pagination) : updater;
 
-    setParams({
-      page: next.pageIndex > 0 ? next.pageIndex + 1 : undefined,
-      perPage: next.pageSize !== defaultPageSize ? next.pageSize : undefined,
-    });
-  }, [defaultPageSize, pagination, setParams]);
+      if (!syncToUrl) {
+        setLocalState((prev) => ({ ...prev, pagination: next }));
+        return;
+      }
 
-  const onSortingChange: OnChangeFn<SortingState> = useCallback((updater) => {
-    const next = typeof updater === 'function' ? updater(sorting) : updater;
-    const sort = next[0];
+      setParams({
+        page: next.pageIndex > 0 ? next.pageIndex + 1 : undefined,
+        perPage: next.pageSize !== defaultPageSize ? next.pageSize : undefined,
+      });
+    },
+    [defaultPageSize, pagination, setParams, syncToUrl],
+  );
 
-    setParams(
-      {
-        sortBy: sort?.id,
-        sort: sort ? (sort.desc ? 'desc' : 'asc') : undefined,
-      },
-      true,
-    );
-  }, [setParams, sorting]);
+  const onSortingChange: OnChangeFn<SortingState> = useCallback(
+    (updater) => {
+      const next = typeof updater === 'function' ? updater(sorting) : updater;
+      const sort = next[0];
 
-  const onGlobalFilterChange: OnChangeFn<string | undefined> = useCallback((updater) => {
-    const next = typeof updater === 'function' ? updater(globalFilter) : updater;
-    setParams({ search: typeof next === 'string' ? next.trim() : undefined }, true);
-  }, [globalFilter, setParams]);
+      if (!syncToUrl) {
+        setLocalState((prev) => ({
+          ...prev,
+          pagination: { ...prev.pagination, pageIndex: 0 },
+          sorting: next,
+        }));
+        return;
+      }
 
-  const onColumnFiltersChange: OnChangeFn<ColumnFiltersState> = useCallback((updater) => {
-    const next = typeof updater === 'function' ? updater(columnFilters) : updater;
-    const updates: Record<string, QueryValue> = {};
+      setParams(
+        {
+          sortBy: sort?.id,
+          sort: sort ? (sort.desc ? 'desc' : 'asc') : undefined,
+        },
+        true,
+      );
+    },
+    [setParams, sorting, syncToUrl],
+  );
 
-    filters.forEach((filter) => {
-      updates[filter.id] = next.find((item) => item.id === filter.id)?.value as QueryValue;
-    });
+  const onGlobalFilterChange: OnChangeFn<string | undefined> = useCallback(
+    (updater) => {
+      const next = typeof updater === 'function' ? updater(globalFilter) : updater;
+      const search = typeof next === 'string' ? next.trim() : '';
 
-    setParams(updates, true);
-  }, [columnFilters, filters, setParams]);
+      if (!syncToUrl) {
+        setLocalState((prev) => ({
+          ...prev,
+          pagination: { ...prev.pagination, pageIndex: 0 },
+          globalFilter: search,
+        }));
+        return;
+      }
+
+      setParams({ search: search || undefined }, true);
+    },
+    [globalFilter, setParams, syncToUrl],
+  );
+
+  const onColumnFiltersChange: OnChangeFn<ColumnFiltersState> = useCallback(
+    (updater) => {
+      const next = typeof updater === 'function' ? updater(columnFilters) : updater;
+
+      if (!syncToUrl) {
+        setLocalState((prev) => ({
+          ...prev,
+          pagination: { ...prev.pagination, pageIndex: 0 },
+          columnFilters: next,
+        }));
+        return;
+      }
+
+      const updates: Record<string, QueryValue> = {};
+
+      filters.forEach((filter) => {
+        updates[filter.id] = next.find((item) => item.id === filter.id)?.value as QueryValue;
+      });
+
+      setParams(updates, true);
+    },
+    [columnFilters, filters, setParams, syncToUrl],
+  );
 
   const resetPage = useCallback(() => {
+    if (!syncToUrl) {
+      setLocalState((prev) => ({
+        ...prev,
+        pagination: { ...prev.pagination, pageIndex: 0 },
+      }));
+      return;
+    }
+
     setParams({ page: undefined });
-  }, [setParams]);
+  }, [setParams, syncToUrl]);
 
   return {
     pagination,

@@ -14,7 +14,6 @@ import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import { applyApiFormErrors } from '@/utils/form-error';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader } from '@tabler/icons-react';
 import { type Table } from '@tanstack/react-table';
@@ -41,9 +40,10 @@ type UserFormDialogProps = {
   currentRow?: IUserOut;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  readOnly?: boolean;
 };
 
-function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps) {
+function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: UserFormDialogProps) {
   const isEdit = !!currentRow;
   const text = TITLE_PAGE.USERS;
   const createMutation = useCreateUser();
@@ -72,6 +72,8 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
   };
 
   const onSubmit = (values: UserFormValues) => {
+    if (readOnly) return;
+
     if (isEdit && currentRow) {
       updateMutation.mutate(
         {
@@ -79,7 +81,6 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
           data: values as IUpdateUserInput,
         },
         {
-          onError: (err) => applyApiFormErrors(form, err, { fallbackMessage: text.ERRORS.UPDATE_FAILED }),
           onSuccess: handleClose,
         },
       );
@@ -87,7 +88,6 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
     }
 
     createMutation.mutate(values as ICreateUserInput, {
-      onError: (err) => applyApiFormErrors(form, err, { fallbackMessage: text.ERRORS.CREATE_FAILED }),
       onSuccess: handleClose,
     });
   };
@@ -109,7 +109,12 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel>{text.FORM.FULL_NAME}</FieldLabel>
-                <Input placeholder={text.FORM.FULL_NAME_PLACEHOLDER} {...field} value={field.value ?? ''} />
+                <Input
+                  placeholder={text.FORM.FULL_NAME_PLACEHOLDER}
+                  disabled={readOnly}
+                  {...field}
+                  value={field.value ?? ''}
+                />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -121,7 +126,13 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel>{text.FORM.EMAIL}</FieldLabel>
-                <Input placeholder={text.FORM.EMAIL_PLACEHOLDER} type="email" {...field} value={field.value ?? ''} />
+                <Input
+                  disabled={readOnly}
+                  placeholder={text.FORM.EMAIL_PLACEHOLDER}
+                  type="email"
+                  {...field}
+                  value={field.value ?? ''}
+                />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -133,7 +144,12 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
             render={({ field, fieldState }) => (
               <Field>
                 <FieldLabel>{text.FORM.PHONE}</FieldLabel>
-                <Input placeholder={text.FORM.PHONE_PLACEHOLDER} {...field} value={field.value ?? ''} />
+                <Input
+                  disabled={readOnly}
+                  placeholder={text.FORM.PHONE_PLACEHOLDER}
+                  {...field}
+                  value={field.value ?? ''}
+                />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -161,10 +177,12 @@ function UserFormDialog({ currentRow, open, onOpenChange }: UserFormDialogProps)
             <Button type="button" variant="outline" onClick={handleClose}>
               {text.DIALOG.CANCEL}
             </Button>
-            <Button type="submit" form="user-form" disabled={isPending}>
-              {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
-              {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
-            </Button>
+            {!readOnly && (
+              <Button type="submit" form="user-form" disabled={isPending}>
+                {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
+                {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>
@@ -195,7 +213,6 @@ function UserResetPasswordDialog({ currentRow, open, onOpenChange }: UserResetPa
     mutation.mutate(
       { id: currentRow.id, data: values },
       {
-        onError: (err) => applyApiFormErrors(form, err, { fallbackMessage: text.ERRORS.RESET_PASSWORD_FAILED }),
         onSuccess: handleClose,
       },
     );
@@ -251,91 +268,46 @@ function UserResetPasswordDialog({ currentRow, open, onOpenChange }: UserResetPa
   );
 }
 
-type UserDeleteDialogProps = {
-  currentRow: IUserOut;
+function UserDeleteConfirmDialog({
+  open,
+  onOpenChange,
+  users,
+  onSuccess,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-};
-
-function UserDeleteDialog({ currentRow, open, onOpenChange }: UserDeleteDialogProps) {
+  users: IUserOut[];
+  onSuccess?: () => void;
+}) {
   const text = TITLE_PAGE.USERS;
   const deleteMutation = useDeleteUser();
+  const isMulti = users.length > 1;
 
   const handleDelete = () => {
     onOpenChange(false);
-    window.setTimeout(() => {
-      deleteMutation.mutate([currentRow.id]);
-    }, 500);
+
+    deleteMutation.mutate(
+      users.map((user) => user.id),
+      {
+        onSuccess,
+      },
+    );
   };
+
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
       title={text.DIALOG.DELETE_TITLE}
       desc={
-        <>
-          {text.DIALOG.DELETE_DESCRIPTION_PREFIX} <strong>{currentRow.fullName}</strong>?{' '}
-          {text.DIALOG.DELETE_DESCRIPTION_SUFFIX}
-        </>
-      }
-      confirmText={text.DIALOG.CONFIRM_DELETE}
-      cancelBtnText={text.DIALOG.CANCEL}
-      destructive
-      handleConfirm={handleDelete}
-    />
-  );
-}
-
-type UserMultiDeleteDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  table: Table<IUserOut>;
-};
-export function UsersMultiDeleteDialog({ open, onOpenChange, table }: UserMultiDeleteDialogProps) {
-  const selectedRows = table.getFilteredSelectedRowModel().rows;
-  const { mutate } = useDeleteUser();
-  const text = TITLE_PAGE.USERS;
-
-  const handleDelete = async () => {
-    onOpenChange(false);
-
-    mutate(
-      selectedRows.map((row) => row.original.id),
-      {
-        onSuccess: () => {
-          table.resetRowSelection();
-        },
-      },
-    );
-
-    // try {
-    //   await toast.promise(mutateAsync(selectedRows.map((row) => row.original.id)), {
-    //     loading: 'Deleting users...',
-    //     success: () => {
-    //       table.resetRowSelection();
-
-    //       return `Deleted ${selectedRows.length} ${selectedRows.length > 1 ? 'users' : 'user'}`;
-    //     },
-    //     error: 'Failed to delete users',
-    //   });
-    // } catch {
-    //   // toast.promise đã xử lý error
-    // }
-  };
-  return (
-    <ConfirmDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={
-        <span className="text-destructive">
-          <AlertTriangle className="me-1 inline-block stroke-destructive" size={18} /> {text.DIALOG.DELETE_TITLE}{' '}
-          {selectedRows.length} {selectedRows.length > 1 ? 'users' : 'user'}
-        </span>
-      }
-      desc={
-        <>
-          Are you sure you want to delete {selectedRows.length} {selectedRows.length > 1 ? 'users' : 'user'}?{' '}
-        </>
+        isMulti ? (
+          `Are you sure you want to delete ${users.length} users?`
+        ) : (
+          <>
+            {text.DIALOG.DELETE_DESCRIPTION_PREFIX} <strong>{users[0]?.fullName}</strong>?{' '}
+            {text.DIALOG.DELETE_DESCRIPTION_SUFFIX}
+          </>
+        )
       }
       confirmText={text.DIALOG.CONFIRM_DELETE}
       cancelBtnText={text.DIALOG.CANCEL}
@@ -356,7 +328,8 @@ export function UserDialogs({ table }: DataTableBulkActionsProps) {
       setCurrentRow(null);
     }, 500);
   };
-
+  const isFormOpen = open === 'view' || open === 'edit';
+  const readOnly = open === 'view';
   return (
     <>
       <UserFormDialog
@@ -364,20 +337,21 @@ export function UserDialogs({ table }: DataTableBulkActionsProps) {
         open={open === 'add'}
         onOpenChange={(nextOpen) => (nextOpen ? setOpen('add') : closeDialog())}
       />
-      <UsersMultiDeleteDialog
-        key="'delete-multi"
+      <UserDeleteConfirmDialog
         open={open === 'delete-multi'}
         onOpenChange={(nextOpen) => (nextOpen ? setOpen('delete-multi') : closeDialog())}
-        table={table}
+        users={table.getFilteredSelectedRowModel().rows.map((row) => row.original)}
+        onSuccess={() => table.resetRowSelection()}
       />
 
       {currentRow && (
         <>
           <UserFormDialog
-            key={`user-edit-${currentRow.id}`}
-            open={open === 'edit'}
-            onOpenChange={(nextOpen) => (nextOpen ? setOpen('edit') : closeDialog())}
+            key={`user-form-${currentRow.id}`}
+            open={isFormOpen}
+            onOpenChange={(nextOpen) => (nextOpen ? setOpen(readOnly ? 'view' : 'edit') : closeDialog())}
             currentRow={currentRow}
+            readOnly={readOnly}
           />
 
           <UserResetPasswordDialog
@@ -387,11 +361,10 @@ export function UserDialogs({ table }: DataTableBulkActionsProps) {
             onOpenChange={(nextOpen) => (nextOpen ? setOpen('reset-password') : closeDialog())}
           />
 
-          <UserDeleteDialog
-            key={`user-delete-${currentRow.id}`}
-            currentRow={currentRow}
+          <UserDeleteConfirmDialog
             open={open === 'delete'}
             onOpenChange={(nextOpen) => (nextOpen ? setOpen('delete') : closeDialog())}
+            users={[currentRow]}
           />
         </>
       )}

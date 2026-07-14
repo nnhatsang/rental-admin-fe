@@ -45,6 +45,7 @@ interface DataTableBodyProps<TData extends RowData> {
   virtualItems: VirtualRowItem<TData>[]
   virtualColumns: { index: number }[]
   withColumnSpacers: WithColumnSpacers
+  
 }
 
 /**

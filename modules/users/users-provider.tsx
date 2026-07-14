@@ -12,7 +12,7 @@ import {
 import type { IUserOut } from './type';
 import useDialogState from '@/hooks/use-dialog-state';
 
-export type UsersDialogType = 'add' | 'edit' | 'delete' | 'reset-password' | 'delete-multi';
+export type UsersDialogType = 'view' | 'add' | 'edit' | 'delete' | 'reset-password' | 'delete-multi';
 
 type UsersContextValue = {
   open: UsersDialogType | null;

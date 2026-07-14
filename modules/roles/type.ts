@@ -44,6 +44,7 @@ export type IUpdateRoleReq = Partial<ICreateRoleReq>;
 export interface IAssignRoleUsersReq {
   roleId: string;
   userIds: string[];
+  operation: 'ASSIGN' | 'REMOVE';
 }
 
 export interface IDeleteRolesReq {

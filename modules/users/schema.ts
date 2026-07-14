@@ -1,8 +1,6 @@
-import { ROLE_CODES } from '@/utils/consts/rbac.const';
 import * as z from 'zod';
 import { UserActivityStatus } from './type';
 
-const roleCodeSchema = z.enum(ROLE_CODES as [string, ...string[]]);
 const userActivityStatusSchema = z.enum(Object.values(UserActivityStatus) as [string, ...string[]]);
 
 export const createUserSchema = z.object({
@@ -25,10 +23,10 @@ export const updateUserActivityStatusSchema = z.object({
 });
 export type IUpdateUserActivityStatusInput = z.infer<typeof updateUserActivityStatusSchema>;
 
-export const updateUserRolesSchema = z.object({
-  roleCodes: z.array(roleCodeSchema).min(1, { message: 'Vui lòng chọn ít nhất một vai trò' }),
-});
-export type IUpdateUserRolesInput = z.infer<typeof updateUserRolesSchema>;
+// export const updateUserRolesSchema = z.object({
+//   roleCodes: z.array().min(1, { message: 'Vui lòng chọn ít nhất một vai trò' }),
+// });
+// export type IUpdateUserRolesInput = z.infer<typeof updateUserRolesSchema>;
 
 export const resetUserPasswordSchema = z
   .object({

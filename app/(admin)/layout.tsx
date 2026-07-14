@@ -43,5 +43,5 @@ const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ 
 export default AdminLayout;
 
 export const metadata: Metadata = {
-  title: TITLE_PAGE.USERS.INDEX,
+  title: TITLE_PAGE.DASHBOARD,
 };

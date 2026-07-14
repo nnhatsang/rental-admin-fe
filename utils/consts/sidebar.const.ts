@@ -1,5 +1,5 @@
 import { NavGroup } from '@/components/layout/types';
-import { PermissionCode as Permission } from '@/utils/consts/rbac.const';
+import { PermissionCode, PermissionCode as Permission } from '@/utils/consts/rbac.const';
 
 import {
   IconCamera,
@@ -7,7 +7,6 @@ import {
   IconCreditCard,
   IconDashboard,
   IconDevices,
-  IconKey,
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
@@ -107,3 +106,29 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
 ];
+
+export const canAccessPermissions = (requiredPermissions: PermissionCode[] | undefined, userPermissions: string[]) => {
+  if (!requiredPermissions?.length) return true;
+
+  return requiredPermissions.some((permission) => userPermissions.includes(permission));
+};
+
+const isPathnameMatch = (pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`);
+
+export const findSidebarItemByPathname = (pathname: string) => {
+  const allItems = sidebarItems.flatMap((group) =>
+    group.items.flatMap((item) => [item, ...(item.subItems ?? [])]),
+  );
+
+  return allItems
+    .filter((item) => isPathnameMatch(pathname, item.url))
+    .sort((a, b) => b.url.length - a.url.length)[0];
+};
+
+export const canAccessSidebarRoute = (pathname: string, userPermissions: string[]) => {
+  const sidebarItem = findSidebarItemByPathname(pathname);
+
+  if (!sidebarItem) return true;
+
+  return canAccessPermissions(sidebarItem.requiredPermissions, userPermissions);
+};
