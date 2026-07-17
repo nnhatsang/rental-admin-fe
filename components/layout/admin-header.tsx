@@ -10,13 +10,20 @@ export function AdminHeader() {
   return (
     <header
       className={cn(
-        'flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12',
+        // 'flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12',
         // Handle sticky navbar style with conditional classes so blur, background, z-index, and rounded corners remain consistent across all SidebarVariant layouts.
-        '[html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-50 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md',
+        'px-4 lg:px-6 flex',
+
+        ' group-has-data-[collapsible=icon]/sidebar-wrapper:before:absolute before:inset-0 before:rounded-t-xl',
+        ' group-has-data-[collapsible=icon]/sidebar-wrapper:before:mask-[linear-gradient(var(--card),var(--card)_18%,transparent_100%)]',
+
+        // chỉ blur khi không sticky
+        '[html:not([data-navbar-style=sticky])_&]:before:backdrop-blur-md',
+        '[html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-49 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md',
       )}
     >
-      <div className="flex w-full items-center justify-between px-4 lg:px-6">
-        <div className="flex items-center gap-1 lg:gap-2">
+      <div className="bg-card relative z-50 mx-auto mt-3 flex w-full items-center justify-between rounded-xl border px-6 py-2">
+        <div className="flex items-center gap-1.5 lg:gap-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
             orientation="vertical"
@@ -24,7 +31,7 @@ export function AdminHeader() {
           />
           <SearchDialog />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <LayoutControls />
           <ThemeSwitcher />
 

@@ -107,13 +107,15 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
             control={control}
             name="fullName"
             render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.FULL_NAME}</FieldLabel>
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>{text.FORM.FULL_NAME}</FieldLabel>
                 <Input
+                  {...field}
+                  id={field.name}
                   placeholder={text.FORM.FULL_NAME_PLACEHOLDER}
                   disabled={readOnly}
-                  {...field}
                   value={field.value ?? ''}
+                  aria-invalid={fieldState.invalid}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -124,14 +126,15 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
             control={control}
             name="email"
             render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.EMAIL}</FieldLabel>
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>{text.FORM.EMAIL}</FieldLabel>
                 <Input
                   disabled={readOnly}
                   placeholder={text.FORM.EMAIL_PLACEHOLDER}
-                  type="email"
                   {...field}
-                  value={field.value ?? ''}
+                  id={field.name}
+                  type="email"
+                  aria-invalid={fieldState.invalid}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -142,13 +145,15 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
             control={control}
             name="phone"
             render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.PHONE}</FieldLabel>
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>{text.FORM.PHONE}</FieldLabel>
                 <Input
                   disabled={readOnly}
                   placeholder={text.FORM.PHONE_PLACEHOLDER}
                   {...field}
-                  value={field.value ?? ''}
+                  id={field.name}
+                  type="email"
+                  aria-invalid={fieldState.invalid}
                 />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
@@ -160,12 +165,13 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
               control={control}
               name="password"
               render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>{text.FORM.INITIAL_PASSWORD}</FieldLabel>
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={field.name}>{text.FORM.INITIAL_PASSWORD}</FieldLabel>
                   <PasswordInput
                     placeholder={text.FORM.INITIAL_PASSWORD_PLACEHOLDER}
                     {...field}
-                    value={field.value ?? ''}
+                    disabled={readOnly}
+                    aria-invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -234,9 +240,14 @@ function UserResetPasswordDialog({ currentRow, open, onOpenChange }: UserResetPa
             control={form.control}
             name="newPassword"
             render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.NEW_PASSWORD}</FieldLabel>
-                <PasswordInput placeholder={text.FORM.NEW_PASSWORD_PLACEHOLDER} {...field} />
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>{text.FORM.NEW_PASSWORD}</FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id={field.name}
+                  placeholder={text.FORM.NEW_PASSWORD_PLACEHOLDER}
+                  aria-invalid={fieldState.invalid}
+                />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -245,9 +256,14 @@ function UserResetPasswordDialog({ currentRow, open, onOpenChange }: UserResetPa
             control={form.control}
             name="confirmPassword"
             render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.CONFIRM_NEW_PASSWORD}</FieldLabel>
-                <PasswordInput placeholder={text.FORM.CONFIRM_NEW_PASSWORD_PLACEHOLDER} {...field} />
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor={field.name}>{text.FORM.CONFIRM_NEW_PASSWORD}</FieldLabel>
+                <PasswordInput
+                  {...field}
+                  id={field.name}
+                  placeholder={text.FORM.CONFIRM_NEW_PASSWORD_PLACEHOLDER}
+                  aria-invalid={fieldState.invalid}
+                />
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}

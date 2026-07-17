@@ -37,7 +37,7 @@ export function formatCurrency(
     noDecimals?: boolean;
   },
 ) {
-  const { currency = 'vi-VN', locale = 'đ', minimumFractionDigits, maximumFractionDigits, noDecimals } = opts ?? {};
+  const { currency = 'VND', locale = 'vi-VN', minimumFractionDigits, maximumFractionDigits, noDecimals } = opts ?? {};
 
   const formatOptions: Intl.NumberFormatOptions = {
     style: 'currency',

@@ -110,64 +110,87 @@ function RoleFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form id="role-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Controller
-              control={form.control}
-              name="code"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>{text.FORM.CODE}</FieldLabel>
-                  <Input {...field} disabled={readOnly} placeholder={text.FORM.CODE_PLACEHOLDER} className="h-10" />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+        <form id="role-form" onSubmit={handleSubmit(onSubmit)}>
+          <ScrollArea className="h-[60vh] pr-4">
+            <div className="grid gap-4">
+              {' '}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Controller
+                  control={form.control}
+                  name="code"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.CODE}</FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        disabled={readOnly}
+                        placeholder={text.FORM.CODE_PLACEHOLDER}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
 
-            <Controller
-              control={form.control}
-              name="name"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>{text.FORM.NAME}</FieldLabel>
-                  <Input disabled={readOnly} {...field} placeholder={text.FORM.NAME_PLACEHOLDER} className="h-10" />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-          </div>
-
-          <Controller
-            control={form.control}
-            name="description"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.DESCRIPTION}</FieldLabel>
-                <Textarea disabled={readOnly} {...field} placeholder={text.FORM.DESCRIPTION_PLACEHOLDER} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-
-          <Controller
-            control={form.control}
-            name="permissionCodes"
-            render={({ field, fieldState }) => (
-              <Field>
-                <FieldLabel>{text.FORM.PERMISSIONS}</FieldLabel>
-                <ScrollArea className="h-72 rounded-md border">
-                  <PermissionMatrixField
-                    emptyText={text.FORM.PERMISSIONS_EMPTY}
-                    permissions={allPermissions}
-                    value={field.value ?? []}
-                    onChange={field.onChange}
-                    readOnly={readOnly}
-                  />
-                </ScrollArea>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.NAME}</FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        disabled={readOnly}
+                        placeholder={text.FORM.NAME_PLACEHOLDER}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </div>
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>{text.FORM.DESCRIPTION}</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      disabled={readOnly}
+                      placeholder={text.FORM.DESCRIPTION_PLACEHOLDER}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="permissionCodes"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>{text.FORM.PERMISSIONS}</FieldLabel>
+                    <ScrollArea className="rounded-md border">
+                      <PermissionMatrixField
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        emptyText={text.FORM.PERMISSIONS_EMPTY}
+                        permissions={allPermissions}
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                        readOnly={readOnly}
+                      />
+                    </ScrollArea>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+            </div>
+          </ScrollArea>
 
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={handleClose} className="h-10">
@@ -380,9 +403,12 @@ function RoleDeleteConfirmDialog({
     if (deletableRoles.length === 0) return;
 
     onOpenChange(false);
-    deleteMutation.mutate(deletableRoles.map((role) => role.id), {
-      onSuccess,
-    });
+    deleteMutation.mutate(
+      deletableRoles.map((role) => role.id),
+      {
+        onSuccess,
+      },
+    );
   };
 
   return (

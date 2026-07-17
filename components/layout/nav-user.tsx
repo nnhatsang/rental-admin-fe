@@ -75,9 +75,9 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
             {userInfo}
           </SidebarMenuButton>
         ) : (
-          <Button type="button" variant="ghost" className={cn('h-9 gap-2 px-2 data-[state=open]:bg-accent', className)}>
-            {userInfo}
-          </Button>
+          <SidebarMenuButton type="button" className={cn(' data-[state=open]:bg-accentr p-0', className)}>
+            <UserAvatar name={user.fullName} src={user.avatar} />
+          </SidebarMenuButton>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
