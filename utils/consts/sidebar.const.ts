@@ -73,7 +73,7 @@ export const sidebarItems: NavGroup[] = [
         requiredPermissions: [Permission.ProductsRead],
       },
       {
-        title: 'Thiết bị vật lý',
+        title: 'Thiết bị trong kho',
         url: '/asset-units',
         icon: IconDevices,
         requiredPermissions: [Permission.AssetsRead],

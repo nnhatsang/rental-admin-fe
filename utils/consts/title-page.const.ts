@@ -136,8 +136,8 @@ export const TITLE_PAGE = {
     },
   },
   ASSET_UNITS: {
-    ROOT: 'Thiết bị vật lý',
-    INDEX: 'Quản lý thiết bị vật lý',
+    ROOT: 'Thiết bị trong kho',
+    INDEX: 'Quản lý thiết bị trong kho',
     DESCRIPTION: 'Quản lý serial, trạng thái và tình trạng từng thiết bị trong kho',
     ACTIONS: {
       VIEW: 'Xem',
