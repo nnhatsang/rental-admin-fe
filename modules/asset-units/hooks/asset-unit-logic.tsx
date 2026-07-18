@@ -10,6 +10,7 @@ import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useAssetUnits } from '../asset-units-provider';
 import { columns } from '../columns';
+import { ProductCombobox } from '../product-combobox';
 import type { IAssetUnitOut, IGetAssetUnitsParams } from '../type';
 import { useGetAssetUnits } from './use-get-asset-units';
 
@@ -70,15 +71,20 @@ export const useAssetUnitsLogic = (): IAssetUnitsLogic => {
     onColumnFiltersChange,
     onGlobalFilterChange,
     renderToolbarActions: () => (
-      <Button
-        size="lg"
-        onClick={() => {
-          setCurrentRow(null);
-          setOpen('add');
-        }}
-      >
-        <IconPlus className="mr-1.5 size-4" /> {text.ACTIONS.CREATE}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-68">
+          <ProductCombobox placeholder={text.FORM.FILTER_PRODUCT_PLACEHOLDER} syncToUrl />
+        </div>
+        <Button
+          size="lg"
+          onClick={() => {
+            setCurrentRow(null);
+            setOpen('add');
+          }}
+        >
+          <IconPlus className="mr-1.5 size-4" /> {text.ACTIONS.CREATE}
+        </Button>
+      </div>
     ),
   });
 

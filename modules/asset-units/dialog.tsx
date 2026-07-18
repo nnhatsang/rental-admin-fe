@@ -19,27 +19,35 @@ import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader } from '@tabler/icons-react';
 import type { Table } from '@tanstack/react-table';
+import { useState } from 'react';
 import { Controller, type Resolver, useForm } from 'react-hook-form';
-import { useSearchParams } from 'next/navigation';
 import { useAssetUnits } from './asset-units-provider';
 import { assetConditionOptions, assetStatusOptions } from './columns';
 import { useCreateAssetUnit } from './hooks/use-create-asset-unit';
 import { useDeleteAssetUnits } from './hooks/use-delete-asset-units';
 import { useUpdateAssetUnit } from './hooks/use-update-asset-unit';
 import { useUpdateAssetUnitStatus } from './hooks/use-update-asset-unit-status';
+import { ProductCombobox } from './product-combobox';
 import {
   assetUnitFormSchema,
   assetUnitStatusSchema,
   type IAssetUnitFormInput,
   type IAssetUnitStatusInput,
 } from './schema';
-import { AssetCondition, AssetStatus, type IAssetUnitOut, type ICreateAssetUnitReq, type IUpdateAssetUnitReq } from './type';
+import {
+  AssetCondition,
+  AssetStatus,
+  type IAssetUnitOut,
+  type ICreateAssetUnitReq,
+  type IUpdateAssetUnitReq,
+} from './type';
 
 type AssetUnitFormDialogProps = {
   currentRow?: IAssetUnitOut;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   readOnly?: boolean;
+  defaultProductId?: string;
 };
 
 const removeUndefined = <T extends object>(value: T): Partial<T> => {
@@ -86,10 +94,16 @@ function AssetUnitSelectField({
   );
 }
 
-function AssetUnitFormDialog({ currentRow, open, onOpenChange, readOnly = false }: AssetUnitFormDialogProps) {
+function AssetUnitFormDialog({
+  currentRow,
+  open,
+  onOpenChange,
+  readOnly = false,
+  defaultProductId = '',
+}: AssetUnitFormDialogProps) {
   const isEdit = !!currentRow;
   const text = TITLE_PAGE.ASSET_UNITS;
-  const searchParams = useSearchParams();
+  const [comboboxPortalContainer, setComboboxPortalContainer] = useState<HTMLDivElement | null>(null);
   const createMutation = useCreateAssetUnit();
   const updateMutation = useUpdateAssetUnit();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
@@ -107,7 +121,7 @@ function AssetUnitFormDialog({ currentRow, open, onOpenChange, readOnly = false 
           isActive: currentRow.isActive,
         }
       : {
-          productId: searchParams.get('productId') ?? '',
+          productId: defaultProductId,
           serialNumber: '',
           status: AssetStatus.AVAILABLE,
           condition: AssetCondition.GOOD,
@@ -143,33 +157,42 @@ function AssetUnitFormDialog({ currentRow, open, onOpenChange, readOnly = false 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {readOnly ? text.DIALOG.FORM_VIEW_TITLE : isEdit ? text.DIALOG.FORM_EDIT_TITLE : text.DIALOG.FORM_CREATE_TITLE}
-          </DialogTitle>
-          <DialogDescription>
-            {readOnly
-              ? text.DIALOG.FORM_VIEW_DESCRIPTION
-              : isEdit
-                ? text.DIALOG.FORM_EDIT_DESCRIPTION
-                : text.DIALOG.FORM_CREATE_DESCRIPTION}
-          </DialogDescription>
-        </DialogHeader>
+        <div ref={setComboboxPortalContainer} className="contents">
+          <DialogHeader>
+            <DialogTitle>
+              {readOnly
+                ? text.DIALOG.FORM_VIEW_TITLE
+                : isEdit
+                  ? text.DIALOG.FORM_EDIT_TITLE
+                  : text.DIALOG.FORM_CREATE_TITLE}
+            </DialogTitle>
+            <DialogDescription>
+              {readOnly
+                ? text.DIALOG.FORM_VIEW_DESCRIPTION
+                : isEdit
+                  ? text.DIALOG.FORM_EDIT_DESCRIPTION
+                  : text.DIALOG.FORM_CREATE_DESCRIPTION}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form id="asset-unit-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid gap-4 py-2">
+          <form id="asset-unit-form" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid gap-4 py-2">
             <Controller
               control={form.control}
               name="productId"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>{text.FORM.PRODUCT_ID}</FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    placeholder={getPlaceholder(text.FORM.PRODUCT_ID_PLACEHOLDER)}
+                  <ProductCombobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    ariaInvalid={fieldState.invalid}
+                    placeholder={getPlaceholder(text.FORM.FILTER_PRODUCT_PLACEHOLDER)}
                     disabled={readOnly}
+                    selectedProduct={currentRow?.product}
+                    syncToUrl={false}
+                    portalContainer={comboboxPortalContainer}
+                    fetchEnabled={open && !readOnly}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -259,20 +282,21 @@ function AssetUnitFormDialog({ currentRow, open, onOpenChange, readOnly = false 
                 </Field>
               )}
             />
-          </div>
+            </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              {text.DIALOG.CANCEL}
-            </Button>
-            {!readOnly && (
-              <Button type="submit" form="asset-unit-form" disabled={isPending}>
-                {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
-                {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                {text.DIALOG.CANCEL}
               </Button>
-            )}
-          </DialogFooter>
-        </form>
+              {!readOnly && (
+                <Button type="submit" form="asset-unit-form" disabled={isPending}>
+                  {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
+                  {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
+                </Button>
+              )}
+            </DialogFooter>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -365,8 +389,7 @@ function AssetUnitStatusDialog({
         <DialogHeader>
           <DialogTitle>{text.DIALOG.STATUS_TITLE}</DialogTitle>
           <DialogDescription>
-            {text.DIALOG.STATUS_DESCRIPTION_PREFIX}{' '}
-            <strong>{assetUnit.serialNumber || assetUnit.product.name}</strong>.
+            {text.DIALOG.STATUS_DESCRIPTION_PREFIX} <strong>{assetUnit.serialNumber || assetUnit.product.name}</strong>.
           </DialogDescription>
         </DialogHeader>
 
@@ -431,7 +454,13 @@ function AssetUnitStatusDialog({
   );
 }
 
-export function AssetUnitDialogs({ table }: { table: Table<IAssetUnitOut> }) {
+export function AssetUnitDialogs({
+  table,
+  defaultProductId,
+}: {
+  table: Table<IAssetUnitOut>;
+  defaultProductId?: string;
+}) {
   const { open, setOpen, currentRow, setCurrentRow } = useAssetUnits();
 
   const closeDialog = () => {
@@ -447,6 +476,7 @@ export function AssetUnitDialogs({ table }: { table: Table<IAssetUnitOut> }) {
         key="asset-unit-add"
         open={open === 'add'}
         onOpenChange={(nextOpen) => (nextOpen ? setOpen('add') : closeDialog())}
+        defaultProductId={defaultProductId}
       />
       <AssetUnitDeleteConfirmDialog
         open={open === 'delete-multi'}
