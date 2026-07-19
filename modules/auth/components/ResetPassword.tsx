@@ -31,9 +31,16 @@ const ResetPassword: React.FC = () => {
           control={control}
           name="newPassword"
           render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Mật khẩu mới</FieldLabel>
-              <PasswordInput placeholder="Mật khẩu mới" {...field} />
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Mật khẩu mới</FieldLabel>
+              <PasswordInput
+                {...field}
+                id={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="Mật khẩu mới"
+                autoComplete="off"
+                className="h-11"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -43,9 +50,16 @@ const ResetPassword: React.FC = () => {
           control={control}
           name="confirmPassword"
           render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Xác nhận mật khẩu mới</FieldLabel>
-              <PasswordInput placeholder="Xác nhận mật khẩu mới" {...field} />
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Xác nhận mật khẩu mới</FieldLabel>
+              <PasswordInput
+                {...field}
+                id={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="Xác nhận mật khẩu mới"
+                autoComplete="off"
+                className="h-11"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -53,7 +67,7 @@ const ResetPassword: React.FC = () => {
 
         {errors.root && <FieldError errors={[errors.root]} />}
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full h-11" disabled={isPending}>
           {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
           Đặt lại mật khẩu
         </Button>

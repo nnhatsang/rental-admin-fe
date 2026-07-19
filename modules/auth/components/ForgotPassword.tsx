@@ -27,9 +27,16 @@ const ForgotPassword: React.FC = () => {
           control={control}
           name="email"
           render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Email</FieldLabel>
-              <Input placeholder="admin@rental.local" {...field} type="email" className="h-11" />
+             <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <Input
+                {...field}
+                id={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="admin@rental.local"
+                type="email"
+                className="h-11"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

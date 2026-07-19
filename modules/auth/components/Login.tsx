@@ -32,9 +32,17 @@ const Login: React.FC = () => {
           control={control}
           name="email"
           render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Email</FieldLabel>
-              <Input placeholder="admin@rental.local" {...field} type="email" className="h-11" />
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+              <Input
+                {...field}
+                id={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="admin@rental.local"
+                type="email"
+                className="h-11"
+                autoComplete="off"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -44,9 +52,16 @@ const Login: React.FC = () => {
           control={control}
           name="password"
           render={({ field, fieldState }) => (
-            <Field>
-              <FieldLabel>Mật khẩu</FieldLabel>
-              <PasswordInput placeholder="Mật khẩu" {...field} className="h-11" />
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={field.name}>Mật khẩu</FieldLabel>
+              <PasswordInput
+                {...field}
+                id={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="Mật khẩu"
+                className="h-11"
+                autoComplete="off"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
