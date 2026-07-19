@@ -64,7 +64,19 @@ const apiAuth: AxiosInstance = axios.create({
 apiAuth.interceptors.request.use((config) => {
   return config;
 });
+let refreshPromise: Promise<void> | null = null;
 
+const refreshSession = () => {
+  if (!refreshPromise) {
+    refreshPromise = requestRefreshToken()
+      .then(() => undefined)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
 apiAuth.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorResponse>) => {
@@ -74,7 +86,8 @@ apiAuth.interceptors.response.use(
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true;
       try {
-        await requestRefreshToken();
+        // await requestRefreshToken();
+        await refreshSession();
         return apiAuth(originalRequest);
       } catch {
         const { clearAuth } = useAuthStore.getState();
