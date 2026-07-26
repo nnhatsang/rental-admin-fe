@@ -5,7 +5,17 @@ import type { IPaginationResponse } from '@/types/api';
 export type AvailabilityFilter = 'ALL' | 'AVAILABLE' | 'UNAVAILABLE';
 export type ProductAvailabilityState = 'AVAILABLE' | 'LOW_STOCK' | 'UNAVAILABLE';
 export type AssetAvailabilityState = 'AVAILABLE' | 'BOOKED' | 'UNASSIGNABLE';
-export type AssetAvailabilityReason = 'BOOKED' | 'INACTIVE' | 'MAINTENANCE' | 'RETIRED' | 'LOST';
+export type AssetAvailabilityReason =
+  | 'BOOKED'
+  | 'INACTIVE'
+  | 'RESERVED'
+  | 'RENTED'
+  | 'INSPECTING'
+  | 'MAINTENANCE'
+  | 'CLEANING'
+  | 'TRANSFERRING'
+  | 'RETIRED'
+  | 'LOST';
 
 export interface IGetAvailabilityProductsParams extends DefaultParamsRequest {
   startDate: string;

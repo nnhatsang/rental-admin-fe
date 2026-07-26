@@ -31,8 +31,8 @@ export const useLogin = () => {
       applyApiFormErrors(form, error);
     },
     onSuccess: () => {
-      const redirect = searchParams.get('redirect');
-      router.push(redirect || '/');
+      // const redirect = searchParams.get('redirect');
+      router.push('/');
       toast.success(SUCCESS_MESSAGES.AUTH.LOGIN);
     },
   });

@@ -23,7 +23,10 @@ export const assetStatusLabels: Record<AssetStatus, string> = {
   [AssetStatus.AVAILABLE]: text.TABLE.STATUS_AVAILABLE,
   [AssetStatus.RESERVED]: text.TABLE.STATUS_RESERVED,
   [AssetStatus.RENTED]: text.TABLE.STATUS_RENTED,
+  [AssetStatus.INSPECTING]: text.TABLE.STATUS_INSPECTING,
   [AssetStatus.MAINTENANCE]: text.TABLE.STATUS_MAINTENANCE,
+  [AssetStatus.CLEANING]: text.TABLE.STATUS_CLEANING,
+  [AssetStatus.TRANSFERRING]: text.TABLE.STATUS_TRANSFERRING,
   [AssetStatus.RETIRED]: text.TABLE.STATUS_RETIRED,
   [AssetStatus.LOST]: text.TABLE.STATUS_LOST,
 };
@@ -55,9 +58,9 @@ function AssetStatusBadge({ status }: { status: AssetStatus }) {
   const className =
     status === AssetStatus.AVAILABLE
       ? 'border-transparent bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15'
-      : status === AssetStatus.RENTED || status === AssetStatus.RESERVED
+      : status === AssetStatus.RENTED || status === AssetStatus.RESERVED || status === AssetStatus.TRANSFERRING
         ? 'border-transparent bg-blue-500/10 text-blue-600 hover:bg-blue-500/15'
-        : status === AssetStatus.MAINTENANCE
+        : status === AssetStatus.MAINTENANCE || status === AssetStatus.CLEANING || status === AssetStatus.INSPECTING
           ? 'border-transparent bg-amber-500/10 text-amber-600 hover:bg-amber-500/15'
           : 'border-transparent bg-zinc-500/10 text-zinc-600 hover:bg-zinc-500/15';
 

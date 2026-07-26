@@ -6,7 +6,13 @@ import {
   RENTAL_GANTT_TIME_ZONE,
 } from '@/components/reui/gantt/gantt-config';
 import { getGanttDateRange, getRangeKey, type WeekStartsOn } from '@/components/reui/gantt/gantt-lib';
-import type { GanttDateRange, GanttEvent, GanttRangeInfo, GanttResource, GanttScale } from '@/components/reui/gantt/gantt-types';
+import type {
+  GanttDateRange,
+  GanttEvent,
+  GanttRangeInfo,
+  GanttResource,
+  GanttScale,
+} from '@/components/reui/gantt/gantt-types';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
@@ -65,8 +71,12 @@ export const useAvailabilityTimelineLogic = () => {
   const page = parsePositiveIntParam(searchParams.get('page'), DEFAULT_PAGE);
   const perPage = parsePositiveIntParam(searchParams.get('perPage'), DEFAULT_PER_PAGE);
   const search = searchParams.get('search') ?? '';
-  const [ganttScale, setGanttScale] = useState<GanttScale>(() => parseScaleParam(searchParams.get('scale')) ?? RENTAL_GANTT_DEFAULT_SCALE);
-  const [ganttDate, setGanttDate] = useState<Date>(() => parseDateParam(searchParams.get('date')) ?? parseDateParam(searchParams.get('startDate')) ?? new Date());
+  const [ganttScale, setGanttScale] = useState<GanttScale>(
+    () => parseScaleParam(searchParams.get('scale')) ?? RENTAL_GANTT_DEFAULT_SCALE,
+  );
+  const [ganttDate, setGanttDate] = useState<Date>(
+    () => parseDateParam(searchParams.get('date')) ?? parseDateParam(searchParams.get('startDate')) ?? new Date(),
+  );
   const [visibleRange, setVisibleRange] = useState<GanttDateRange>(() => getVisibleRange(ganttScale, ganttDate));
   const [isTimelineReady, setIsTimelineReady] = useState(false);
 
@@ -173,7 +183,7 @@ export const useAvailabilityTimelineLogic = () => {
           id: `${row.assetUnitId}-${block.orderId}`,
           title: `${block.orderCode} - ${block.customerName}`,
           start: new Date(block.startDate),
-          end: new Date(block.blockedEndDate),
+          end: new Date(block.endDate),
           resourceId: row.assetUnitId,
           color: statusColor[block.status] ?? 'var(--color-primary)',
           readOnly: true,

@@ -15,6 +15,11 @@ import { useGetAvailabilityAssets } from '../hooks/use-get-availability-assets';
 import type { AssetAvailabilityReason, AvailabilityFilter, IAvailabilityAsset } from '../type';
 
 const reasonLabel: Record<AssetAvailabilityReason, string> = {
+  RESERVED: 'Đã giữ chỗ',
+  RENTED: 'Đang cho thuê',
+  INSPECTING: 'Đang kiểm tra',
+  CLEANING: 'Đang vệ sinh',
+  TRANSFERRING: 'Đang chuyển kho',
   BOOKED: 'Đã có lịch thuê',
   INACTIVE: 'Đang tạm ngừng',
   MAINTENANCE: 'Đang bảo trì',
