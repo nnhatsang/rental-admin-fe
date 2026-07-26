@@ -27,9 +27,9 @@ export const QueryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       new QueryClient({
         queryCache: new QueryCache({
           onError: (error) => {
-            if (shouldToastError(error)) {
+            // if (shouldToastError(error)) {
               toast.error(getErrorMessage(error));
-            }
+            // }
           },
         }),
         mutationCache: new MutationCache({

@@ -1,4 +1,8 @@
 export const SUCCESS_MESSAGES = {
+  AVAILABILITY: {
+    CHECK: 'Danh sách thiết bị hiện vẫn khả dụng.',
+    UPDATED: 'Lịch thiết bị vừa thay đổi. Dữ liệu đã được cập nhật.',
+  },
   AUTH: {
     REGISTER: 'Đăng ký tài khoản thành công! Vui lòng kiểm tra email để kích hoạt.',
     LOGIN: 'Đăng nhập thành công.',

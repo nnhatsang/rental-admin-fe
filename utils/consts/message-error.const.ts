@@ -1,5 +1,9 @@
 export const ERROR_MESSAGES = {
   DEFAULT: 'Xảy ra lỗi, vui lòng thử lại sau',
+  AVAILABILITY: {
+    LOAD: 'Không thể tải lịch thiết bị',
+    CHECK: 'Kiểm tra lịch thiết bị thất bại',
+  },
   AUTH: {
     REGISTER: 'Tài khoản đăng ký không thành công',
     LOGIN: 'Đăng nhập không thành công',

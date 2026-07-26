@@ -30,12 +30,13 @@ export type IAssetUnitProductOut = {
   id: string;
   name: string;
   sku: string;
+  deletedAt: string | null;
 };
 
 export type IAssetUnitOut = {
   id: string;
   product: IAssetUnitProductOut;
-  serialNumber: string | null;
+  serialNumber: string;
   status: AssetStatus;
   condition: AssetCondition;
   note: string | null;
@@ -57,7 +58,7 @@ export interface IGetAssetUnitsParams extends DefaultParamsRequest {
 
 export interface ICreateAssetUnitReq {
   productId: string;
-  serialNumber?: string;
+  serialNumber: string;
   status?: AssetStatus;
   condition?: AssetCondition;
   note?: string;

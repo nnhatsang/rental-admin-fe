@@ -167,9 +167,7 @@ export const columns: ColumnDef<IAssetUnitOut>[] = [
     meta: { label: text.TABLE.SERIAL_NUMBER },
     cell: ({ row }) => (
       <div className="min-w-0">
-        <div className="truncate text-sm font-medium text-foreground">
-          {row.original.serialNumber || row.original.id}
-        </div>
+        <div className="truncate text-sm font-medium text-foreground">{row.original.serialNumber} </div>
         <div className="truncate text-xs text-muted-foreground">
           {row.original.product.name} · {row.original.product.sku}
         </div>
@@ -180,7 +178,16 @@ export const columns: ColumnDef<IAssetUnitOut>[] = [
   {
     accessorKey: 'product',
     header: text.TABLE.PRODUCT,
-    cell: ({ row }) => row.original.product.name,
+    // cell: ({ row }) => row.original.product.name,
+    cell: ({ row }) => (
+      <div className="grid gap-2">
+        <span>{row.original.product.name}</span>
+
+        {row.original.product.deletedAt && (
+          <Badge variant="destructive">{formatDate(row.original.product.deletedAt)}</Badge>
+        )}
+      </div>
+    ),
     enableSorting: false,
     enableColumnFilter: false,
   },

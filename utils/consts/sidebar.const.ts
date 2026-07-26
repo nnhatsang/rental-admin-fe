@@ -1,5 +1,5 @@
 import { NavGroup } from '@/components/layout/types';
-import { PermissionCode, PermissionCode as Permission } from '@/utils/consts/rbac.const';
+import { PermissionCode as Permission, PermissionCode } from '@/utils/consts/rbac.const';
 
 import {
   IconCamera,
@@ -7,11 +7,13 @@ import {
   IconCreditCard,
   IconDashboard,
   IconDevices,
+  IconPackages,
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
+  IconTimeline,
   IconTruckReturn,
-  IconUsers,
+  IconUsers
 } from '@tabler/icons-react';
 
 export const sidebarItems: NavGroup[] = [
@@ -34,6 +36,24 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 2,
+    label: 'Lịch khả dụng',
+    items: [
+      {
+        title: 'Sản phẩm',
+        url: '/availability/products',
+        icon: IconPackages,
+        requiredPermissions: [Permission.OrdersRead],
+      },
+      {
+        title: 'Timeline',
+        url: '/availability/timeline',
+        icon: IconTimeline,
+        requiredPermissions: [Permission.OrdersRead],
+      },
+    ],
+  },
+  {
+    id: 3,
     label: 'Vận hành thuê',
     items: [
       {
@@ -63,7 +83,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 3,
+    id: 4,
     label: 'Kho thiết bị',
     items: [
       {
@@ -81,7 +101,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 4,
+    id: 5,
     label: 'Quản trị',
     items: [
       {
@@ -116,13 +136,9 @@ export const canAccessPermissions = (requiredPermissions: PermissionCode[] | und
 const isPathnameMatch = (pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`);
 
 export const findSidebarItemByPathname = (pathname: string) => {
-  const allItems = sidebarItems.flatMap((group) =>
-    group.items.flatMap((item) => [item, ...(item.subItems ?? [])]),
-  );
+  const allItems = sidebarItems.flatMap((group) => group.items.flatMap((item) => [item, ...(item.subItems ?? [])]));
 
-  return allItems
-    .filter((item) => isPathnameMatch(pathname, item.url))
-    .sort((a, b) => b.url.length - a.url.length)[0];
+  return allItems.filter((item) => isPathnameMatch(pathname, item.url)).sort((a, b) => b.url.length - a.url.length)[0];
 };
 
 export const canAccessSidebarRoute = (pathname: string, userPermissions: string[]) => {

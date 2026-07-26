@@ -58,7 +58,7 @@ const removeUndefined = <T extends object>(value: T): Partial<T> => {
 
 const normalizePayload = (values: IAssetUnitFormInput): ICreateAssetUnitReq => ({
   productId: values.productId.trim(),
-  serialNumber: values.serialNumber?.trim() || undefined,
+  serialNumber: values.serialNumber.trim(),
   status: values.status,
   condition: values.condition,
   note: values.note?.trim() || undefined,
@@ -389,7 +389,7 @@ function AssetUnitStatusDialog({
         <DialogHeader>
           <DialogTitle>{text.DIALOG.STATUS_TITLE}</DialogTitle>
           <DialogDescription>
-            {text.DIALOG.STATUS_DESCRIPTION_PREFIX} <strong>{assetUnit.serialNumber || assetUnit.product.name}</strong>.
+            {text.DIALOG.STATUS_DESCRIPTION_PREFIX} <strong>{assetUnit.serialNumber}</strong>.
           </DialogDescription>
         </DialogHeader>
 

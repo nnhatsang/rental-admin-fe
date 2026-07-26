@@ -45,7 +45,7 @@ export type IProductOut = {
   category: IProductRelationOut | null;
   brand: IProductRelationOut | null;
   dailyPrice: string;
-  halfDayPrice: string | null;
+  halfDayPrice: string;
   hourlyOveragePrice: string | null;
   rentalPriceTiers: IProductRentalPriceTierOut[];
   depositAmount: string;

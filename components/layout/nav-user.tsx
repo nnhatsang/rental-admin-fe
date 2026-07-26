@@ -81,7 +81,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className={cn(isSidebar ? 'w-(--radix-dropdown-menu-trigger-width)' : 'w-64', 'min-w-56 rounded-lg')}
+        className={cn(isSidebar ? 'w-(--radix-dropdown-menu-trigger-width)' : 'w-52', 'min-w-52 rounded-lg')}
         side={dropdownSide}
         align={align}
         sideOffset={4}

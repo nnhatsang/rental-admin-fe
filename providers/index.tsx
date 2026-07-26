@@ -20,7 +20,7 @@ export const Providers: React.FC<{
           navbarStyle={navbar_style}
           // font={font}
         >
-          <Toaster richColors position="bottom-right" />
+          <Toaster  position="bottom-right" />
           <TooltipProvider>
             <AuthProvider>{children}</AuthProvider>
           </TooltipProvider>

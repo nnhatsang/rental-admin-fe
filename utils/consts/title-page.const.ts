@@ -7,6 +7,11 @@ export const TITLE_PAGE = {
     FORGOT_PASSWORD: 'Quên mật khẩu',
     RESET_PASSWORD: 'Đặt lại mật khẩu',
   },
+  AVAILABILITY: {
+    ROOT: 'Lịch trống',
+    INDEX: 'Kiểm tra lịch trống',
+    DESCRIPTION: 'Tìm sản phẩm và thiết bị khả dụng theo khoảng thời gian thuê',
+  },
   USERS: {
     ROOT: 'Người dùng',
     INDEX: 'Quản lý người dùng',

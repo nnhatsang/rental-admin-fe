@@ -159,7 +159,7 @@ export function SearchDialog() {
       >
         <IconSearch data-icon="inline-start" />
         Tìm kiếm
-        <Kbd className="bg-muted">{`${modKeyLabel} + J`}</Kbd>
+        <Kbd>{modKeyLabel}</Kbd> <Kbd>J</Kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={handleOpenChange}>
         <Command>

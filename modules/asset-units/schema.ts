@@ -8,7 +8,7 @@ const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional(
 
 export const assetUnitFormSchema = z.object({
   productId: z.string().regex(UUID_V7_REGEX, { message: 'UUID sản phẩm không hợp lệ' }),
-  serialNumber: optionalString,
+  serialNumber: z.string().trim().min(1, 'Vui lòng nhập serial number'),
   status: z.enum(AssetStatus),
   condition: z.enum(AssetCondition),
   note: optionalString,

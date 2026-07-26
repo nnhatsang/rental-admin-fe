@@ -1,5 +1,6 @@
 export enum ESocketEmit {
   PERMISSIONS_UPDATED = 'permissions:updated',
+  AVAILABILITY_CHANGED = 'availability:changed',
 }
 
 export enum ESocketReason {
