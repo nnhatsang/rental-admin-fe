@@ -2,10 +2,13 @@
 
 import { ApiClientError } from '@/axios';
 import { ERROR_MESSAGES } from '@/utils/consts/message-error.const';
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { createIdbPersister } from '@/lib/react-query-idb-persister';
+import { REACT_QUERY_PERSIST_MAX_AGE, shouldPersistQuery } from '@/lib/react-query-persist-config';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof ApiClientError) return error.message;
@@ -61,12 +64,21 @@ export const QueryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
       }),
   );
-
+const [persister] = useState(() => createIdbPersister());
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: REACT_QUERY_PERSIST_MAX_AGE,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => shouldPersistQuery(query.queryKey),
+        },
+      }}
+    >
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 };
 
