@@ -15,32 +15,23 @@ import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { IconDots, IconEdit, IconEye, IconPackage, IconPower, IconToggleLeft, IconTrash } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import Link from 'next/link';
+import { productActiveConfig, productActiveOptions } from './display-config';
 import { useProducts } from './products-provider';
 import type { IProductOut } from './type';
 
 const productText = TITLE_PAGE.PRODUCTS;
 
-const activeFilterOptions = [
-  { label: productText.TABLE.ACTIVE, value: 'true' },
-  { label: productText.TABLE.INACTIVE, value: 'false' },
-];
-
-const formatProductCurrency = (value: string | null) => {
+const formatProductCurrency = (value: number | null) => {
   if (value === null) return '-';
-  return formatCurrency(Number(value), { noDecimals: true });
+  return formatCurrency(value, { noDecimals: true });
 };
 
 function ProductStatusBadge({ isActive }: { isActive: boolean }) {
+  const item = productActiveConfig[String(isActive) as keyof typeof productActiveConfig];
+
   return (
-    <Badge
-      variant="outline"
-      className={
-        isActive
-          ? 'border-transparent bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15'
-          : 'border-transparent bg-zinc-500/10 text-zinc-600 hover:bg-zinc-500/15'
-      }
-    >
-      {isActive ? productText.TABLE.ACTIVE : productText.TABLE.INACTIVE}
+    <Badge variant="outline" className={item.className}>
+      {item.label}
     </Badge>
   );
 }
@@ -161,7 +152,7 @@ export const columns: ColumnDef<IProductOut>[] = [
     meta: {
       label: productText.TABLE.STATUS,
       variant: 'select',
-      options: activeFilterOptions,
+      options: productActiveOptions,
     },
   },
   {

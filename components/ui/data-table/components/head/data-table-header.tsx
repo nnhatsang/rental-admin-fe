@@ -1,40 +1,26 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import type { Header, RowData } from "@tanstack/react-table"
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import type { VirtualItem } from "@tanstack/react-virtual"
+import * as React from 'react';
+import type { Header, RowData } from '@tanstack/react-table';
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import type { VirtualItem } from '@tanstack/react-virtual';
 
-import {
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
-import {
-  getColumnPinningClass,
-  getColumnPinningStyle,
-  getWidthStyle,
-} from "../../utils/column-styles"
-import { DENSITY_CELL_PADDING } from "../../core/constants"
-import {
-  headerControlsOptionsFromTable,
-  shouldShowColumnDragGrip,
-} from "../../helpers/header-controls"
-import type { DataTableInstance } from "../../core/types"
-import type { WithColumnSpacers } from "../../hooks/use-table-virtualizers"
-import { DataTableHeadCell } from "../body/dnd"
-import { DataTableColumnFilter } from "./data-table-column-filter"
-import { DataTableColumnHeader } from "./data-table-column-header"
+import { getColumnPinningClass, getColumnPinningStyle, getWidthStyle } from '../../utils/column-styles';
+import { DENSITY_CELL_PADDING } from '../../core/constants';
+import { headerControlsOptionsFromTable, shouldShowColumnDragGrip } from '../../helpers/header-controls';
+import type { DataTableInstance } from '../../core/types';
+import type { WithColumnSpacers } from '../../hooks/use-table-virtualizers';
+import { DataTableHeadCell } from '../body/dnd';
+import { DataTableColumnFilter } from './data-table-column-filter';
+import { DataTableColumnHeader } from './data-table-column-header';
 
 interface DataTableHeaderProps<TData extends RowData> {
-  table: DataTableInstance<TData>
-  virtualColumns: VirtualItem[]
-  withColumnSpacers: WithColumnSpacers
+  table: DataTableInstance<TData>;
+  virtualColumns: VirtualItem[];
+  withColumnSpacers: WithColumnSpacers;
 }
 
 /**
@@ -56,20 +42,15 @@ export function DataTableHeader<TData extends RowData>({
     columnFilterDisplayMode,
     enableStickyHeader,
     refs,
-  } = table.cnTable
+  } = table.cnTable;
 
-  const controls = headerControlsOptionsFromTable(table)
-  const padding = DENSITY_CELL_PADDING[density]
-  const leafColumnIds = table.getVisibleLeafColumns().map((c) => c.id)
+  const controls = headerControlsOptionsFromTable(table);
+  const padding = DENSITY_CELL_PADDING[density];
+  const leafColumnIds = table.getVisibleLeafColumns().map((c) => c.id);
 
-  const anyFilterable = table
-    .getAllColumns()
-    .some((column) => column.getCanFilter())
+  const anyFilterable = table.getAllColumns().some((column) => column.getCanFilter());
   const filterRowVisible =
-    enableColumnFilters &&
-    showColumnFilters &&
-    anyFilterable &&
-    columnFilterDisplayMode === "subheader"
+    enableColumnFilters && showColumnFilters && anyFilterable && columnFilterDisplayMode === 'subheader';
 
   const renderHeadCell = (header: Header<TData, unknown>) => (
     <DataTableHeadCell
@@ -85,11 +66,9 @@ export function DataTableHeader<TData extends RowData>({
       widthStyle={getWidthStyle(header.column, table)}
       padding={padding}
     >
-      {header.isPlaceholder ? null : (
-        <DataTableColumnHeader header={header} table={table} />
-      )}
+      {header.isPlaceholder ? null : <DataTableColumnHeader header={header} table={table} />}
     </DataTableHeadCell>
-  )
+  );
 
   const renderFilterCell = (header: Header<TData, unknown>) => (
     <TableHead
@@ -99,40 +78,34 @@ export function DataTableHeader<TData extends RowData>({
         ...getWidthStyle(header.column, table),
         ...getColumnPinningStyle(header.column),
       }}
-      className={cn(
-        "bg-background pt-0 pb-2",
-        getColumnPinningClass(header.column)
-      )}
+      className={cn('bg-background pt-0 pb-2', getColumnPinningClass(header.column))}
     >
       <DataTableColumnFilter header={header} table={table} />
     </TableHead>
-  )
+  );
 
   return (
     <TableHeader
+      // Forwarding the exposed DOM ref object as a JSX ref (not reading
+      // .current during render).
+      // eslint-disable-next-line react-hooks/refs
       ref={refs.tableHeadRef}
-      className={cn(enableStickyHeader && "sticky top-0 z-20 bg-background")}
+      className={cn(enableStickyHeader && 'sticky top-0 z-20 bg-background')}
     >
       {table.getHeaderGroups().map((headerGroup) => (
-        <TableRow
-          key={headerGroup.id}
-          className="group/th hover:bg-transparent"
-        >
+        <TableRow key={headerGroup.id} className="group/th hover:bg-transparent">
           {enableColumnVirtualization ? (
             withColumnSpacers(
               virtualColumns
                 .map((vc) => {
-                  const header = headerGroup.headers[vc.index]
-                  return header ? renderHeadCell(header) : null
+                  const header = headerGroup.headers[vc.index];
+                  return header ? renderHeadCell(header) : null;
                 })
                 .filter(Boolean) as React.ReactNode[],
-              `head-${headerGroup.id}`
+              `head-${headerGroup.id}`,
             )
           ) : (
-            <SortableContext
-              items={leafColumnIds}
-              strategy={horizontalListSortingStrategy}
-            >
+            <SortableContext items={leafColumnIds} strategy={horizontalListSortingStrategy}>
               {headerGroup.headers.map(renderHeadCell)}
             </SortableContext>
           )}
@@ -141,23 +114,20 @@ export function DataTableHeader<TData extends RowData>({
 
       {filterRowVisible &&
         table.getHeaderGroups().map((headerGroup) => (
-          <TableRow
-            key={`${headerGroup.id}-filters`}
-            className="hover:bg-transparent"
-          >
+          <TableRow key={`${headerGroup.id}-filters`} className="hover:bg-transparent">
             {enableColumnVirtualization
               ? withColumnSpacers(
                   virtualColumns
                     .map((vc) => {
-                      const header = headerGroup.headers[vc.index]
-                      return header ? renderFilterCell(header) : null
+                      const header = headerGroup.headers[vc.index];
+                      return header ? renderFilterCell(header) : null;
                     })
                     .filter(Boolean) as React.ReactNode[],
-                  `filter-${headerGroup.id}`
+                  `filter-${headerGroup.id}`,
                 )
               : headerGroup.headers.map(renderFilterCell)}
           </TableRow>
         ))}
     </TableHeader>
-  )
+  );
 }

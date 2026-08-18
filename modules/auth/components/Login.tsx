@@ -27,7 +27,15 @@ const Login: React.FC = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        noValidate
+        method="post"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit(onSubmit)(event);
+        }}
+        className="space-y-4"
+      >
         <Controller
           control={control}
           name="email"

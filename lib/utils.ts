@@ -58,6 +58,7 @@ export const LOCALE = {
     short: 'dd/MM/yyyy',
     shortDateTime: 'dd/MM HH:mm',
     time: 'HH:mm',
+    rentalSchedule: 'HH:mm EEEE dd/MM',
   },
 } as const;
 

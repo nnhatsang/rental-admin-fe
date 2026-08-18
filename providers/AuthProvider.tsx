@@ -3,7 +3,6 @@
 import { useAuthStore } from '@/modules/auth/store';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { useSocket } from '@/hooks/use-socket';
 
 const PUBLIC_ROUTES = ['/auth', '/auth/login', '/auth/forgot-password', '/auth/reset-password'];
 
@@ -12,7 +11,6 @@ const isPublicRoute = (pathname: string) => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  useSocket();
   const pathname = usePathname();
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
   const isLoading = useAuthStore((state) => state.isLoading);

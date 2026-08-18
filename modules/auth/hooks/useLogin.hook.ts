@@ -3,14 +3,13 @@ import { useAuthStore } from '../store';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { applyApiFormErrors } from '@/utils/form-error';
 import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
 
 export const useLogin = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const { login } = useAuthStore();
   const form = useForm<ILoginInput>({
@@ -31,8 +30,10 @@ export const useLogin = () => {
       applyApiFormErrors(form, error);
     },
     onSuccess: () => {
-      // const redirect = searchParams.get('redirect');
-      router.push('/');
+      const redirect = searchParams.get('redirect');
+      const nextPath = redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : '/';
+
+      window.location.href = nextPath;
       toast.success(SUCCESS_MESSAGES.AUTH.LOGIN);
     },
   });

@@ -6,12 +6,14 @@ import { Metadata } from 'next';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { cn } from '@/lib/utils';
 import { PermissionProvider } from '@/providers/PermissionProvider';
+import { AdminSocketProvider } from '@/providers/AdminSocketProvider';
 
 const AdminLayout: React.FC<Readonly<{ children: React.ReactNode }>> = async ({ children }) => {
   const { defaultOpen, variant, collapsible } = await getLayoutPreferences();
 
   return (
     <>
+      <AdminSocketProvider />
       <SidebarProvider
         defaultOpen={defaultOpen}
         style={

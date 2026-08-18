@@ -4,18 +4,18 @@ import { DateTimeRangePicker, type DateTimeRange } from '@/components/shared/dat
 import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { columns } from '../columns';
 import { useRentalOrders } from '../rental-orders-provider';
-import type { IGetRentalOrdersParams, IRentalOrderOut } from '../type';
+import type { IGetRentalOrdersParams, IRentalOrderListItemOut } from '../type';
 import { useGetRentalOrders } from './use-get-rental-orders';
 
 export interface IRentalOrdersLogic {
-  table: DataTableInstance<IRentalOrderOut>;
+  table: DataTableInstance<IRentalOrderListItemOut>;
 }
 
 const parseDateFilter = (value: string) => {
@@ -66,7 +66,7 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
     }),
     [fromDateInput, queryParams, toDateInput],
   );
-  const { data, isLoading, isFetching } = useGetRentalOrders(rentalOrderQueryParams);
+  const { data, isLoading, isFetching, refetch } = useGetRentalOrders(rentalOrderQueryParams);
 
   const setDateRangeFilter = useCallback(
     (range: DateTimeRange) => {
@@ -87,7 +87,7 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
     [pathname, router, searchParams],
   );
 
-  const table = useDataTable<IRentalOrderOut>({
+  const table = useDataTable<IRentalOrderListItemOut>({
     data: data?.items ?? [],
     columns,
     pageCount: data?.pagination?.totalPage ?? 1,
@@ -123,12 +123,22 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
           onUpdate={({ range }) => setDateRangeFilter(range)}
           open={dateRangeOpen}
           setOpen={setDateRangeOpen}
+          updateMode="manual"
           enableTime={false}
+          allowPastDates
           className="w-full sm:w-[320px]"
         />
-        <Button size="lg" onClick={() => setOpen('create')}>
+        <Button onClick={() => setOpen('create')}>
           <IconPlus className="mr-1.5 size-4" />
           Tạo đơn thuê
+        </Button>
+        <Button
+          variant="outline"
+          disabled={isFetching}
+          onClick={() => void refetch()}
+        >
+          <IconRefresh className="mr-1.5 size-4" />
+          Làm mới
         </Button>
       </div>
     ),

@@ -20,14 +20,14 @@ import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader, IconPlus, IconTrash } from '@tabler/icons-react';
 import type { Table } from '@tanstack/react-table';
-import { Controller, type Resolver, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, type Resolver } from 'react-hook-form';
 import { useCreateProduct } from './hooks/use-create-product';
 import { useDeleteProducts } from './hooks/use-delete-products';
 import { useUpdateProduct } from './hooks/use-update-product';
 import { useUpdateProductStatus } from './hooks/use-update-product-status';
-import { productFormSchema, type IProductFormInput } from './schema';
-import type { ICreateProductReq, IProductOut, IUpdateProductReq } from './type';
 import { useProducts } from './products-provider';
+import { productFormSchema, type IProductFormInput } from './schema';
+import type { IProductOut, IUpdateProductReq } from './type';
 
 type ProductFormDialogProps = {
   currentRow?: IProductOut;
@@ -36,36 +36,7 @@ type ProductFormDialogProps = {
   readOnly?: boolean;
 };
 
-const toNumberOrZero = (value: string | null) => (value === null ? 0 : Number(value));
-
-const normalizePayload = (values: IProductFormInput): ICreateProductReq => ({
-  name: values.name.trim(),
-  sku: values.sku.trim(),
-  description: values.description?.trim() || undefined,
-  includedAccessories: values.includedAccessories?.trim() || undefined,
-  usageGuide: values.usageGuide?.trim() || undefined,
-  categoryId: values.categoryId || undefined,
-  brandId: values.brandId || undefined,
-  dailyPrice: values.dailyPrice,
-  halfDayPrice: values.halfDayPrice,
-  hourlyOveragePrice: values.hourlyOveragePrice,
-  rentalPriceTiers: values.rentalPriceTiers?.map((tier, index) => ({
-    minDays: tier.minDays,
-    maxDays: tier.maxDays,
-    dailyPrice: tier.dailyPrice,
-    name: tier.name?.trim() || undefined,
-    sortOrder: tier.sortOrder ?? index,
-  })),
-  depositAmount: values.depositAmount,
-  replacementValue: values.replacementValue,
-  isActive: values.isActive,
-});
-
-const removeUndefined = <T extends object>(value: T): Partial<T> => {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, item]) => item !== undefined && item !== ''),
-  ) as Partial<T>;
-};
+const toNumberOrZero = (value: number | null) => value ?? 0;
 
 function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }: ProductFormDialogProps) {
   const isEdit = !!currentRow;
@@ -74,7 +45,12 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
   const updateMutation = useUpdateProduct();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const form = useForm<IProductFormInput>({
+  const {
+    reset,
+    formState: { isDirty, dirtyFields },
+    handleSubmit,
+    control,
+  } = useForm<IProductFormInput>({
     resolver: zodResolver(productFormSchema) as Resolver<IProductFormInput>,
     defaultValues: currentRow
       ? {
@@ -83,7 +59,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           description: currentRow.description ?? undefined,
           includedAccessories: currentRow.includedAccessories ?? undefined,
           usageGuide: currentRow.usageGuide ?? undefined,
-          dailyPrice: Number(currentRow.dailyPrice),
+          dailyPrice: currentRow.dailyPrice,
           halfDayPrice: toNumberOrZero(currentRow.halfDayPrice),
           hourlyOveragePrice: toNumberOrZero(currentRow.hourlyOveragePrice),
           categoryId: currentRow.category?.id ?? undefined,
@@ -91,11 +67,10 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           rentalPriceTiers: currentRow.rentalPriceTiers.map((tier) => ({
             minDays: tier.minDays,
             maxDays: tier.maxDays ?? undefined,
-            dailyPrice: Number(tier.dailyPrice),
+            dailyPrice: tier.dailyPrice,
             name: tier.name ?? undefined,
-            sortOrder: tier.sortOrder,
           })),
-          depositAmount: Number(currentRow.depositAmount),
+          depositAmount: currentRow.depositAmount,
           replacementValue: toNumberOrZero(currentRow.replacementValue),
           isActive: currentRow.isActive,
         }
@@ -117,32 +92,42 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
         },
   });
   const rentalPriceTiers = useFieldArray({
-    control: form.control,
+    control: control,
     name: 'rentalPriceTiers',
   });
 
   const handleClose = () => {
-    form.reset();
+    reset();
     onOpenChange(false);
   };
 
   const onSubmit = (values: IProductFormInput) => {
     if (readOnly) return;
 
-    const payload = normalizePayload(values);
-
-    if (isEdit && currentRow) {
-      updateMutation.mutate(
-        {
-          id: currentRow.id,
-          data: removeUndefined(payload) as IUpdateProductReq,
-        },
-        { onSuccess: handleClose },
-      );
+    if (!currentRow) {
+      createMutation.mutate(values, {
+        onSuccess: handleClose,
+      });
+      return;
+    }
+    if (!isDirty) {
+      handleClose();
       return;
     }
 
-    createMutation.mutate(removeUndefined(payload) as ICreateProductReq, { onSuccess: handleClose });
+    const dirtyValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) => {
+        return dirtyFields[key as keyof IProductFormInput];
+      }),
+    ) as IUpdateProductReq;
+
+    updateMutation.mutate(
+      {
+        id: currentRow.id,
+        data: dirtyValues,
+      },
+      { onSuccess: handleClose },
+    );
   };
 
   return (
@@ -155,12 +140,12 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           </DialogDescription>
         </DialogHeader>
 
-        <form id="product-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <ScrollArea className="h-[60vh] ">
+        <form id="product-form" onSubmit={handleSubmit(onSubmit)}>
+          <ScrollArea className="h-[60dvh] max-h-[calc(100dvh-220px)]">
             <div className="pr-4 py-2 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="name"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -177,7 +162,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="sku"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -197,7 +182,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="categoryId"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -214,7 +199,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="brandId"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -234,7 +219,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="dailyPrice"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -245,7 +230,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="halfDayPrice"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -259,7 +244,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="depositAmount"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -270,7 +255,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="hourlyOveragePrice"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -281,7 +266,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="replacementValue"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -308,7 +293,6 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                         rentalPriceTiers.append({
                           minDays: 0,
                           dailyPrice: 0,
-                          sortOrder: rentalPriceTiers.fields.length,
                         })
                       }
                     >
@@ -328,7 +312,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                         className="grid gap-3 rounded-md border p-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto]"
                       >
                         <Controller
-                          control={form.control}
+                          control={control}
                           name={`rentalPriceTiers.${index}.minDays`}
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -346,7 +330,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                           )}
                         />
                         <Controller
-                          control={form.control}
+                          control={control}
                           name={`rentalPriceTiers.${index}.maxDays`}
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -364,7 +348,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                           )}
                         />
                         <Controller
-                          control={form.control}
+                          control={control}
                           name={`rentalPriceTiers.${index}.dailyPrice`}
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -380,7 +364,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                           )}
                         />
                         <Controller
-                          control={form.control}
+                          control={control}
                           name={`rentalPriceTiers.${index}.name`}
                           render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
@@ -414,7 +398,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
               </div>
 
               <Controller
-                control={form.control}
+                control={control}
                 name="description"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -427,7 +411,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="includedAccessories"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -443,7 +427,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   )}
                 />
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="usageGuide"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -461,7 +445,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
               </div>
 
               <Controller
-                control={form.control}
+                control={control}
                 name="isActive"
                 render={({ field }) => (
                   <Field orientation="horizontal" className="justify-between rounded-md border p-3">
@@ -481,7 +465,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
               {text.DIALOG.CANCEL}
             </Button>
             {!readOnly && (
-              <Button type="submit" form="product-form" disabled={isPending}>
+              <Button type="submit" form="product-form" disabled={isPending || !isDirty}>
                 {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
                 {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
               </Button>

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -39,7 +39,7 @@ export const useAssetUnitsLogic = (): IAssetUnitsLogic => {
   });
   const productId = searchParams.get('productId') || undefined;
   const params = useMemo(() => ({ ...queryParams, productId }), [productId, queryParams]);
-  const { data, isLoading, isFetching } = useGetAssetUnits(params);
+  const { data, isLoading, isFetching, refetch } = useGetAssetUnits(params);
 
   const table = useDataTable<IAssetUnitOut>({
     data: data?.items ?? [],
@@ -76,13 +76,20 @@ export const useAssetUnitsLogic = (): IAssetUnitsLogic => {
           <ProductCombobox placeholder={text.FORM.FILTER_PRODUCT_PLACEHOLDER} syncToUrl />
         </div>
         <Button
-          size="lg"
           onClick={() => {
             setCurrentRow(null);
             setOpen('add');
           }}
         >
           <IconPlus className="mr-1.5 size-4" /> {text.ACTIONS.CREATE}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={isFetching}
+          onClick={() => void refetch()}
+        >
+          <IconRefresh className="mr-1.5 size-4" />
+          Làm mới
         </Button>
       </div>
     ),

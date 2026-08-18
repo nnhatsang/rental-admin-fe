@@ -153,6 +153,7 @@ export const useAvailabilityProductsLogic = () => {
             value={{ from: parseLocalDateTime(values.startDate), to: parseLocalDateTime(values.endDate) }}
             open={isDatePickerOpen}
             setOpen={setDatePickerOpen}
+            updateMode="manual"
             onUpdate={({ range }) => handleDateRangeChange(range)}
           />
           {(form.formState.errors.startDate || form.formState.errors.endDate) && (
@@ -182,18 +183,18 @@ export const useAvailabilityProductsLogic = () => {
               <div className="space-y-2 divide-y p-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>Giá ngày</span>
-                  <span className="font-semibold">{formatCurrency(Number(dailyPrice), { noDecimals: true })}</span>
+                  <span className="font-semibold">{formatCurrency(dailyPrice, { noDecimals: true })}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span>Giá thuê theo buổi (6 tiếng)</span>
                   <span className="font-semibold">
-                    {halfDayPrice ? formatCurrency(Number(halfDayPrice), { noDecimals: true }) : '-'}
+                    {halfDayPrice ? formatCurrency(halfDayPrice, { noDecimals: true }) : '-'}
                   </span>
                 </div>
                 {rentalPriceTiers
                   .toSorted((a, b) => (a.minDays ?? 0) - (b.minDays ?? 0))
                   .map(({ minDays = 1, maxDays, dailyPrice }, idx) => {
-                    const tierPrice = Number(dailyPrice);
+                    const tierPrice = dailyPrice;
 
                     const isExactCombo = typeof maxDays === 'number' && maxDays === minDays;
                     const isOpenRange = typeof maxDays !== 'number';

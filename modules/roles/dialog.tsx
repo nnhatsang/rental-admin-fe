@@ -25,7 +25,7 @@ import { useDeleteRole } from './hooks/use-delete-role';
 import { useUpdateRole } from './hooks/use-update-role';
 import { PermissionMatrixField } from './permission-matrix-field';
 import { assignRoleUsersSchema, createRoleSchema, IAssignRoleUsersInput, ICreateRoleInput } from './schema';
-import { IRoleOut } from './type';
+import { IRoleOut, IUpdateRoleReq } from './type';
 import { useRoles } from './roles-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAssignLogic } from './hooks/use-assign-logic';
@@ -69,11 +69,15 @@ function RoleFormDialog({
   const updateMutation = useUpdateRole();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const form = useForm<RoleFormValues>({
+  const {
+    reset,
+    formState: { isDirty, dirtyFields },
+    handleSubmit,
+    control,
+  } = useForm<RoleFormValues>({
     resolver: zodResolver(createRoleSchema),
     defaultValues: getRoleFormDefaultValues(currentRow),
   });
-  const { handleSubmit, reset } = form;
 
   const allPermissions = useMemo(() => permissionsQuery.data?.data ?? [], [permissionsQuery.data?.data]);
 
@@ -85,19 +89,30 @@ function RoleFormDialog({
   const onSubmit = (values: RoleFormValues) => {
     if (readOnly) return;
 
-    if (isEdit && currentRow) {
-      updateMutation.mutate(
-        { id: currentRow.id, data: values },
-        {
-          onSuccess: handleClose,
-        },
-      );
+    if (!currentRow) {
+      createMutation.mutate(values, {
+        onSuccess: handleClose,
+      });
       return;
     }
 
-    createMutation.mutate(values, {
-      onSuccess: handleClose,
-    });
+    if (!isDirty) {
+      handleClose();
+      return;
+    }
+    const dirtyValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) => {
+        return dirtyFields[key as keyof RoleFormValues];
+      }),
+    ) as IUpdateRoleReq;
+
+    updateMutation.mutate(
+      {
+        id: currentRow.id,
+        data: dirtyValues,
+      },
+      { onSuccess: handleClose },
+    );
   };
 
   return (
@@ -111,12 +126,11 @@ function RoleFormDialog({
         </DialogHeader>
 
         <form id="role-form" onSubmit={handleSubmit(onSubmit)}>
-          <ScrollArea className="h-[60vh] pr-4">
+          <ScrollArea className="h-[50dvh] max-h-[calc(100dvh-220px)]">
             <div className="grid gap-4">
-              {' '}
               <div className="grid gap-4 md:grid-cols-2">
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="code"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -134,7 +148,7 @@ function RoleFormDialog({
                 />
 
                 <Controller
-                  control={form.control}
+                  control={control}
                   name="name"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
@@ -152,7 +166,7 @@ function RoleFormDialog({
                 />
               </div>
               <Controller
-                control={form.control}
+                control={control}
                 name="description"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -169,7 +183,7 @@ function RoleFormDialog({
                 )}
               />
               <Controller
-                control={form.control}
+                control={control}
                 name="permissionCodes"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -196,7 +210,7 @@ function RoleFormDialog({
             <Button type="button" variant="outline" onClick={handleClose} className="h-10">
               {text.DIALOG.CANCEL}
             </Button>
-            <Button type="submit" disabled={isPending} className="h-10 min-w-[100px]">
+            <Button type="submit" disabled={isPending || !isDirty} className="h-10 min-w-[100px]">
               {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
               {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
             </Button>
@@ -239,15 +253,13 @@ function AssignRoleDialog({
       operation: 'ASSIGN',
     },
   });
-  const { clearErrors, getValues, setError, setValue, trigger } = form;
+  const { clearErrors, getValues, setError, setValue, trigger, formState } = form;
 
   const submitAssignUsers = (values: IAssignRoleUsersInput) => {
-    if (currentRow) {
-      mutate(values, {
-        onError: (err) => applyApiFormErrors(form, err, { fallbackMessage: text.ERRORS.UPDATE_FAILED }),
-        onSuccess: handleClose,
-      });
-    }
+    mutate(values, {
+      onError: (err) => applyApiFormErrors(form, err, { fallbackMessage: text.ERRORS.UPDATE_FAILED }),
+      onSuccess: handleClose,
+    });
   };
 
   const handleSave = async () => {
@@ -323,9 +335,8 @@ function AssignRoleDialog({
               event.preventDefault();
               void handleSave();
             }}
-            className="flex min-h-0 flex-1 flex-col pt-2"
           >
-            <div className="min-h-0 flex-1 overflow-x-auto no-scrollbar">
+            <div className="min-h-0 overflow-x-auto no-scrollbar p-1">
               <div className="mb-5 flex items-center justify-between">
                 <Select value={String(inOutList)} onValueChange={(value) => setInOutList(Number(value) as List)}>
                   <SelectTrigger className="w-65">
@@ -341,9 +352,9 @@ function AssignRoleDialog({
                 </Select>
               </div>
               <DataTable table={table} surfaceClassName="h-[260px]" />
-              {form.formState.errors.userIds && (
+              {formState.errors.userIds && (
                 <div className="mt-2">
-                  <FieldError errors={[form.formState.errors.userIds]} />
+                  <FieldError errors={[formState.errors.userIds]} />
                 </div>
               )}
             </div>

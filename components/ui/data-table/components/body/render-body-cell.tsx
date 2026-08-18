@@ -50,27 +50,20 @@ export function renderBodyCell<TData extends RowData>(
             ? meta.renderGroupedCell({ cell, row, column, table })
             : flexRender(column.columnDef.cell, cell.getContext())}
         </span>
-        <span className="text-xs text-muted-foreground">
-          ({row.subRows.length})
-        </span>
+        <span className="text-xs text-muted-foreground">({row.subRows.length})</span>
       </button>
-    )
+    );
   }
 
   if (isGrouping && cell.getIsAggregated()) {
     if (meta?.renderAggregatedCell) {
-      return meta.renderAggregatedCell({ cell, row, column, table })
+      return meta.renderAggregatedCell({ cell, row, column, table });
     }
-    return flexRender(
-      column.columnDef.aggregatedCell ?? column.columnDef.cell,
-      cell.getContext()
-    )
+    return flexRender(column.columnDef.aggregatedCell ?? column.columnDef.cell, cell.getContext());
   }
 
   if (isGrouping && cell.getIsPlaceholder()) {
-    return meta?.renderPlaceholderCell
-      ? meta.renderPlaceholderCell({ cell, row, column, table })
-      : null
+    return meta?.renderPlaceholderCell ? meta.renderPlaceholderCell({ cell, row, column, table }) : null;
   }
 
   return (
@@ -95,46 +88,45 @@ function renderCellContent<TData extends RowData>(
   cell: Cell<TData, unknown>,
   table: DataTableInstance<TData>,
   enableHighlight: boolean,
-  columnsWithCustomCell: ReadonlySet<string>
+  columnsWithCustomCell: ReadonlySet<string>,
 ): React.ReactNode {
-  const { column } = cell
-  const value = cell.getValue()
+  const { column } = cell;
+  const value = cell.getValue();
   const canHighlight =
     enableHighlight &&
     !column.columnDef.meta?.disableHighlight &&
     !columnsWithCustomCell.has(column.id) &&
-    (typeof value === "string" || typeof value === "number")
+    (typeof value === 'string' || typeof value === 'number');
 
   if (canHighlight) {
-    const query = resolveHighlightQuery(cell, table)
+    const query = resolveHighlightQuery(cell, table);
     if (query) {
-      return <Highlight text={String(value)} query={query} />
+      return <Highlight text={String(value)} query={query} />;
     }
   }
 
-  return flexRender(column.columnDef.cell, cell.getContext())
+  return flexRender(column.columnDef.cell, cell.getContext());
 }
-
 /** The active highlight query for a cell: its column filter, else global search. */
 function resolveHighlightQuery<TData extends RowData>(
   cell: Cell<TData, unknown>,
-  table: DataTableInstance<TData>
+  table: DataTableInstance<TData>,
 ): string | null {
-  const filterValue = cell.column.getFilterValue()
+  const filterValue = cell.column.getFilterValue();
   if (
-    typeof filterValue === "string" &&
+    typeof filterValue === 'string' &&
     filterValue.length > 0 &&
     SUBSTRING_MODES.has(getEffectiveMode(cell.column, table))
   ) {
-    return filterValue
+    return filterValue;
   }
-  const globalFilter = table.getState().globalFilter
+  const globalFilter = table.getState().globalFilter;
   if (
-    typeof globalFilter === "string" &&
+    typeof globalFilter === 'string' &&
     globalFilter.length > 0 &&
     SUBSTRING_MODES.has(table.cnTable.globalFilterMode)
   ) {
-    return globalFilter
+    return globalFilter;
   }
-  return null
+  return null;
 }

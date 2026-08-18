@@ -1,51 +1,29 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import {
-  type Cell,
-  type Row,
-  type RowData,
-} from "@tanstack/react-table"
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import type { Virtualizer } from "@tanstack/react-virtual"
+import * as React from 'react';
+import { type Cell, type Row, type RowData } from '@tanstack/react-table';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { Virtualizer } from '@tanstack/react-virtual';
 
-import {
-  TableBody,
-  TableCell,
-  TableRow,
-} from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+import { TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
-import {
-  getColumnPinningClass,
-  getColumnPinningStyle,
-  getWidthStyle,
-} from "../../utils/column-styles"
-import {
-  ALIGN_CELL,
-  DENSITY_CELL_PADDING,
-  NON_DATA_COLUMN_IDS,
-} from "../../core/constants"
-import type { DataTableInstance } from "../../core/types"
-import type {
-  VirtualRowItem,
-  WithColumnSpacers,
-} from "../../hooks/use-table-virtualizers"
-import { DataTableBodyRow } from "./dnd"
-import { DataTableCreateRow } from "../editing/data-table-create-row"
-import { renderBodyCell } from "./render-body-cell"
-import { SkeletonRows } from "./skeleton-rows"
+import { getColumnPinningClass, getColumnPinningStyle, getWidthStyle } from '../../utils/column-styles';
+import { ALIGN_CELL, DENSITY_CELL_PADDING, NON_DATA_COLUMN_IDS, SELECTED_ROW_CLASS } from '../../core/constants';
+import type { DataTableInstance } from '../../core/types';
+import type { VirtualRowItem, WithColumnSpacers } from '../../hooks/use-table-virtualizers';
+import { DataTableBodyRow } from './dnd';
+import { DataTableCreateRow } from '../editing/data-table-create-row';
+import { renderBodyCell } from './render-body-cell';
+import { SkeletonRows } from './skeleton-rows';
+import { resolveRowHeight } from '../../helpers/resolve-row-height';
 
 interface DataTableBodyProps<TData extends RowData> {
-  table: DataTableInstance<TData>
-  rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>
-  virtualItems: VirtualRowItem<TData>[]
-  virtualColumns: { index: number }[]
-  withColumnSpacers: WithColumnSpacers
-  
+  table: DataTableInstance<TData>;
+  rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>;
+  virtualItems: VirtualRowItem<TData>[];
+  virtualColumns: { index: number }[];
+  withColumnSpacers: WithColumnSpacers;
 }
 
 /**
@@ -79,119 +57,99 @@ export function DataTableBody<TData extends RowData>({
     enablePagination,
     showSkeletons,
     localization,
-  } = table.cnTable
+    rowHeight,
+    getRowHeight,
+  } = table.cnTable;
 
-  const padding = DENSITY_CELL_PADDING[density]
-  const visibleColumnCount = table.getVisibleLeafColumns().length
-  const topRows = table.getTopRows()
-  const bottomRows = table.getBottomRows()
-  const centerRows = table.getCenterRows()
-  const hasRows = topRows.length + centerRows.length + bottomRows.length > 0
-  const centerRowIds = centerRows.map((r) => r.id)
+  const padding = DENSITY_CELL_PADDING[density];
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const topRows = table.getTopRows();
+  const bottomRows = table.getBottomRows();
+  const centerRows = table.getCenterRows();
+  const hasRows = topRows.length + centerRows.length + bottomRows.length > 0;
+  const centerRowIds = centerRows.map((r) => r.id);
 
   // Tree data (getSubRows) indents the first real data column by row depth so
   // the hierarchy is visible (grouped rows self-indent via the group cell).
-  const isTreeData = table.options.getSubRows != null
-  const firstDataColumnId = table
-    .getVisibleLeafColumns()
-    .find((c) => !NON_DATA_COLUMN_IDS.has(c.id))?.id
+  const isTreeData = table.options.getSubRows != null;
+  const firstDataColumnId = table.getVisibleLeafColumns().find((c) => !NON_DATA_COLUMN_IDS.has(c.id))?.id;
 
   const renderCell = (
     cell: Cell<TData, unknown>,
     row: Row<TData>,
     rowIndex: number,
-    colIndex: number
+    colIndex: number,
+    rowHeightValue: number | 'auto' | undefined,
   ) => {
-    const align = cell.column.columnDef.meta?.align ?? "left"
+    const align = cell.column.columnDef.meta?.align ?? 'left';
+    const isAutoHeight = rowHeightValue === 'auto';
+    const isFixedHeight = typeof rowHeightValue === 'number';
     const treeIndent =
-      isTreeData &&
-      cell.column.id === firstDataColumnId &&
-      !cell.getIsGrouped() &&
-      row.depth > 0
-        ? row.depth
-        : 0
+      isTreeData && cell.column.id === firstDataColumnId && !cell.getIsGrouped() && row.depth > 0 ? row.depth : 0;
+    const content = renderBodyCell(cell, table, enableFilterMatchHighlighting, columnsWithCustomCell, localization);
+    const indented =
+      treeIndent > 0 ? (
+        <span className="flex items-center" style={{ paddingInlineStart: `${treeIndent}rem` }}>
+          {content}
+        </span>
+      ) : (
+        content
+      );
     return (
       <TableCell
         key={cell.id}
         data-cell-row={rowIndex}
         data-cell-col={colIndex}
         data-pinned={cell.column.getIsPinned() || undefined}
-        tabIndex={
-          enableKeyboardNavigation
-            ? rowIndex === 0 && colIndex === 0
-              ? 0
-              : -1
-            : undefined
-        }
+        tabIndex={enableKeyboardNavigation ? (rowIndex === 0 && colIndex === 0 ? 0 : -1) : undefined}
         style={{
           ...getWidthStyle(cell.column, table),
           ...getColumnPinningStyle(cell.column),
         }}
-        onClick={
-          onCellClick
-            ? (event) => onCellClick({ cell, row, table, event })
-            : undefined
-        }
-        onDoubleClick={
-          onCellDoubleClick
-            ? (event) => onCellDoubleClick({ cell, row, table, event })
-            : undefined
-        }
+        onClick={onCellClick ? (event) => onCellClick({ cell, row, table, event }) : undefined}
+        onDoubleClick={onCellDoubleClick ? (event) => onCellDoubleClick({ cell, row, table, event }) : undefined}
         className={cn(
-          "relative bg-background",
+          'relative  group-data-[state=selected]:bg-transparent',
           padding,
           ALIGN_CELL[align],
           // Fixed layout (resizing on) clips overflowing content with an
-          // ellipsis instead of letting it bleed into the next column.
-          enableColumnResizing && "overflow-hidden text-ellipsis",
+          // ellipsis instead of letting it bleed into the next column. An
+          // "auto" row opts out so its content wraps and the row grows.
+          enableColumnResizing && !isAutoHeight && 'overflow-hidden text-ellipsis',
+          isAutoHeight && 'align-top whitespace-normal wrap-break-word',
           getColumnPinningClass(cell.column),
           enableKeyboardNavigation &&
-            "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:-outline-offset-2 focus-visible:outline-none"
+            'focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:-outline-offset-2 focus-visible:outline-none',
         )}
       >
-        {treeIndent > 0 ? (
-          <span
-            className="flex items-center"
-            style={{ paddingInlineStart: `${treeIndent}rem` }}
-          >
-            {renderBodyCell(
-              cell,
-              table,
-              enableFilterMatchHighlighting,
-              columnsWithCustomCell,
-              localization
-            )}
-          </span>
+        {isFixedHeight ? (
+          // Pin the content box to the requested height and clip overflow.
+          <div className="overflow-hidden" style={{ height: rowHeightValue }}>
+            {indented}
+          </div>
         ) : (
-          renderBodyCell(
-            cell,
-            table,
-            enableFilterMatchHighlighting,
-            columnsWithCustomCell,
-            localization
-          )
+          indented
         )}
       </TableCell>
-    )
-  }
+    );
+  };
 
   const renderCells = (row: Row<TData>, rowIndex: number): React.ReactNode => {
-    const cells = row.getVisibleCells()
+    const rowHeightValue = resolveRowHeight(row, { rowHeight, getRowHeight });
+    const cells = row.getVisibleCells();
     if (!enableColumnVirtualization) {
-      return cells.map((cell, colIndex) =>
-        renderCell(cell, row, rowIndex, colIndex)
-      )
+      return cells.map((cell, colIndex) => renderCell(cell, row, rowIndex, colIndex, rowHeightValue));
     }
     return withColumnSpacers(
       virtualColumns
         .map((vc) => {
-          const cell = cells[vc.index]
-          return cell ? renderCell(cell, row, rowIndex, vc.index) : null
+          const cell = cells[vc.index];
+          return cell ? renderCell(cell, row, rowIndex, vc.index, rowHeightValue) : null;
         })
         .filter(Boolean) as React.ReactNode[],
-      `row-${row.id}`
-    )
-  }
+      `row-${row.id}`,
+    );
+  };
 
   const detailRow = (row: Row<TData>) => (
     <TableRow className="hover:bg-transparent">
@@ -199,52 +157,37 @@ export function DataTableBody<TData extends RowData>({
         <div className="p-3">{renderDetailPanel?.({ row, table })}</div>
       </TableCell>
     </TableRow>
-  )
+  );
 
-  let runningRowIndex = 0
+  let runningRowIndex = 0;
   const renderRow = (row: Row<TData>) => {
-    const rowIndex = runningRowIndex++
-    const isGrouped = row.getIsGrouped()
-    const showDetail = !!renderDetailPanel && row.getIsExpanded() && !isGrouped
+    const rowIndex = runningRowIndex++;
+    const isGrouped = row.getIsGrouped();
+    const showDetail = !!renderDetailPanel && row.getIsExpanded() && !isGrouped;
 
     return (
       <React.Fragment key={row.id}>
         <DataTableBodyRow
           row={row}
-          draggable={
-            enableRowOrdering &&
-            !enableRowVirtualization &&
-            !row.getIsPinned() &&
-            !isGrouped
-          }
-          onClick={
-            onRowClick ? (event) => onRowClick({ row, table, event }) : undefined
-          }
-          onDoubleClick={
-            onRowDoubleClick
-              ? (event) => onRowDoubleClick({ row, table, event })
-              : undefined
-          }
+          draggable={enableRowOrdering && !enableRowVirtualization && !row.getIsPinned() && !isGrouped}
+          onClick={onRowClick ? (event) => onRowClick({ row, table, event }) : undefined}
+          onDoubleClick={onRowDoubleClick ? (event) => onRowDoubleClick({ row, table, event }) : undefined}
         >
           {renderCells(row, rowIndex)}
         </DataTableBodyRow>
         {showDetail && detailRow(row)}
       </React.Fragment>
-    )
-  }
+    );
+  };
 
   return (
     <TableBody>
-      {table.cnTable.enableEditing &&
-        table.cnTable.isCreating &&
-        table.cnTable.createDisplayMode === "row" && (
-          <DataTableCreateRow table={table} />
-        )}
+      {table.cnTable.enableEditing && table.cnTable.isCreating && table.cnTable.createDisplayMode === 'row' && (
+        <DataTableCreateRow table={table} />
+      )}
       {showSkeletons && !hasRows ? (
         <SkeletonRows
-          rowCount={
-            enablePagination ? table.getState().pagination.pageSize : 8
-          }
+          rowCount={enablePagination ? table.getState().pagination.pageSize : 8}
           columnCount={visibleColumnCount}
           padding={padding}
         />
@@ -252,25 +195,19 @@ export function DataTableBody<TData extends RowData>({
         <>
           {topRows.map(renderRow)}
           {(() => {
-            const vRows = rowVirtualizer.getVirtualItems()
-            const padTop = vRows.length ? (vRows[0]?.start ?? 0) : 0
-            const padBottom = vRows.length
-              ? rowVirtualizer.getTotalSize() -
-                (vRows[vRows.length - 1]?.end ?? 0)
-              : 0
+            const vRows = rowVirtualizer.getVirtualItems();
+            const padTop = vRows.length ? (vRows[0]?.start ?? 0) : 0;
+            const padBottom = vRows.length ? rowVirtualizer.getTotalSize() - (vRows[vRows.length - 1]?.end ?? 0) : 0;
             return (
               <>
                 {padTop > 0 && (
                   <tr aria-hidden>
-                    <td
-                      colSpan={visibleColumnCount}
-                      style={{ height: padTop, padding: 0, border: 0 }}
-                    />
+                    <td colSpan={visibleColumnCount} style={{ height: padTop, padding: 0, border: 0 }} />
                   </tr>
                 )}
                 {vRows.map((vRow) => {
-                  const item = virtualItems[vRow.index]
-                  if (!item) return null
+                  const item = virtualItems[vRow.index];
+                  if (!item) return null;
                   if (item.detail) {
                     return (
                       <TableRow
@@ -279,80 +216,53 @@ export function DataTableBody<TData extends RowData>({
                         ref={rowVirtualizer.measureElement}
                         className="hover:bg-transparent"
                       >
-                        <TableCell
-                          colSpan={visibleColumnCount}
-                          className="bg-muted/20 p-0"
-                        >
-                          <div className="p-3">
-                            {renderDetailPanel?.({ row: item.row, table })}
-                          </div>
+                        <TableCell colSpan={visibleColumnCount} className="bg-muted/20 p-0">
+                          <div className="p-3">{renderDetailPanel?.({ row: item.row, table })}</div>
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   }
                   return (
                     <TableRow
                       key={item.row.id}
                       data-index={vRow.index}
                       ref={rowVirtualizer.measureElement}
-                      data-state={
-                        item.row.getIsSelected() ? "selected" : undefined
-                      }
-                      onClick={
-                        onRowClick
-                          ? (event) =>
-                              onRowClick({ row: item.row, table, event })
-                          : undefined
-                      }
+                      data-state={item.row.getIsSelected() ? 'selected' : undefined}
+                      onClick={onRowClick ? (event) => onRowClick({ row: item.row, table, event }) : undefined}
                       onDoubleClick={
-                        onRowDoubleClick
-                          ? (event) =>
-                              onRowDoubleClick({ row: item.row, table, event })
-                          : undefined
+                        onRowDoubleClick ? (event) => onRowDoubleClick({ row: item.row, table, event }) : undefined
                       }
-                      className={cn(
-                        "data-[state=selected]:shadow-[inset_2px_0_0_0_var(--primary)]",
-                        (onRowClick || onRowDoubleClick) && "cursor-pointer"
-                      )}
+                      className={cn(SELECTED_ROW_CLASS, (onRowClick || onRowDoubleClick) && 'cursor-pointer')}
                     >
                       {renderCells(item.row, vRow.index)}
                     </TableRow>
-                  )
+                  );
                 })}
                 {padBottom > 0 && (
                   <tr aria-hidden>
-                    <td
-                      colSpan={visibleColumnCount}
-                      style={{ height: padBottom, padding: 0, border: 0 }}
-                    />
+                    <td colSpan={visibleColumnCount} style={{ height: padBottom, padding: 0, border: 0 }} />
                   </tr>
                 )}
               </>
-            )
+            );
           })()}
           {bottomRows.map(renderRow)}
         </>
       ) : hasRows ? (
         <>
           {topRows.map(renderRow)}
-          <SortableContext
-            items={centerRowIds}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={centerRowIds} strategy={verticalListSortingStrategy}>
             {centerRows.map(renderRow)}
           </SortableContext>
           {bottomRows.map(renderRow)}
         </>
       ) : (
         <TableRow className="hover:bg-transparent">
-          <TableCell
-            colSpan={visibleColumnCount}
-            className="h-32 text-center text-sm text-muted-foreground"
-          >
+          <TableCell colSpan={visibleColumnCount} className="h-32 text-center text-sm text-muted-foreground ">
             {renderEmpty?.({ table }) ?? localization.noRecordsToDisplay}
           </TableCell>
         </TableRow>
       )}
     </TableBody>
-  )
+  );
 }

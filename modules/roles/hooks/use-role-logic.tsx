@@ -1,17 +1,15 @@
 'use client';
-import { IGetRolesParams, IRoleOut } from '../type';
-import { useRoles } from '../roles-provider';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
-
-import { useTableQueryState } from '@/hooks/use-table-query-state';
-import { useState } from 'react';
-import { RowSelectionState } from '@tanstack/react-table';
-import { useGetRoles } from './use-get-roles';
-import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import columns from '../columns';
+import { useRoles } from '../roles-provider';
+import { IGetRolesParams, IRoleOut } from '../type';
 import { Button } from '@/components/ui/button';
-import { IconPlus } from '@tabler/icons-react';
-import { List } from '@/utils/enums/list.enum';
+import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { TITLE_PAGE } from '@/utils/consts/title-page.const';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
+import { RowSelectionState } from '@tanstack/react-table';
+import { useState } from 'react';
+import columns from '../columns';
+import { useGetRoles } from './use-get-roles';
 
 export interface IRoleLogic {
   table: DataTableInstance<IRoleOut>;
@@ -34,7 +32,7 @@ export const useRoleLogic = (): IRoleLogic => {
     defaultPageSize: 10,
     columns,
   });
-  const { data, isLoading, isFetching } = useGetRoles(queryParams);
+  const { data, isLoading, isFetching, refetch } = useGetRoles(queryParams);
   const table = useDataTable<IRoleOut>({
     data: data?.items ?? [],
     columns: columns,
@@ -70,15 +68,20 @@ export const useRoleLogic = (): IRoleLogic => {
     onColumnFiltersChange,
     onGlobalFilterChange,
     renderToolbarActions: () => (
-      <Button
-        size="lg"
-        onClick={() => {
-          setCurrentRow(null);
-          setOpen('add');
-        }}
-      >
-        <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.ROLES.ACTIONS.CREATE}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={() => {
+            setCurrentRow(null);
+            setOpen('add');
+          }}
+        >
+          <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.ROLES.ACTIONS.CREATE}
+        </Button>
+        <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+          <IconRefresh className="mr-1.5 size-4" />
+          Làm mới
+        </Button>
+      </div>
     ),
   });
 

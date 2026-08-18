@@ -1,38 +1,38 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import type { ColumnDef, RowData } from "@tanstack/react-table"
+import * as React from 'react';
+import type { ColumnDef, RowData } from '@tanstack/react-table';
 
 import {
   createExpandColumn,
   createRowDragHandleColumn,
   createRowNumberColumn,
-} from "../injected-columns/injected-columns"
-import { createRowActionsColumn } from "../injected-columns/data-table-row-actions"
-import { createSelectionColumn } from "../injected-columns/selection-column"
-import type { DataTableIcons } from "../core/icons"
-import type { DataTableLocalization } from "../core/localization"
-import type { EditDisplayMode, UseDataTableOptions } from "../core/types"
+} from '../injected-columns/injected-columns';
+import { createRowActionsColumn } from '../injected-columns/data-table-row-actions';
+import { createSelectionColumn } from '../injected-columns/selection-column';
+import type { DataTableIcons } from '../core/icons';
+import type { DataTableLocalization } from '../core/localization';
+import type { EditDisplayMode, UseDataTableOptions } from '../core/types';
 
 interface UseResolvedColumnsParams<TData extends RowData> {
-  columns: ColumnDef<TData, unknown>[]
-  enableRowOrdering: boolean
-  enableRowSelection: boolean
-  selectAllMode: "page" | "all"
-  enableSelectAll: boolean
-  needsExpandColumn: boolean
-  positionExpandColumn: "first" | "last"
-  enableRowNumbers: boolean
-  rowNumberMode: "static" | "original"
-  enableRowPinning: boolean
-  renderRowActions: UseDataTableOptions<TData>["renderRowActions"]
-  renderRowActionMenuItems: UseDataTableOptions<TData>["renderRowActionMenuItems"]
-  positionActionsColumn: "first" | "last"
-  enableEditing: boolean
-  readOnly: boolean
-  editDisplayMode: EditDisplayMode
-  localization: DataTableLocalization
-  icons: DataTableIcons
+  columns: ColumnDef<TData, unknown>[];
+  enableRowOrdering: boolean;
+  enableRowSelection: boolean;
+  selectAllMode: 'page' | 'all';
+  enableSelectAll: boolean;
+  needsExpandColumn: boolean;
+  positionExpandColumn: 'first' | 'last';
+  enableRowNumbers: boolean;
+  rowNumberMode: 'static' | 'original';
+  enableRowPinning: boolean;
+  renderRowActions: UseDataTableOptions<TData>['renderRowActions'];
+  renderRowActionMenuItems: UseDataTableOptions<TData>['renderRowActionMenuItems'];
+  positionActionsColumn: 'first' | 'last';
+  enableEditing: boolean;
+  readOnly: boolean;
+  editDisplayMode: EditDisplayMode;
+  localization: DataTableLocalization;
+  icons: DataTableIcons;
 }
 
 /**
@@ -63,53 +63,40 @@ export function useResolvedColumns<TData extends RowData>({
   icons,
 }: UseResolvedColumnsParams<TData>): ColumnDef<TData, unknown>[] {
   return React.useMemo(() => {
-    const leading = []
-    const trailing = []
+    const leading = [];
+    const trailing = [];
     if (enableRowOrdering) {
-      leading.push(createRowDragHandleColumn<TData>(localization, icons))
+      leading.push(createRowDragHandleColumn<TData>(localization, icons));
     }
     if (enableRowSelection) {
-      leading.push(
-        createSelectionColumn<TData>(localization, selectAllMode, enableSelectAll)
-      )
+      leading.push(createSelectionColumn<TData>(localization, selectAllMode, enableSelectAll));
     }
     if (needsExpandColumn) {
-      const expand = createExpandColumn<TData>(localization, icons)
-      if (positionExpandColumn === "last") trailing.push(expand)
-      else leading.push(expand)
+      const expand = createExpandColumn<TData>(localization, icons);
+      if (positionExpandColumn === 'last') trailing.push(expand);
+      else leading.push(expand);
     }
     if (enableRowNumbers) {
-      leading.push(
-        createRowNumberColumn<TData>(
-          localization,
-          rowNumberMode,
-          enableRowPinning,
-          icons
-        )
-      )
+      leading.push(createRowNumberColumn<TData>(localization, rowNumberMode, enableRowPinning, icons));
     }
     const visibleColumns = readOnly
       ? columns.filter((column) => {
-          const id = "id" in column ? column.id : undefined
-          const meta = column.meta as { isActionsColumn?: boolean } | undefined
-          return id !== "actions" && meta?.isActionsColumn !== true
+          const id = 'id' in column ? column.id : undefined;
+          const meta = column.meta as { isActionsColumn?: boolean } | undefined;
+          return id !== 'actions' && meta?.isActionsColumn !== true;
         })
-      : columns
+      : columns;
     const showRowActions =
       !readOnly &&
       (!!renderRowActions ||
-      !!renderRowActionMenuItems ||
-      (enableEditing &&
-        (editDisplayMode === "row" || editDisplayMode === "modal"))
-      )
+        !!renderRowActionMenuItems ||
+        (enableEditing && (editDisplayMode === 'row' || editDisplayMode === 'modal')));
     if (showRowActions) {
-      const actions = createRowActionsColumn<TData>(positionActionsColumn)
-      if (positionActionsColumn === "first") leading.unshift(actions)
-      else trailing.push(actions)
+      const actions = createRowActionsColumn<TData>(positionActionsColumn);
+      if (positionActionsColumn === 'first') leading.unshift(actions);
+      else trailing.push(actions);
     }
-    return leading.length > 0 || trailing.length > 0
-      ? [...leading, ...visibleColumns, ...trailing]
-      : visibleColumns
+    return leading.length > 0 || trailing.length > 0 ? [...leading, ...visibleColumns, ...trailing] : visibleColumns;
   }, [
     columns,
     enableRowOrdering,
@@ -129,5 +116,5 @@ export function useResolvedColumns<TData extends RowData>({
     editDisplayMode,
     localization,
     icons,
-  ])
+  ]);
 }

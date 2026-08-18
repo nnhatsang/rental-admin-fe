@@ -27,7 +27,7 @@ export function DataTableAlertBanner<TData extends RowData>({
     <div
       data-slot="data-table-alert-banner"
       className={cn(
-        "flex items-center justify-between gap-3 border bg-muted px-4 py-2 text-xs font-medium text-muted-foreground"
+        'flex items-center justify-between gap-3 rounded-md border bg-muted px-3 py-2 text-xs font-medium text-muted-foreground',
       )}
       role="status"
     >
@@ -40,5 +40,5 @@ export function DataTableAlertBanner<TData extends RowData>({
         {localization.clearSelection}
       </button>
     </div>
-  )
+  );
 }

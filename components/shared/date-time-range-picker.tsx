@@ -15,10 +15,14 @@ export interface DateTimeRange {
   from: Date | undefined;
   to: Date | undefined;
 }
-
+// updateMode="instant": mặc định, chọn là update ngay.
+// updateMode="debounced": chọn xong chờ updateDebounceMs, mặc định 500ms, rồi mới gọi onUpdate.
+// updateMode="manual": chọn trong popover chỉ là bản nháp, bấm Áp dụng mới gọi onUpdate.
 export interface DateTimeRangePickerV2Props {
   value?: DateTimeRange;
   onUpdate?: (values: { range: DateTimeRange }) => void;
+  updateMode?: 'instant' | 'debounced' | 'manual';
+  updateDebounceMs?: number;
   initialDateFrom?: Date | string;
   initialDateTo?: Date | string;
   align?: 'start' | 'center' | 'end';
@@ -28,6 +32,8 @@ export interface DateTimeRangePickerV2Props {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   enableTime?: boolean;
+  allowPastDates?: boolean;
+  portalContainer?: HTMLElement | null;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -93,6 +99,10 @@ export function DateTimeRangePicker({
   open,
   setOpen,
   enableTime = true,
+  allowPastDates = false,
+  updateMode = 'instant',
+  updateDebounceMs = 500,
+  portalContainer,
 }: DateTimeRangePickerV2Props) {
   const businessHoursQuery = useGetStoreBussinessHours(open && enableTime);
   const businessHours: IStoreBussinessHoursOut[] | undefined = businessHoursQuery.data?.data;
@@ -103,9 +113,12 @@ export function DateTimeRangePicker({
     from: normalizedFrom,
     to: normalizedTo,
   });
-  // const [open, setOpen] = React.useState(false);
+  const committedRange = value ?? internalRange;
+  const [draftRange, setDraftRange] = React.useState<DateTimeRange>(committedRange);
+  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRangeRef = React.useRef<DateTimeRange | null>(null);
 
-  const range = value ?? internalRange;
+  const range = updateMode === 'instant' || !open ? committedRange : draftRange;
 
   // Recalculate on render so a long-lived page does not keep offering hours
   // that have already passed when the picker is opened again.
@@ -113,7 +126,13 @@ export function DateTimeRangePicker({
   const minDateOnly = new Date(minNow);
   minDateOnly.setHours(0, 0, 0, 0);
 
-  const emit = React.useCallback(
+  React.useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  const emitNow = React.useCallback(
     (next: DateTimeRange) => {
       if (!value) setInternalRange(next);
       onUpdate?.({ range: next });
@@ -121,8 +140,66 @@ export function DateTimeRangePicker({
     [onUpdate, value],
   );
 
+  const commitRange = React.useCallback(
+    (next: DateTimeRange) => {
+      if (updateMode !== 'instant') setDraftRange(next);
+
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+      if (updateMode === 'manual') {
+        pendingRangeRef.current = next;
+        return;
+      }
+
+      if (updateMode === 'debounced') {
+        pendingRangeRef.current = next;
+        debounceTimerRef.current = setTimeout(() => {
+          pendingRangeRef.current = null;
+          emitNow(next);
+        }, updateDebounceMs);
+        return;
+      }
+
+      emitNow(next);
+    },
+    [emitNow, updateDebounceMs, updateMode],
+  );
+
+  const applyDraftRange = React.useCallback(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    pendingRangeRef.current = null;
+    emitNow(draftRange);
+    setOpen(false);
+  }, [draftRange, emitNow, setOpen]);
+
+  const clearDraftRange = React.useCallback(() => {
+    const emptyRange = { from: undefined, to: undefined };
+    setDraftRange(emptyRange);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    pendingRangeRef.current = null;
+    emitNow(emptyRange);
+    setOpen(false);
+  }, [emitNow, setOpen]);
+
+  const handleOpenChange = React.useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen && updateMode === 'debounced' && pendingRangeRef.current) {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        emitNow(pendingRangeRef.current);
+        pendingRangeRef.current = null;
+      }
+
+      if (nextOpen && updateMode !== 'instant') {
+        setDraftRange(committedRange);
+      }
+
+      setOpen(nextOpen);
+    },
+    [committedRange, emitNow, setOpen, updateMode],
+  );
+
   const getAvailableHours = React.useCallback(
-    (date: Date | undefined, minAllowed: Date) => {
+    (date: Date | undefined, minAllowed?: Date) => {
       if (!enableTime) return [];
       if (!date) return [];
 
@@ -142,18 +219,21 @@ export function DateTimeRangePicker({
       });
 
       // Vẫn phải đảm bảo giờ đó lớn hơn hoặc bằng thời điểm hiện tại (minAllowed)
+      if (!minAllowed) return available;
+
       return available.filter(({ value: hour }) => mergeDateAndHour(date, hour).getTime() >= minAllowed.getTime());
     },
     [businessHours, businessHoursReady, enableTime],
   );
 
   const isDateDisabled = (date: Date) =>
-    date < minDateOnly || (enableTime && (!businessHoursReady || getAvailableHours(date, minNow).length === 0));
+    (!allowPastDates && date < minDateOnly) ||
+    (enableTime && (!businessHoursReady || getAvailableHours(date, allowPastDates ? undefined : minNow).length === 0));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleRangeSelect = (newRange: any) => {
     if (!newRange) {
-      emit({ from: undefined, to: undefined });
+      commitRange({ from: undefined, to: undefined });
       return;
     }
 
@@ -161,7 +241,7 @@ export function DateTimeRangePicker({
     let nextTo = newRange.to;
 
     if (!enableTime) {
-      emit({
+      commitRange({
         from: nextFrom ? startOfDate(nextFrom) : undefined,
         to: nextTo ? endOfDate(nextTo) : undefined,
       });
@@ -171,21 +251,21 @@ export function DateTimeRangePicker({
     // Giữ nguyên giờ đã chọn khi thay đổi ngày nhận, nếu không thì lấy giờ khả dụng đầu tiên
     if (nextFrom) {
       const targetHour = range.from ? range.from.getHours() : undefined;
-      const available = getAvailableHours(nextFrom, minNow);
+      const available = getAvailableHours(nextFrom, allowPastDates ? undefined : minNow);
       const hour = available.find((h) => h.value === targetHour)?.value ?? available[0]?.value ?? 0;
       nextFrom = mergeDateAndHour(nextFrom, hour);
     }
 
     // Giữ nguyên giờ đã chọn khi thay đổi ngày trả
     if (nextTo) {
-      const minTo = nextFrom || minNow;
+      const minTo = nextFrom || (allowPastDates ? undefined : minNow);
       const targetHour = range.to ? range.to.getHours() : undefined;
       const available = getAvailableHours(nextTo, minTo);
       const hour = available.find((h) => h.value === targetHour)?.value ?? available[0]?.value ?? 0;
       nextTo = mergeDateAndHour(nextTo, hour);
     }
 
-    emit({ from: nextFrom, to: nextTo });
+    commitRange({ from: nextFrom, to: nextTo });
   };
 
   const handleFromHourSelect = (hour: number) => {
@@ -197,22 +277,22 @@ export function DateTimeRangePicker({
     if (nextTo && nextTo.getTime() <= nextFrom.getTime()) {
       nextTo = undefined;
     }
-    emit({ from: nextFrom, to: nextTo });
+    commitRange({ from: nextFrom, to: nextTo });
   };
 
   const handleToHourSelect = (hour: number) => {
     if (!range.to) return;
     const nextTo = mergeDateAndHour(range.to, hour);
-    emit({ from: range.from, to: nextTo });
+    commitRange({ from: range.from, to: nextTo });
   };
 
-  const fromAvailableHours = getAvailableHours(range.from, minNow);
-  const toAvailableHours = getAvailableHours(range.to, range.from || minNow);
+  const fromAvailableHours = getAvailableHours(range.from, allowPastDates ? undefined : minNow);
+  const toAvailableHours = getAvailableHours(range.to, range.from || (allowPastDates ? undefined : minNow));
   const isMobile = useIsMobile();
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             id={id}
@@ -254,7 +334,7 @@ export function DateTimeRangePicker({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent align={align} className="w-auto p-0 z-500">
+        <PopoverContent align={align} className="w-auto p-0 z-500" portalContainer={portalContainer}>
           <div className="flex flex-col divide-y sm:divide-y-0 sm:divide-x overflow-hidden bg-background">
             {/* Lịch ở bên trái */}
             <Calendar
@@ -280,7 +360,7 @@ export function DateTimeRangePicker({
                   <div className="space-y-2 px-2 pt-3 pb-2 border-b shrink-0">
                     <p className="text-center text-xs font-bold text-primary uppercase tracking-wider">Giờ nhận</p>
                   </div>
-                  <ScrollArea className="flex-1 w-full h-full">
+                  <ScrollArea className="flex-1 w-full h-[140px] md:h-[200px]">
                     <div className="flex flex-col gap-1.5 p-2">
                       {range.from ? (
                         fromAvailableHours.length ? (
@@ -312,7 +392,7 @@ export function DateTimeRangePicker({
                   <div className="space-y-2 px-2 pt-3 pb-2 border-b shrink-0">
                     <p className="text-center text-xs font-bold text-primary uppercase tracking-wider">Giờ trả</p>
                   </div>
-                  <ScrollArea className="flex-1 w-full h-full">
+                  <ScrollArea className="flex-1 w-full h-[140px] md:h-[200px]">
                     <div className="flex flex-col gap-1.5 p-2">
                       {range.to ? (
                         toAvailableHours.length ? (
@@ -340,6 +420,16 @@ export function DateTimeRangePicker({
                 </div>
               </div>
             ) : null}
+            {updateMode === 'manual' && (
+              <div className="flex items-center justify-end gap-2 border-t p-3">
+                <Button type="button" variant="ghost" size="sm" onClick={clearDraftRange}>
+                  Xóa
+                </Button>
+                <Button type="button" size="sm" onClick={applyDraftRange}>
+                  Áp dụng
+                </Button>
+              </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>

@@ -98,19 +98,7 @@ export function DataTableToolbar<TData extends RowData>({
           )}
           {positionToolbarActions === 'left' && renderToolbarActions && !readOnly && renderToolbarActions({ table })}
         </div>
-        {/* {isFiltered && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                table.setColumnFilters([]);
-                table.setGlobalFilter(undefined);
-              }}
-              className="h-8 px-2 lg:px-3"
-            >
-              {localization.clearFilter}
-              <IconX className="ms-2 h-4 w-4" />
-            </Button>
-          )} */}
+
         {enableToolbarInternalActions && (
           <div
             data-slot="data-table-toolbar-actions"

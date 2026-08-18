@@ -58,8 +58,8 @@ export function AssetSelectionDrawer() {
 
   return (
     <Sheet open={isAssetDrawerOpen} onOpenChange={setAssetDrawerOpen}>
-      <SheetContent showCloseButton={false} className="w-80 p-0 max-md:w-full flex flex-col">
-        <SheetHeader className="border-b px-5 py-4">
+      <SheetContent showCloseButton={false} className="mdw-96! p-0 w-full! flex flex-col">
+        <SheetHeader className="border-b px-5 pt-4">
           <div className="flex items-start gap-4">
             <Button
               variant="link"
@@ -88,7 +88,7 @@ export function AssetSelectionDrawer() {
           </div>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col gap-4 px-5 py-4">
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex gap-2 flex-row">
             <Tabs value={assetTab} onValueChange={(value) => setTab(value as AvailabilityFilter)} className="flex-1">
               <TabsList className="grid h-10 w-full grid-cols-2">
                 <TabsTrigger value="AVAILABLE">

@@ -32,12 +32,12 @@ export function DataTableFilterToggle<TData extends RowData>({
           aria-label={label}
           aria-pressed={showColumnFilters}
           onClick={() => setShowColumnFilters((prev) => !prev)}
-          className={cn("size-8", showColumnFilters && "bg-muted text-foreground")}
+          className={cn('size-8', showColumnFilters && 'bg-muted text-foreground')}
         >
           <icons.filter />
         </Button>
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
-  )
+  );
 }

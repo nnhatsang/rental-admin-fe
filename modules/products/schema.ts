@@ -6,14 +6,11 @@ const emptyStringToUndefined = (value: unknown) => (value === '' || value === nu
 
 const positiveNumber = z.coerce.number().positive({ message: 'Giá trị phải lớn hơn 0' });
 const optionalNumber = z.preprocess(emptyStringToUndefined, z.coerce.number().optional());
-const optionalNonNegativeNumber = z.preprocess(
-  emptyStringToUndefined,
-  z.coerce.number().min(0, { message: 'Gia tri phai lon hon hoac bang 0' }).optional(),
-);
+
 const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional());
 const optionalUuidV7 = z.preprocess(
   emptyStringToUndefined,
-  z.string().regex(UUID_V7_REGEX, { message: 'UUID khong hop le' }).optional(),
+  z.string().regex(UUID_V7_REGEX, { message: 'Mã không hợp lệ' }).optional(),
 );
 
 export const productRentalPriceTierSchema = z
@@ -22,7 +19,6 @@ export const productRentalPriceTierSchema = z
     maxDays: optionalNumber,
     dailyPrice: positiveNumber,
     name: optionalString,
-    sortOrder: optionalNonNegativeNumber,
   })
   .refine((value) => value.maxDays === undefined || value.maxDays >= value.minDays, {
     message: 'Số ngày tối đâ phải lớn hơn hoặc bằng số ngày tối thiểu',

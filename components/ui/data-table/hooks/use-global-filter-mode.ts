@@ -1,32 +1,28 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import type { FilterFn, RowData, RowModel, Table } from "@tanstack/react-table"
+import * as React from 'react';
+import type { FilterFn, RowData, RowModel, Table } from '@tanstack/react-table';
 
-import {
-  createGlobalFilterFn,
-  createRankedSortedRowModel,
-  type GlobalFilterMode,
-} from "../fns/filter-fns"
-import { useControllableState } from "./use-controllable-state"
+import { createGlobalFilterFn, createRankedSortedRowModel, type GlobalFilterMode } from '../fns/filter-fns';
+import { useControllableState } from './use-controllable-state';
 
 interface UseGlobalFilterModeParams {
-  globalFilterMode?: GlobalFilterMode
-  defaultGlobalFilterMode: GlobalFilterMode
-  onGlobalFilterModeChange?: (mode: GlobalFilterMode) => void
-  enableGlobalFilterRankedResults: boolean
-  manualSorting: boolean
-  manualFiltering: boolean
-  enableGrouping: boolean
+  globalFilterMode?: GlobalFilterMode;
+  defaultGlobalFilterMode: GlobalFilterMode;
+  onGlobalFilterModeChange?: (mode: GlobalFilterMode) => void;
+  enableGlobalFilterRankedResults: boolean;
+  manualSorting: boolean;
+  manualFiltering: boolean;
+  enableGrouping: boolean;
 }
 
 export interface GlobalFilterModeState<TData extends RowData> {
-  globalFilterMode: GlobalFilterMode
-  setGlobalFilterMode: (mode: GlobalFilterMode) => void
+  globalFilterMode: GlobalFilterMode;
+  setGlobalFilterMode: (mode: GlobalFilterMode) => void;
   /** Mode-aware global filter fn (new identity per mode → re-runs filtering). */
-  dynamicGlobalFilterFn: FilterFn<TData>
+  dynamicGlobalFilterFn: FilterFn<TData>;
   /** Sorted row model that re-orders by fuzzy rank when ranking is active. */
-  rankedSortedRowModel: (table: Table<TData>) => () => RowModel<TData>
+  rankedSortedRowModel: (table: Table<TData>) => () => RowModel<TData>;
 }
 
 /**
@@ -45,55 +41,60 @@ export function useGlobalFilterMode<TData extends RowData>({
   manualFiltering,
   enableGrouping,
 }: UseGlobalFilterModeParams): GlobalFilterModeState<TData> {
-  const [globalFilterMode, setGlobalFilterMode] =
-    useControllableState<GlobalFilterMode>(
-      globalFilterModeProp,
-      defaultGlobalFilterMode,
-      onGlobalFilterModeChange
-    )
+  const [globalFilterMode, setGlobalFilterMode] = useControllableState<GlobalFilterMode>(
+    globalFilterModeProp,
+    defaultGlobalFilterMode,
+    onGlobalFilterModeChange,
+  );
 
   // Recreating the fn when the mode changes gives it a new identity, which
   // makes TanStack re-run global filtering with the new mode immediately.
   const dynamicGlobalFilterFn = React.useMemo(
     () => createGlobalFilterFn<TData>(() => globalFilterMode),
-    [globalFilterMode]
-  )
+    [globalFilterMode],
+  );
 
   const rankingRef = React.useRef<{
-    enabled: boolean
-    mode: GlobalFilterMode
-    manualSorting: boolean
-    manualFiltering: boolean
-    grouping: boolean
-  }>(null!)
+    enabled: boolean;
+    mode: GlobalFilterMode;
+    manualSorting: boolean;
+    manualFiltering: boolean;
+    grouping: boolean;
+  }>(null!);
+  // Render-phase latest-ref write is load-bearing: TanStack computes row
+  // models during render, and the stable factory below must see this render's
+  // config (an effect write would rank with stale config for a full frame).
+  // eslint-disable-next-line react-hooks/refs
   rankingRef.current = {
     enabled: enableGlobalFilterRankedResults,
     mode: globalFilterMode,
     manualSorting,
     manualFiltering,
     grouping: enableGrouping,
-  }
+  };
   const rankedSortedRowModel = React.useMemo(
     () =>
+      // The predicate runs inside TanStack's row-model computation, not
+      // during this hook's render.
+      // eslint-disable-next-line react-hooks/refs
       createRankedSortedRowModel<TData>((t) => {
-        const c = rankingRef.current
-        if (!c.enabled || c.mode !== "fuzzy") return false
-        if (c.manualSorting || c.manualFiltering) return false
-        const s = t.getState()
-        if (!s.globalFilter) return false
-        if (s.sorting.some(Boolean)) return false
-        if (c.grouping && s.grouping.length > 0) return false
-        if (s.expanded === true || Object.values(s.expanded).some(Boolean))
-          return false
-        return true
+        const c = rankingRef.current;
+        if (!c.enabled || c.mode !== 'fuzzy') return false;
+        if (c.manualSorting || c.manualFiltering) return false;
+        const s = t.getState();
+        if (!s.globalFilter) return false;
+        if (s.sorting.some(Boolean)) return false;
+        if (c.grouping && s.grouping.length > 0) return false;
+        if (s.expanded === true || Object.values(s.expanded).some(Boolean)) return false;
+        return true;
       }),
-    []
-  )
+    [],
+  );
 
   return {
     globalFilterMode,
     setGlobalFilterMode,
     dynamicGlobalFilterFn,
     rankedSortedRowModel,
-  }
+  };
 }

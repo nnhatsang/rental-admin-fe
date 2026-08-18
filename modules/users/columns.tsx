@@ -15,68 +15,22 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn, formatDate } from '@/lib/utils';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import {
-  IconDots,
-  IconEdit,
-  IconEye,
-  IconKey,
-  IconKeyOff,
-  IconLock,
-  IconLockOpen,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconDots, IconEdit, IconEye, IconKey, IconTrash } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
-import type { ComponentType } from 'react';
+import { userActivityStatusConfig, userActivityStatusOptions } from './display-config';
 import { useUpdateUserActivityStatus } from './hooks/use-update-user-activity-status';
 import type { IUserOut, UserActivityStatus as UserActivityStatusType } from './type';
 import { useUsers } from './users-provider';
 
-export const statusMeta: Record<
-  UserActivityStatusType,
-  { label: string; color: string; textColor: string; icon: ComponentType<{ className?: string }> }
-> = {
-  ACTIVE: {
-    label: 'Hoạt động',
-    color:
-      'bg-teal-100/30 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-500/15 border-transparent',
-    textColor: 'text-emerald-600 dark:text-emerald-400',
-    icon: IconLockOpen,
-  },
-  BANNED: {
-    label: 'Bị cấm',
-    color: 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/15 border-transparent',
-    textColor: 'text-red-600 dark:text-red-400',
-    icon: IconLock,
-  },
-  LOCKED: {
-    label: 'Bị khóa',
-    color:
-      'bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 hover:bg-amber-500/15 border-transparent',
-    textColor: 'text-amber-600 dark:text-amber-400',
-    icon: IconLock,
-  },
-  INACTIVE: {
-    label: 'Chưa kích hoạt',
-    color:
-      'bg-zinc-500/10 text-zinc-600 dark:bg-zinc-500/20 dark:text-zinc-400 hover:bg-zinc-500/15 border-transparent',
-    textColor: 'text-zinc-600 dark:text-zinc-400',
-    icon: IconKeyOff,
-  },
-};
-
-export const statusFilterOptions = Object.entries(statusMeta).map(([value, meta]) => ({
-  label: meta.label,
-  value,
-}));
-
 export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
   const update = useUpdateUserActivityStatus();
+  const currentStatus = userActivityStatusConfig[row.original.activityStatus];
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Badge variant="outline" className={cn('cursor-pointer', statusMeta[row.original.activityStatus].color)}>
-          {statusMeta[row.original.activityStatus].label}
+        <Badge variant="outline" className={cn('cursor-pointer', currentStatus.className)}>
+          {currentStatus.label}
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
@@ -84,7 +38,7 @@ export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
 
         <DropdownMenuSeparator />
 
-        {Object.entries(statusMeta).map(([key, item]) => {
+        {Object.entries(userActivityStatusConfig).map(([key, item]) => {
           const ItemIcon = item.icon;
           const isActive = key === row.original.activityStatus;
 
@@ -95,13 +49,13 @@ export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
               className={cn(
                 'flex items-center gap-2 mt-1 cursor-pointer',
                 isActive && 'cursor-not-allowed',
-                item.color,
+                item.className,
               )}
               onClick={() => {
                 update.mutate({ data: { activityStatus: key as UserActivityStatusType }, id: row.original.id });
               }}
             >
-              <ItemIcon className={`size-4 ${isActive ? item.textColor : ''}`} />
+              <ItemIcon className={cn('size-4', isActive && item.filterClassName)} />
 
               <div className="flex flex-col">
                 <span>{item.label}</span>
@@ -115,6 +69,7 @@ export function StatusBadgeRow({ row }: { row: Row<IUserOut> }) {
     </DropdownMenu>
   );
 }
+
 export function RolesCell({ roles }: { roles: IUserOut['roles'] }) {
   if (roles.length === 0) return <span className="text-muted-foreground text-xs">-</span>;
 
@@ -225,9 +180,8 @@ export const columns: ColumnDef<IUserOut>[] = [
     meta: {
       label: 'Trạng thái',
       variant: 'select',
-      options: statusFilterOptions,
+      options: userActivityStatusOptions,
     },
-    // enableSorting: false,
   },
   {
     accessorKey: 'createdAt',

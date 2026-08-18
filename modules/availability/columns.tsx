@@ -7,28 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/utils';
 import { IconListDetails } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
+import { availabilityFilterOptions, productAvailabilityConfig, type ProductAvailabilityState } from './display-config';
 import type { IAvailabilityProduct } from './type';
-
-const stateMeta = {
-  AVAILABLE: {
-    label: 'Còn hàng',
-    className: 'border-transparent bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15',
-  },
-  LOW_STOCK: {
-    label: 'Sắp hết',
-    className: 'border-transparent bg-amber-500/10 text-amber-600 hover:bg-amber-500/15',
-  },
-  UNAVAILABLE: {
-    label: 'Hết hàng',
-    className: 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/15',
-  },
-} as const;
-
-export const availabilityFilterOptions = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: 'Còn hàng', value: 'AVAILABLE' },
-  { label: 'Hết hàng', value: 'UNAVAILABLE' },
-];
 
 export type AvailabilityColumnHandlers = {
   onAdd?: (product: IAvailabilityProduct) => void;
@@ -67,11 +47,12 @@ export const createAvailabilityColumns = (handlers?: AvailabilityColumnHandlers)
   {
     accessorKey: 'dailyPrice',
     header: 'Giá thuê/ngày',
-    cell: ({ row }) => <span>{formatCurrency(Number(row.original.dailyPrice))}</span>,
+    cell: ({ row }) => <span>{formatCurrency(row.original.dailyPrice)}</span>,
     meta: {
       label: 'Giá thuê',
     },
     enableSorting: false,
+    enableColumnFilter: false,
   },
   {
     id: 'inventory',
@@ -102,7 +83,13 @@ export const createAvailabilityColumns = (handlers?: AvailabilityColumnHandlers)
     accessorKey: 'availability',
     header: 'Trạng thái',
     cell: ({ row }) => {
-      const meta = stateMeta[row.original.availabilityState];
+      const state: ProductAvailabilityState =
+        row.original.inventory.available === 0
+          ? 'UNAVAILABLE'
+          : row.original.inventory.available <= 2
+            ? 'LOW_STOCK'
+            : 'AVAILABLE';
+      const meta = productAvailabilityConfig[state];
 
       return (
         <Badge variant="outline" className={meta.className}>

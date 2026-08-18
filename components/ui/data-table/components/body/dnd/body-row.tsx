@@ -9,6 +9,7 @@ import { TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
 import { RowDragContext } from "../../../injected-columns/injected-columns"
+import { SELECTED_ROW_CLASS } from "../../../core/constants"
 
 /**
  * Body row. `useSortable` is always called (disabled when row ordering is off).
@@ -54,18 +55,18 @@ export function DataTableBodyRow<TData extends RowData>({
       <TableRow
         ref={setNodeRef}
         style={style}
-        data-state={row.getIsSelected() ? "selected" : undefined}
+        data-state={row.getIsSelected() ? 'selected' : undefined}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
         className={cn(
-          "data-[state=selected]:shadow-[inset_2px_0_0_0_var(--primary)]",
-          isDragging && "bg-muted",
-          (onClick || onDoubleClick) && "cursor-pointer",
-          className
+          SELECTED_ROW_CLASS,
+          isDragging && 'bg-muted',
+          (onClick || onDoubleClick) && 'cursor-pointer',
+          className,
         )}
       >
         {children}
       </TableRow>
     </RowDragContext.Provider>
-  )
+  );
 }

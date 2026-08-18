@@ -22,7 +22,7 @@ import type { Table } from '@tanstack/react-table';
 import { useState } from 'react';
 import { Controller, type Resolver, useForm } from 'react-hook-form';
 import { useAssetUnits } from './asset-units-provider';
-import { assetConditionOptions, assetStatusOptions } from './columns';
+import { assetConditionOptions, assetStatusOptions } from './display-config';
 import { useCreateAssetUnit } from './hooks/use-create-asset-unit';
 import { useDeleteAssetUnits } from './hooks/use-delete-asset-units';
 import { useUpdateAssetUnit } from './hooks/use-update-asset-unit';
@@ -38,8 +38,7 @@ import {
   AssetCondition,
   AssetStatus,
   type IAssetUnitOut,
-  type ICreateAssetUnitReq,
-  type IUpdateAssetUnitReq,
+  type IUpdateAssetUnitReq
 } from './type';
 
 type AssetUnitFormDialogProps = {
@@ -49,21 +48,6 @@ type AssetUnitFormDialogProps = {
   readOnly?: boolean;
   defaultProductId?: string;
 };
-
-const removeUndefined = <T extends object>(value: T): Partial<T> => {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, item]) => item !== undefined && item !== ''),
-  ) as Partial<T>;
-};
-
-const normalizePayload = (values: IAssetUnitFormInput): ICreateAssetUnitReq => ({
-  productId: values.productId.trim(),
-  serialNumber: values.serialNumber.trim(),
-  status: values.status,
-  condition: values.condition,
-  note: values.note?.trim() || undefined,
-  isActive: values.isActive,
-});
 
 function AssetUnitSelectField({
   value,
@@ -109,7 +93,12 @@ function AssetUnitFormDialog({
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
   const getPlaceholder = (placeholder: string) => (readOnly ? undefined : placeholder);
 
-  const form = useForm<IAssetUnitFormInput>({
+  const {
+    reset,
+    formState: { isDirty, dirtyFields },
+    handleSubmit,
+    control,
+  } = useForm<IAssetUnitFormInput>({
     resolver: zodResolver(assetUnitFormSchema) as Resolver<IAssetUnitFormInput>,
     defaultValues: currentRow
       ? {
@@ -131,27 +120,38 @@ function AssetUnitFormDialog({
   });
 
   const handleClose = () => {
-    form.reset();
+    reset();
     onOpenChange(false);
   };
 
   const onSubmit = (values: IAssetUnitFormInput) => {
     if (readOnly) return;
 
-    const payload = normalizePayload(values);
-
-    if (isEdit && currentRow) {
-      updateMutation.mutate(
-        {
-          id: currentRow.id,
-          data: removeUndefined(payload) as IUpdateAssetUnitReq,
-        },
-        { onSuccess: handleClose },
-      );
+    if (!currentRow) {
+      createMutation.mutate(values, {
+        onSuccess: handleClose,
+      });
       return;
     }
 
-    createMutation.mutate(removeUndefined(payload) as ICreateAssetUnitReq, { onSuccess: handleClose });
+    if (!isDirty) {
+      handleClose();
+      return;
+    }
+
+    const dirtyValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) => {
+        return dirtyFields[key as keyof IAssetUnitFormInput];
+      }),
+    ) as IUpdateAssetUnitReq;
+
+    updateMutation.mutate(
+      {
+        id: currentRow.id,
+        data: dirtyValues,
+      },
+      { onSuccess: handleClose },
+    );
   };
 
   return (
@@ -175,113 +175,113 @@ function AssetUnitFormDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <form id="asset-unit-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <form id="asset-unit-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-4 py-2">
-            <Controller
-              control={form.control}
-              name="productId"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>{text.FORM.PRODUCT_ID}</FieldLabel>
-                  <ProductCombobox
-                    value={field.value}
-                    onChange={field.onChange}
-                    ariaInvalid={fieldState.invalid}
-                    placeholder={getPlaceholder(text.FORM.FILTER_PRODUCT_PLACEHOLDER)}
-                    disabled={readOnly}
-                    selectedProduct={currentRow?.product}
-                    syncToUrl={false}
-                    portalContainer={comboboxPortalContainer}
-                    fetchEnabled={open && !readOnly}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            <Controller
-              control={form.control}
-              name="serialNumber"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>{text.FORM.SERIAL_NUMBER}</FieldLabel>
-                  <Input
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    placeholder={getPlaceholder(text.FORM.SERIAL_NUMBER_PLACEHOLDER)}
-                    disabled={readOnly}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
               <Controller
-                control={form.control}
-                name="status"
+                control={control}
+                name="productId"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>{text.FORM.STATUS}</FieldLabel>
-                    <AssetUnitSelectField
+                    <FieldLabel htmlFor={field.name}>{text.FORM.PRODUCT_ID}</FieldLabel>
+                    <ProductCombobox
                       value={field.value}
                       onChange={field.onChange}
+                      ariaInvalid={fieldState.invalid}
+                      placeholder={getPlaceholder(text.FORM.FILTER_PRODUCT_PLACEHOLDER)}
                       disabled={readOnly}
-                      options={assetStatusOptions}
+                      selectedProduct={currentRow?.product}
+                      syncToUrl={false}
+                      portalContainer={comboboxPortalContainer}
+                      fetchEnabled={open && !readOnly}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
+
               <Controller
-                control={form.control}
-                name="condition"
+                control={control}
+                name="serialNumber"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor={field.name}>{text.FORM.CONDITION}</FieldLabel>
-                    <AssetUnitSelectField
-                      value={field.value}
-                      onChange={field.onChange}
+                    <FieldLabel htmlFor={field.name}>{text.FORM.SERIAL_NUMBER}</FieldLabel>
+                    <Input
+                      {...field}
+                      id={field.name}
+                      aria-invalid={fieldState.invalid}
+                      placeholder={getPlaceholder(text.FORM.SERIAL_NUMBER_PLACEHOLDER)}
                       disabled={readOnly}
-                      options={assetConditionOptions}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 )}
               />
-            </div>
 
-            <Controller
-              control={form.control}
-              name="note"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>{text.FORM.NOTE}</FieldLabel>
-                  <Textarea
-                    {...field}
-                    value={field.value ?? ''}
-                    placeholder={getPlaceholder(text.FORM.NOTE_PLACEHOLDER)}
-                    disabled={readOnly}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.STATUS}</FieldLabel>
+                      <AssetUnitSelectField
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={readOnly}
+                        options={assetStatusOptions}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="condition"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.CONDITION}</FieldLabel>
+                      <AssetUnitSelectField
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={readOnly}
+                        options={assetConditionOptions}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </div>
 
-            <Controller
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <Field orientation="horizontal" className="justify-between rounded-md border p-3">
-                  <div>
-                    <FieldLabel htmlFor={field.name}>{text.FORM.IS_ACTIVE}</FieldLabel>
-                    <p className="text-sm text-muted-foreground">{text.FORM.IS_ACTIVE_DESCRIPTION}</p>
-                  </div>
-                  <Switch disabled={readOnly} checked={field.value ?? true} onCheckedChange={field.onChange} />
-                </Field>
-              )}
-            />
+              <Controller
+                control={control}
+                name="note"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>{text.FORM.NOTE}</FieldLabel>
+                    <Textarea
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder={getPlaceholder(text.FORM.NOTE_PLACEHOLDER)}
+                      disabled={readOnly}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="isActive"
+                render={({ field }) => (
+                  <Field orientation="horizontal" className="justify-between rounded-md border p-3">
+                    <div>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.IS_ACTIVE}</FieldLabel>
+                      <p className="text-sm text-muted-foreground">{text.FORM.IS_ACTIVE_DESCRIPTION}</p>
+                    </div>
+                    <Switch disabled={readOnly} checked={field.value ?? true} onCheckedChange={field.onChange} />
+                  </Field>
+                )}
+              />
             </div>
 
             <DialogFooter>
@@ -289,7 +289,7 @@ function AssetUnitFormDialog({
                 {text.DIALOG.CANCEL}
               </Button>
               {!readOnly && (
-                <Button type="submit" form="asset-unit-form" disabled={isPending}>
+                <Button type="submit" form="asset-unit-form" disabled={isPending||!isDirty}>
                   {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
                   {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
                 </Button>
@@ -359,7 +359,11 @@ function AssetUnitStatusDialog({
 }) {
   const mutation = useUpdateAssetUnitStatus();
   const text = TITLE_PAGE.ASSET_UNITS;
-  const form = useForm<IAssetUnitStatusInput>({
+  const {
+    reset,
+    handleSubmit,
+    control,
+  } = useForm<IAssetUnitStatusInput>({
     resolver: zodResolver(assetUnitStatusSchema) as Resolver<IAssetUnitStatusInput>,
     defaultValues: {
       status: assetUnit.status,
@@ -369,7 +373,7 @@ function AssetUnitStatusDialog({
   });
 
   const handleClose = () => {
-    form.reset();
+    reset();
     onOpenChange(false);
   };
 
@@ -393,11 +397,11 @@ function AssetUnitStatusDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form id="asset-unit-status-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id="asset-unit-status-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <Controller
-                control={form.control}
+                control={control}
                 name="status"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -408,7 +412,7 @@ function AssetUnitStatusDialog({
                 )}
               />
               <Controller
-                control={form.control}
+                control={control}
                 name="condition"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -425,7 +429,7 @@ function AssetUnitStatusDialog({
             </div>
 
             <Controller
-              control={form.control}
+              control={control}
               name="isActive"
               render={({ field }) => (
                 <Field orientation="horizontal" className="justify-between rounded-md border p-3">

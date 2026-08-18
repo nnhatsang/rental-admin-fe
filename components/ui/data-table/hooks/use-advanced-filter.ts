@@ -1,29 +1,29 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import type { RowData, RowModel, Table } from "@tanstack/react-table"
+import * as React from 'react';
+import type { RowData, RowModel, Table } from '@tanstack/react-table';
 
-import { createAdvancedFilteredRowModel } from "../fns/advanced-filter"
-import type { AdvancedFilterGroup } from "../core/types"
-import { useControllableState } from "./use-controllable-state"
+import { createAdvancedFilteredRowModel } from '../fns/advanced-filter';
+import type { AdvancedFilterGroup } from '../core/types';
+import { useControllableState } from './use-controllable-state';
 
-const EMPTY_GROUP: AdvancedFilterGroup = { logic: "and", rules: [] }
+const EMPTY_GROUP: AdvancedFilterGroup = { logic: 'and', rules: [] };
 
 interface UseAdvancedFilterParams {
-  enableAdvancedFilter: boolean
-  advancedFilter?: AdvancedFilterGroup
-  defaultAdvancedFilter?: AdvancedFilterGroup
-  onAdvancedFilterChange?: (filter: AdvancedFilterGroup) => void
+  enableAdvancedFilter: boolean;
+  advancedFilter?: AdvancedFilterGroup;
+  defaultAdvancedFilter?: AdvancedFilterGroup;
+  onAdvancedFilterChange?: (filter: AdvancedFilterGroup) => void;
 }
 
 export interface AdvancedFilterState<TData extends RowData> {
-  advancedFilter: AdvancedFilterGroup
-  setAdvancedFilter: React.Dispatch<React.SetStateAction<AdvancedFilterGroup>>
-  showAdvancedFilterPanel: boolean
-  setShowAdvancedFilterPanel: React.Dispatch<React.SetStateAction<boolean>>
+  advancedFilter: AdvancedFilterGroup;
+  setAdvancedFilter: React.Dispatch<React.SetStateAction<AdvancedFilterGroup>>;
+  showAdvancedFilterPanel: boolean;
+  setShowAdvancedFilterPanel: React.Dispatch<React.SetStateAction<boolean>>;
   /** Filtered row model that applies the advanced group on top of the normal
    *  column/global filters. Stable identity (preserves TanStack memoization). */
-  advancedFilteredRowModel: (table: Table<TData>) => () => RowModel<TData>
+  advancedFilteredRowModel: (table: Table<TData>) => () => RowModel<TData>;
 }
 
 /**
@@ -38,22 +38,27 @@ export function useAdvancedFilter<TData extends RowData>({
   defaultAdvancedFilter,
   onAdvancedFilterChange,
 }: UseAdvancedFilterParams): AdvancedFilterState<TData> {
-  const [advancedFilter, setAdvancedFilter] =
-    useControllableState<AdvancedFilterGroup>(
-      advancedFilterProp,
-      defaultAdvancedFilter ?? EMPTY_GROUP,
-      onAdvancedFilterChange
-    )
-  const [showAdvancedFilterPanel, setShowAdvancedFilterPanel] =
-    React.useState(false)
+  const [advancedFilter, setAdvancedFilter] = useControllableState<AdvancedFilterGroup>(
+    advancedFilterProp,
+    defaultAdvancedFilter ?? EMPTY_GROUP,
+    onAdvancedFilterChange,
+  );
+  const [showAdvancedFilterPanel, setShowAdvancedFilterPanel] = React.useState(false);
 
-  const groupRef = React.useRef<AdvancedFilterGroup>(EMPTY_GROUP)
-  groupRef.current = enableAdvancedFilter ? advancedFilter : EMPTY_GROUP
+  const groupRef = React.useRef<AdvancedFilterGroup>(EMPTY_GROUP);
+  // Render-phase latest-ref write is load-bearing: TanStack computes row
+  // models during render, and the stable factory below must see this render's
+  // group (an effect write would filter with a stale group for a full frame).
+  // eslint-disable-next-line react-hooks/refs
+  groupRef.current = enableAdvancedFilter ? advancedFilter : EMPTY_GROUP;
 
   const advancedFilteredRowModel = React.useMemo(
+    // The getter runs inside TanStack's row-model computation, not during
+    // this hook's render.
+    // eslint-disable-next-line react-hooks/refs
     () => createAdvancedFilteredRowModel<TData>(() => groupRef.current),
-    []
-  )
+    [],
+  );
 
   return {
     advancedFilter,
@@ -61,5 +66,5 @@ export function useAdvancedFilter<TData extends RowData>({
     showAdvancedFilterPanel,
     setShowAdvancedFilterPanel,
     advancedFilteredRowModel,
-  }
+  };
 }

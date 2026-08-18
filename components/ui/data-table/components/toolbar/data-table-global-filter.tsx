@@ -63,6 +63,7 @@ export function DataTableGlobalFilter<TData extends RowData>({
   const debounceMs = table.options.manualFiltering ? 300 : 0;
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(external);
     if (styleSearchInput !== 'default') {
       setExpanded(external.length > 0);
@@ -80,7 +81,7 @@ export function DataTableGlobalFilter<TData extends RowData>({
 
   if (styleSearchInput === 'default') {
     return (
-      <div className="flex h-9 items-center gap-0.5 rounded-md border bg-background pr-1 pl-2 focus-within:border-ring">
+      <div className="flex h-8 items-center gap-0.5 rounded-md border bg-background pr-1 pl-2 focus-within:border-ring dark:bg-input">
         <icons.search className="size-3.5 shrink-0 text-muted-foreground" />
 
         <Input

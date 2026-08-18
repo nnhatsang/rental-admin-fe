@@ -16,6 +16,7 @@ import type { IRoleOut } from './type';
 import { useRoles } from './roles-provider';
 import { ProtectedAction } from '@/components/shared/protected-action';
 import { PermissionCode } from '@/utils/consts/rbac.const';
+import { roleSystemConfig, roleSystemOptions } from './display-config';
 
 export type RoleActionHandlers = {
   handleOpenEdit: (role: IRoleOut) => void;
@@ -23,14 +24,14 @@ export type RoleActionHandlers = {
 };
 
 function SystemBadge({ isSystem }: { isSystem: boolean }) {
+  const item = roleSystemConfig[String(isSystem) as keyof typeof roleSystemConfig];
+
   return (
     <Badge
       variant="outline"
-      className={
-        isSystem ? 'border-transparent bg-blue-500/10 text-blue-600' : 'border-transparent bg-zinc-500/10 text-zinc-600'
-      }
+      className={item.className}
     >
-      {isSystem ? 'Hệ thống' : 'Tùy chỉnh'}
+      {item.label}
     </Badge>
   );
 }
@@ -127,8 +128,9 @@ const columns: ColumnDef<IRoleOut>[] = [
     header: 'Loại',
     cell: ({ row }) => <SystemBadge isSystem={row.original.isSystem} />,
     meta: {
-      variant: 'checkbox',
-      label: 'Quyền hệ thống',
+      variant: 'select',
+      label: 'Loại quyền',
+      options: roleSystemOptions,
     },
   },
   {

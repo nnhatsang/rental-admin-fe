@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -41,12 +42,7 @@ export function DataTableViewOptions<TData extends RowData>({
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label={localization.columnVisibility}
-              className="size-8"
-            >
+            <Button variant="outline" size="icon" aria-label={localization.columnVisibility} className="size-8">
               <icons.columnVisibility />
             </Button>
           </DropdownMenuTrigger>
@@ -54,7 +50,11 @@ export function DataTableViewOptions<TData extends RowData>({
         <TooltipContent>{localization.columnVisibility}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel>{localization.columnVisibility}</DropdownMenuLabel>
+        {/* Base UI's GroupLabel requires a Group ancestor; Radix renders the
+            group as an inert wrapper. */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{localization.columnVisibility}</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         {hideableColumns.map((column) => (
           <DropdownMenuCheckboxItem
@@ -69,5 +69,5 @@ export function DataTableViewOptions<TData extends RowData>({
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

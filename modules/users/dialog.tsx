@@ -17,7 +17,6 @@ import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader } from '@tabler/icons-react';
 import { type Table } from '@tanstack/react-table';
-import { AlertTriangle } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { useCreateUser } from './hooks/use-create-user';
 import { useDeleteUser } from './hooks/use-delete-user';
@@ -33,6 +32,8 @@ import {
 } from './schema';
 import type { IUserOut } from './type';
 import { useUsers } from './users-provider';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { IUpdateCustomerReq } from '../customers/type';
 
 type UserFormValues = ICreateUserInput | IUpdateUserInput;
 
@@ -50,7 +51,12 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
   const updateMutation = useUpdateUser();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
 
-  const form = useForm<UserFormValues>({
+  const {
+    reset,
+    formState: { isDirty, dirtyFields },
+    handleSubmit,
+    control,
+  } = useForm<UserFormValues>({
     resolver: zodResolver(isEdit ? updateUserSchema : createUserSchema),
     defaultValues: isEdit
       ? {
@@ -64,7 +70,6 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
           password: '',
         },
   });
-  const { control, handleSubmit, reset } = form;
 
   const handleClose = () => {
     reset();
@@ -72,29 +77,36 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
   };
 
   const onSubmit = (values: UserFormValues) => {
-    if (readOnly) return;
-
-    if (isEdit && currentRow) {
-      updateMutation.mutate(
-        {
-          id: currentRow.id,
-          data: values as IUpdateUserInput,
-        },
-        {
-          onSuccess: handleClose,
-        },
-      );
+    if (!currentRow) {
+      createMutation.mutate(values as ICreateUserInput, {
+        onSuccess: handleClose,
+      });
       return;
     }
 
-    createMutation.mutate(values as ICreateUserInput, {
-      onSuccess: handleClose,
-    });
+    if (!isDirty) {
+      handleClose();
+      return;
+    }
+
+    const dirtyValues = Object.fromEntries(
+      Object.entries(values).filter(([key]) => {
+        return dirtyFields[key as keyof UserFormValues];
+      }),
+    ) as IUpdateCustomerReq;
+
+    updateMutation.mutate(
+      {
+        id: currentRow.id,
+        data: dirtyValues,
+      },
+      { onSuccess: handleClose },
+    );
   };
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? text.DIALOG.FORM_EDIT_TITLE : text.DIALOG.FORM_CREATE_TITLE}</DialogTitle>
           <DialogDescription>
@@ -102,89 +114,94 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
           </DialogDescription>
         </DialogHeader>
 
-        <form id="user-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
-          <Controller
-            control={control}
-            name="fullName"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>{text.FORM.FULL_NAME}</FieldLabel>
-                <Input
-                  {...field}
-                  id={field.name}
-                  placeholder={text.FORM.FULL_NAME_PLACEHOLDER}
-                  disabled={readOnly}
-                  value={field.value ?? ''}
-                  aria-invalid={fieldState.invalid}
+        <form id="user-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <ScrollArea className="h-[25dvh] max-h-[calc(100dvh-220px)]">
+            <div className="py-2 grid gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Controller
+                  control={control}
+                  name="fullName"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.FULL_NAME}</FieldLabel>
+                      <Input
+                        {...field}
+                        id={field.name}
+                        placeholder={text.FORM.FULL_NAME_PLACEHOLDER}
+                        disabled={readOnly}
+                        value={field.value ?? ''}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
                 />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="email"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>{text.FORM.EMAIL}</FieldLabel>
-                <Input
-                  disabled={readOnly}
-                  placeholder={text.FORM.EMAIL_PLACEHOLDER}
-                  {...field}
-                  id={field.name}
-                  type="email"
-                  aria-invalid={fieldState.invalid}
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.EMAIL}</FieldLabel>
+                      <Input
+                        disabled={readOnly}
+                        placeholder={text.FORM.EMAIL_PLACEHOLDER}
+                        {...field}
+                        id={field.name}
+                        type="email"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
                 />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
+              </div>
 
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor={field.name}>{text.FORM.PHONE}</FieldLabel>
-                <Input
-                  disabled={readOnly}
-                  placeholder={text.FORM.PHONE_PLACEHOLDER}
-                  {...field}
-                  id={field.name}
-                  type="email"
-                  aria-invalid={fieldState.invalid}
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>{text.FORM.PHONE}</FieldLabel>
+                    <Input
+                      disabled={readOnly}
+                      placeholder={text.FORM.PHONE_PLACEHOLDER}
+                      {...field}
+                      id={field.name}
+                      type="phone"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              {!isEdit && (
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor={field.name}>{text.FORM.INITIAL_PASSWORD}</FieldLabel>
+                      <PasswordInput
+                        placeholder={text.FORM.INITIAL_PASSWORD_PLACEHOLDER}
+                        {...field}
+                        disabled={readOnly}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
                 />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-
-          {!isEdit && (
-            <Controller
-              control={control}
-              name="password"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>{text.FORM.INITIAL_PASSWORD}</FieldLabel>
-                  <PasswordInput
-                    placeholder={text.FORM.INITIAL_PASSWORD_PLACEHOLDER}
-                    {...field}
-                    disabled={readOnly}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
               )}
-            />
-          )}
+            </div>
+          </ScrollArea>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
               {text.DIALOG.CANCEL}
             </Button>
             {!readOnly && (
-              <Button type="submit" form="user-form" disabled={isPending}>
+              <Button type="submit" form="user-form" disabled={isPending || !isDirty}>
                 {isPending && <IconLoader className="mr-2 size-4 animate-spin" />}
                 {isEdit ? text.DIALOG.SAVE_CHANGES : text.DIALOG.CREATE_SUBMIT}
               </Button>

@@ -1,26 +1,24 @@
 import type { DefaultParamsRequest } from '@/types/api';
 
-export type OrderStatus =
-  | 'DRAFT'
-  | 'CONFIRMED'
-  | 'PREPARING'
-  | 'READY_FOR_PICKUP'
-  | 'DELIVERING'
-  | 'RENTING'
-  | 'OVERDUE'
-  | 'RETURNED'
-  | 'COMPLETED'
-  | 'CANCELLED'
-  | 'REFUNDING'
-  | 'REFUNDED'
-  | 'DISPUTED';
-
-export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED';
+export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'RENTING' | 'OVERDUE' | 'RETURNED' | 'DONE' | 'CANCELLED' | 'DISPUTED';
+export type RentalOrderItemStatus = 'PENDING' | 'ACTIVE' | 'RETURNED' | 'CANCELLED';
+export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
+export type RefundStatus = 'NOT_REQUIRED' | 'PARTIALLY_REFUNDED' | 'REFUNDED' | 'FAILED';
 export type PickupMethod = 'PICKUP_AT_STORE' | 'DELIVERY';
+export type CollateralType = 'NONE' | 'IDENTITY_CARD' | 'VEHICLE_OR_HIGH_VALUE' | 'OTHER_ASSET';
+export type PaymentKind =
+  | 'BOOKING_HOLD'
+  | 'DEPOSIT'
+  | 'RENTAL_PAYMENT'
+  | 'HANDOVER_PAYMENT'
+  | 'ADDITIONAL_CHARGE'
+  | 'OTHER'
+  | 'REFUND';
+export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'CARD' | 'E_WALLET' | 'OTHER';
+export type PaymentRecordStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
 
 export interface IGetRentalOrdersParams extends DefaultParamsRequest {
   customerId?: string;
-  assignedToId?: string;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
   fromDate?: string;
@@ -34,11 +32,122 @@ export interface IRentalOrderCustomer {
   email: string | null;
 }
 
-export interface IRentalOrderUser {
+export type RentalOrderCustomerSnapshot = {
+  id?: string;
+  code?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  identityNumber?: string | null;
+  socialContact?: string | null;
+};
+
+export type RentalOrderSettingsSnapshot = {
+  id?: number;
+  bookingHoldPricePerUnit?: string | number;
+  bookingBufferTimeMinutes?: number;
+  maxRentalTimeDays?: number;
+  maxLateReturnTimeHours?: number;
+};
+
+export type RentalOrderPriceTierSnapshot = {
   id: string;
-  fullName: string;
-  email: string;
-}
+  minDays: number;
+  maxDays: number | null;
+  dailyPrice: number;
+  name: string | null;
+};
+
+export type RentalOrderItemSnapshot = {
+  product?: {
+    id?: string;
+    name?: string | null;
+    sku?: string | null;
+    dailyPrice?: number;
+    halfDayPrice?: number;
+    hourlyOveragePrice?: number | null;
+    depositAmount?: number;
+    rentalPriceTiers?: RentalOrderPriceTierSnapshot[];
+  };
+  assetUnit?: {
+    id?: string;
+    serialNumber?: string | null;
+  };
+  pricing?: {
+    pricingMode?: string;
+    pricingLabel?: string;
+    durationHours?: number;
+    billableDays?: number;
+    billableHalfDays?: number;
+    overageHours?: number;
+    unitPrice?: number;
+    depositAmount?: number;
+    bookingHoldAmount?: number;
+    lineTotal?: number;
+    appliedTierId?: string | null;
+    appliedTier?: RentalOrderPriceTierSnapshot | null;
+  };
+  rentalWindow?: {
+    startDate?: string;
+    endDate?: string;
+    blockedEndDate?: string;
+  };
+};
+
+export type RentalOrderRentalPeriod = {
+  startDate: string;
+  endDate: string;
+  actualPickupDate?: string | null;
+  actualReturnDate?: string | null;
+  blockedEndDate?: string;
+};
+
+export type RentalOrderFulfillment = {
+  pickupMethod: PickupMethod;
+  deliveryAddress: string | null;
+  collateralType: CollateralType;
+  collateralDescription?: string | null;
+};
+
+export type RentalOrderFinancials = {
+  deliveryFeeTotal: number;
+  rentalFeeTotal: number;
+  depositTotal: number;
+  bookingHoldTotal: number;
+  lateFeeTotal: number;
+  damageFeeTotal: number;
+  discountTotal: number;
+  compensationFeeTotal: number;
+  chargeTotal: number;
+  paidTotal: number;
+  estimatedRefundTotal: number;
+  actualRefundTotal: number;
+  adjustedDepositTotal: number;
+  handoverRequiredTotal: number;
+  handoverAmountDue: number;
+};
+
+export type RentalOrderNotes = {
+  customerNote: string | null;
+  internalNote: string | null;
+  cancelReason: string | null;
+};
+
+export type RentalOrderItemPricing = {
+  pricingMode: string;
+  pricingLabel: string;
+  durationHours: number;
+  billableDays: number;
+  billableHalfDays: number;
+  overageHours: number;
+  unitPrice: number;
+  depositAmount: number;
+  bookingHoldAmount: number;
+  lineTotal: number;
+  appliedTierId: string | null;
+  appliedTier: RentalOrderPriceTierSnapshot | null;
+};
 
 export interface IRentalOrderProduct {
   id: string;
@@ -53,19 +162,45 @@ export interface IRentalOrderAssetUnit {
 
 export interface IRentalOrderItem {
   id: string;
+  productId: string;
+  assetUnitId: string;
   product: IRentalOrderProduct;
-  assetUnit: IRentalOrderAssetUnit | null;
-  productNameSnapshot: string;
-  skuSnapshot: string | null;
-  unitPrice: string;
-  bookingHoldAmount: string;
-  upfrontAmount: string;
-  refundableDepositAmount: string;
-  depositAmount: string;
-  lineTotal: string;
+  assetUnit: IRentalOrderAssetUnit;
+  status: RentalOrderItemStatus;
+  snapshot?: RentalOrderItemSnapshot | null;
+  productSnapshot: RentalOrderItemSnapshot['product'];
+  assetUnitSnapshot: NonNullable<RentalOrderItemSnapshot['assetUnit']>;
+  rentalPeriod: RentalOrderRentalPeriod;
+  pricing: RentalOrderItemPricing;
+  unitPrice?: number;
+  depositAmount?: number;
+  bookingHoldAmount?: number;
+  lineTotal?: number;
+  startDate?: string;
+  endDate?: string;
+  blockedEndDate?: string;
   note: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface IRentalOrderPaymentRecord {
+  id: string;
+  kind: PaymentKind;
+  method: PaymentMethod;
+  status: PaymentRecordStatus;
+  amount: number;
+  referenceCode: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface IRentalOrderStatusHistory {
+  id: string;
+  fromStatus: OrderStatus | null;
+  toStatus: OrderStatus;
+  note: string | null;
+  createdAt: string;
 }
 
 export interface IRentalOrderOut {
@@ -74,46 +209,75 @@ export interface IRentalOrderOut {
   source: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
-  rentalPolicyId: string | null;
+  refundStatus: RefundStatus;
+  customerId: string;
   customer: IRentalOrderCustomer;
-  customerNameSnapshot: string;
-  customerPhoneSnapshot: string | null;
-  customerEmailSnapshot: string | null;
-  customerAddressSnapshot: string | null;
-  customerIdentitySnapshot: string | null;
+  customerSnapshot: RentalOrderCustomerSnapshot;
+  settingsSnapshot: RentalOrderSettingsSnapshot;
+  rentalPeriod: RentalOrderRentalPeriod;
+  fulfillment: RentalOrderFulfillment;
+  financials: RentalOrderFinancials;
+  notes: RentalOrderNotes;
   startDate: string;
   endDate: string;
-  turnaroundMinutes: number;
-  blockedEndDate: string;
+  actualPickupDate: string | null;
   actualReturnDate: string | null;
   pickupMethod: PickupMethod;
   deliveryAddress: string | null;
-  deliveryFeeTotal: string;
-  subtotal: string;
-  depositTotal: string;
-  upfrontTotal: string;
-  bookingHoldTotal: string;
-  handoverDueTotal: string;
-  lateFeeTotal: string;
-  damageFeeTotal: string;
-  discountTotal: string;
-  paidTotal: string;
-  remainingTotal: string;
-  refundTotal: string;
+  deliveryFeeTotal: number;
+  rentalFeeTotal: number;
+  depositTotal: number;
+  bookingHoldTotal: number;
+  lateFeeTotal: number;
+  damageFeeTotal: number;
+  discountTotal: number;
+  compensationFeeTotal: number;
+  chargeTotal: number;
+  paidTotal: number;
+  estimatedRefundTotal: number;
+  actualRefundTotal: number;
+  adjustedDepositTotal: number;
+  handoverRequiredTotal: number;
+  handoverAmountDue: number;
   note: string | null;
   internalNote: string | null;
   cancelReason: string | null;
   createdBy: string;
-  assignedTo: IRentalOrderUser | null;
   items: IRentalOrderItem[];
+  payments: IRentalOrderPaymentRecord[];
+  statusHistories: IRentalOrderStatusHistory[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
 
+export type IRentalOrderListItemOut = Pick<
+  IRentalOrderOut,
+  | 'id'
+  | 'code'
+  | 'source'
+  | 'status'
+  | 'paymentStatus'
+  | 'refundStatus'
+  | 'customerSnapshot'
+  | 'startDate'
+  | 'endDate'
+  | 'rentalFeeTotal'
+  | 'depositTotal'
+  | 'bookingHoldTotal'
+  | 'chargeTotal'
+  | 'paidTotal'
+  | 'estimatedRefundTotal'
+  | 'actualRefundTotal'
+  | 'handoverRequiredTotal'
+  | 'handoverAmountDue'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
 export interface IRentalOrderCreateItemReq {
   productId: string;
-  assetUnitId?: string;
+  assetUnitId: string;
   note?: string;
 }
 
@@ -125,21 +289,98 @@ export interface ICreateRentalOrderReq {
   deliveryAddress: string;
   deliveryFeeTotal?: number;
   discountTotal?: number;
-  assignedToId?: string;
   note?: string;
   internalNote?: string;
   items: IRentalOrderCreateItemReq[];
 }
 
+export interface IUpdateRentalOrderCustomerSnapshotReq {
+  name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  identityNumber?: string;
+  socialContact?: string;
+}
+
+export type IUpdateRentalOrderReq = Partial<ICreateRentalOrderReq> & {
+  customerSnapshot?: IUpdateRentalOrderCustomerSnapshotReq;
+};
+
+export interface IDeleteRentalOrdersReq {
+  rentalOrderIds: string[];
+}
+
+export interface IDeleteRentalOrdersOut {
+  success: boolean;
+}
+
+export interface ICancelRentalOrderReq {
+  cancelReason: string;
+  refundBookingHold?: boolean;
+  refundAmount?: number;
+  keepPaidAmountAsPenalty?: boolean;
+  note?: string;
+}
+
+export interface IHandoverRentalOrderPaymentReq {
+  method: PaymentMethod;
+  amount: number;
+  referenceCode?: string;
+  note?: string;
+}
+
+export interface IHandoverRentalOrderReq {
+  actualPickupDate?: string;
+  collateralType?: CollateralType;
+  collateralDescription?: string;
+  payment?: IHandoverRentalOrderPaymentReq;
+  note?: string;
+}
+
+export interface ICompleteRentalOrderSettlementPaymentReq {
+  kind: Extract<PaymentKind, 'ADDITIONAL_CHARGE' | 'REFUND'>;
+  method: PaymentMethod;
+  amount: number;
+  referenceCode?: string;
+  note?: string;
+}
+
+export interface ICompleteRentalOrderReq {
+  actualReturnDate?: string;
+  damageFeeTotal?: number;
+  damageNote?: string;
+  settlementPayment?: ICompleteRentalOrderSettlementPaymentReq;
+  note?: string;
+}
+
+export interface IRecordRentalOrderPaymentReq {
+  kind: Exclude<PaymentKind, 'REFUND'>;
+  method: PaymentMethod;
+  status?: PaymentRecordStatus;
+  amount: number;
+  referenceCode?: string;
+  note?: string;
+}
+
+export interface IRefundRentalOrderPaymentReq {
+  method: PaymentMethod;
+  status?: PaymentRecordStatus;
+  amount: number;
+  referenceCode?: string;
+  note?: string;
+}
+
 export interface ICheckRentalOrderAvailabilityItemReq {
   productId: string;
   quantity: number;
-  assetUnitIds?: string[];
+  assetUnitIds: string[];
 }
 
 export interface ICheckRentalOrderAvailabilityReq {
   startDate: string;
   endDate: string;
+  excludeOrderId?: string;
   items: ICheckRentalOrderAvailabilityItemReq[];
 }
 
@@ -182,11 +423,11 @@ export interface IGetCustomersParams extends DefaultParamsRequest {
 
 export interface ICreateCustomerReq {
   name: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  identityNumber?: string;
-  socialContact?: string;
+  phone: string;
+  email: string;
+  address: string;
+  identityNumber: string;
+  socialContact: string;
   notes?: string;
 }
 
@@ -195,10 +436,27 @@ export type OrderLineDraft = {
   productId: string;
   productName: string;
   sku: string;
-  quantity: number;
-  available: number;
-  reserved: number;
-  total: number;
-  assetUnitIds: string[];
+  assetUnitId: string;
+  serialNumber: string;
+  dailyPrice: number;
+  halfDayPrice: number;
+  hourlyOveragePrice: number;
+  depositAmount: number;
+  rentalPriceTiers: Array<{
+    id: string;
+    minDays: number;
+    maxDays: number | null;
+    dailyPrice: number;
+    name: string | null;
+  }>;
   note?: string;
 };
+
+export type RentalOrderEditableLine = OrderLineDraft & {
+  status?: string;
+  bookingHoldAmount?: number;
+  removed?: boolean;
+};
+
+export type RentalOrderEditableLineState = 'UNCHANGED' | 'ADDED' | 'REMOVED' | 'CHANGED';
+export type RentalOrderEditableLineFilter = 'ALL' | RentalOrderEditableLineState;

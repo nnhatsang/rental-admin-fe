@@ -2,11 +2,16 @@ import * as z from 'zod';
 import { UserActivityStatus } from './type';
 
 const userActivityStatusSchema = z.enum(Object.values(UserActivityStatus) as [string, ...string[]]);
+const phoneRegex = /^(?:\+84|0)(3[2-9]|5[689]|7[06789]|8[1-9]|9\d|2\d{1,2})\d{7}$/;
 
 export const createUserSchema = z.object({
   email: z.string().min(1, { message: 'Vui lòng nhập email' }).email({ message: 'Định dạng email không hợp lệ' }),
   fullName: z.string().min(1, { message: 'Vui lòng nhập họ tên' }),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .min(1, { message: 'Vui lòng nhập số điện thoại' })
+    .regex(phoneRegex, { message: 'Số điện thoại không hợp lệ' })
+    .optional(),
   password: z.string().min(8, { message: 'Mật khẩu phải có ít nhất 8 ký tự' }),
 });
 export type ICreateUserInput = z.infer<typeof createUserSchema>;
@@ -14,7 +19,11 @@ export type ICreateUserInput = z.infer<typeof createUserSchema>;
 export const updateUserSchema = z.object({
   email: z.string().email({ message: 'Định dạng email không hợp lệ' }).optional(),
   fullName: z.string().min(1, { message: 'Vui lòng nhập họ tên' }).optional(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .min(1, { message: 'Vui lòng nhập số điện thoại' })
+    .regex(phoneRegex, { message: 'Số điện thoại không hợp lệ' })
+    .optional(),
 });
 export type IUpdateUserInput = z.infer<typeof updateUserSchema>;
 

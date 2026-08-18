@@ -45,17 +45,20 @@ export function DataTableHeadCell<TData extends RowData, TValue>({
   padding,
   children,
 }: {
-  header: Header<TData, TValue>
-  table: DataTableInstance<TData>
-  draggable: boolean
-  resizable: boolean
-  widthStyle: React.CSSProperties
-  padding: string
-  children: React.ReactNode
+  header: Header<TData, TValue>;
+  table: DataTableInstance<TData>;
+  draggable: boolean;
+  resizable: boolean;
+  widthStyle: React.CSSProperties;
+  padding: string;
+  children: React.ReactNode;
 }) {
-  const column = header.column
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
-    useSortable({ id: column.id, disabled: !draggable, data: { type: "column" } })
+  const column = header.column;
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } = useSortable({
+    id: column.id,
+    disabled: !draggable,
+    data: { type: 'column' },
+  });
 
   const style: React.CSSProperties = {
     ...widthStyle,
@@ -63,10 +66,10 @@ export function DataTableHeadCell<TData extends RowData, TValue>({
     transform: CSS.Translate.toString(transform),
     // Animate width for programmatic changes (autosize, pinning) but not during
     // an active drag, where the easing makes the header lag behind the cursor.
-    transition: column.getIsResizing() ? undefined : "width 0.15s ease",
+    transition: column.getIsResizing() ? undefined : 'width 0.15s ease',
     opacity: isDragging ? 0.7 : undefined,
     zIndex: isDragging ? 30 : undefined,
-  }
+  };
 
   // Hand the drag-activator props to the header (via context) so the grip can
   // render next to the column-actions menu instead of crowding the left edge.
@@ -76,8 +79,8 @@ export function DataTableHeadCell<TData extends RowData, TValue>({
       listeners: listeners as Record<string, unknown> | undefined,
       setActivatorNodeRef,
     }),
-    [attributes, listeners, setActivatorNodeRef]
-  )
+    [attributes, listeners, setActivatorNodeRef],
+  );
 
   return (
     <TableHead
@@ -87,35 +90,27 @@ export function DataTableHeadCell<TData extends RowData, TValue>({
       data-pinned={column.getIsPinned() || undefined}
       aria-sort={ariaSort(column.getIsSorted())}
       className={cn(
-        "relative bg-background",
+        'relative bg-background',
         padding,
         // Match the body: under fixed layout, keep long header labels from
         // bleeding past the (resizable) column edge.
-        resizable && "overflow-hidden",
-        getColumnPinningClass(column)
+        resizable && 'overflow-hidden',
+        getColumnPinningClass(column),
       )}
     >
-      <ColumnDragContext.Provider value={draggable ? dragProps : null}>
-        {children}
-      </ColumnDragContext.Provider>
+      <ColumnDragContext.Provider value={draggable ? dragProps : null}>{children}</ColumnDragContext.Provider>
       {resizable && <ColumnResizeHandle header={header} table={table} />}
     </TableHead>
-  )
+  );
 }
 
 /** Column reorder grip. Reads dnd-kit props from {@link ColumnDragContext} and
  *  renders nothing when the column isn't draggable. Lives inside the column
  *  header, just before the column-actions menu. */
-export function ColumnDragHandle({
-  label,
-  Icon,
-}: {
-  label: string
-  Icon: IconComponent
-}) {
-  const ctx = React.useContext(ColumnDragContext)
-  if (!ctx) return null
-  const { attributes, listeners, setActivatorNodeRef } = ctx
+export function ColumnDragHandle({ label, Icon }: { label: string; Icon: IconComponent }) {
+  const ctx = React.useContext(ColumnDragContext);
+  if (!ctx) return null;
+  const { attributes, listeners, setActivatorNodeRef } = ctx;
   return (
     <Button
       type="button"
@@ -135,13 +130,11 @@ export function ColumnDragHandle({
     >
       <Icon className="size-3.5" />
     </Button>
-  )
+  );
 }
 
-function ariaSort(
-  sorted: false | "asc" | "desc"
-): React.AriaAttributes["aria-sort"] {
-  if (sorted === "asc") return "ascending"
-  if (sorted === "desc") return "descending"
-  return "none"
+function ariaSort(sorted: false | 'asc' | 'desc'): React.AriaAttributes['aria-sort'] {
+  if (sorted === 'asc') return 'ascending';
+  if (sorted === 'desc') return 'descending';
+  return 'none';
 }

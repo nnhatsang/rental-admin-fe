@@ -20,8 +20,7 @@ export const requestGetAvailabilityProducts = (
 export const requestGetAvailabilityAssets = (
   params: IGetAvailabilityAssetsParams,
 ): Promise<AxiosResponse<DefaultResponse<IAvailabilityAssetsData>>> => {
-  const { productId, ...query } = params;
-  return apiAuth({ method: 'GET', url: `${url}/products/${productId}/assets`, params: query } satisfies AxiosRequestConfig);
+  return apiAuth({ method: 'GET', url: `${url}/assets`, params } satisfies AxiosRequestConfig);
 };
 
 export const requestGetAvailabilityTimeline = (

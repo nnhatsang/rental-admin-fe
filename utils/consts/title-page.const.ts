@@ -262,4 +262,72 @@ export const TITLE_PAGE = {
       DELETE_FAILED: 'Xóa nhóm quyền thất bại',
     },
   },
+  CUSTOMER: {
+    ROOT: 'Khách hàng',
+    INDEX: 'Quản lý khách hàng',
+    CREATE: 'Tạo mới',
+    EDIT: 'Cập nhật',
+    DESCRIPTION: 'Quản lý thông tin khách hàng',
+
+    ACTIONS: {
+      VIEW: 'Xem',
+      CREATE: 'Thêm khách hàng',
+      EDIT: 'Chỉnh sửa',
+      DELETE: 'Xóa khách hàng',
+      DELETE_MULTI: 'Xóa nhiều khách hàng',
+    },
+
+    FORM: {
+      NAME: 'Họ và tên',
+      NAME_PLACEHOLDER: 'Nguyễn Văn A',
+
+      PHONE: 'Số điện thoại',
+      PHONE_PLACEHOLDER: '0900000000',
+
+      EMAIL: 'Email',
+      EMAIL_PLACEHOLDER: 'customer@example.com',
+
+      ADDRESS: 'Địa chỉ',
+      ADDRESS_PLACEHOLDER: '123 Nguyễn Trãi, Quận 1, TP.HCM',
+
+      IDENTITY_NUMBER: 'CCCD / CMND',
+      IDENTITY_NUMBER_PLACEHOLDER: '079000000001',
+
+      SOCIAL_CONTACT: 'Liên hệ mạng xã hội',
+      SOCIAL_CONTACT_PLACEHOLDER: 'zalo.me/0900000000',
+
+      NOTES: 'Ghi chú',
+      NOTES_PLACEHOLDER: 'Ghi chú về khách hàng',
+    },
+
+    DIALOG: {
+      FORM_CREATE_TITLE: 'Thêm khách hàng mới',
+      FORM_EDIT_TITLE: 'Chỉnh sửa thông tin',
+      FORM_VIEW_TITLE: 'Chi tiết khách hàng',
+
+      FORM_CREATE_DESCRIPTION: 'Nhập thông tin chi tiết để tạo hồ sơ khách hàng mới.',
+
+      FORM_EDIT_DESCRIPTION: 'Cập nhật thông tin cơ bản cho khách hàng này.',
+
+      FORM_VIEW_DESCRIPTION: 'Xem thông tin chi tiết của khách hàng.',
+
+      DELETE_TITLE: 'Xác nhận xóa khách hàng',
+
+      DELETE_DESCRIPTION_PREFIX: 'Bạn có chắc chắn muốn xóa khách hàng',
+
+      DELETE_DESCRIPTION_SUFFIX: 'Hành động này không thể khôi phục.',
+
+      CANCEL: 'Hủy',
+      SAVE_CHANGES: 'Lưu thay đổi',
+      CREATE_SUBMIT: 'Tạo mới',
+      UPDATE_SUBMIT: 'Cập nhật',
+      CONFIRM_DELETE: 'Xác nhận xóa',
+    },
+
+    ERRORS: {
+      CREATE_FAILED: 'Tạo khách hàng thất bại',
+      UPDATE_FAILED: 'Cập nhật khách hàng thất bại',
+      DELETE_FAILED: 'Xóa khách hàng thất bại',
+    },
+  },
 } as const;

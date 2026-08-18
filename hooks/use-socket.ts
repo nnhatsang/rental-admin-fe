@@ -180,7 +180,6 @@ export const useSocketEvents = () => {
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
-  const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated || !user) return;
@@ -224,6 +223,7 @@ export const useSocketEvents = () => {
 
 // Hook tổng hợp quản lý toàn bộ vòng đời và sự kiện của Socket
 export const useSocket = () => {
-  useSocketEmit(); // Khởi tạo / Ngắt kết nối socket theo trạng thái auth
-  useSocketEvents(); // Lắng nghe các sự kiện socket (đổi quyền,...)
+  const emitFunctions = useSocketEmit();
+  useSocketEvents();
+  return emitFunctions; // Lắng nghe các sự kiện socket (đổi quyền,...)
 };

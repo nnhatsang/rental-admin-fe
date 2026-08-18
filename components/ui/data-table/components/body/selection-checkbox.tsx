@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
 interface SelectionCheckboxProps extends Omit<
-  React.ComponentProps<"button">,
-  "onChange" | "type" | "role" | "aria-checked"
+  React.ComponentProps<'button'>,
+  'onChange' | 'type' | 'role' | 'aria-checked'
 > {
-  checked?: boolean
-  indeterminate?: boolean
-  onCheckedChange?: (checked: boolean) => void
+  checked?: boolean;
+  indeterminate?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }
 
 /**
@@ -34,20 +34,18 @@ function SelectionCheckbox({
   onCheckedChange,
   ...props
 }: SelectionCheckboxProps) {
-  const active = checked || indeterminate
+  const active = checked || indeterminate;
   return (
     <button
       type="button"
       role="checkbox"
       data-slot="checkbox"
-      aria-checked={indeterminate ? "mixed" : checked}
+      aria-checked={indeterminate ? 'mixed' : checked}
       onClick={() => onCheckedChange?.(!checked)}
       className={cn(
-        "peer relative flex size-4.5 shrink-0 items-center justify-center rounded-none border bg-transparent transition-shadow outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
-        active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input",
-        className
+        'peer relative flex size-4.5 shrink-0 items-center justify-center rounded-none border bg-transparent transition-shadow outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
+        active ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
+        className,
       )}
       {...props}
     >
@@ -62,15 +60,11 @@ function SelectionCheckbox({
           className="size-3.5"
           aria-hidden="true"
         >
-          {indeterminate ? (
-            <path d="M5 12h14" />
-          ) : (
-            <path d="M20 6 9 17l-5-5" />
-          )}
+          {indeterminate ? <path d="M5 12h14" /> : <path d="M20 6 9 17l-5-5" />}
         </svg>
       )}
     </button>
-  )
+  );
 }
 
-export { SelectionCheckbox }
+export { SelectionCheckbox };

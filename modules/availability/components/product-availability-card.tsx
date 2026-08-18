@@ -13,7 +13,7 @@ export function ProductAvailabilityCard({
   onAdd: () => void;
   onViewAssets: () => void;
 }) {
-  const state = product.availabilityState;
+  const state = product.inventory.available === 0 ? 'UNAVAILABLE' : product.inventory.available <= 2 ? 'LOW_STOCK' : 'AVAILABLE';
   const badgeVariant = state === 'UNAVAILABLE' ? 'destructive' : state === 'LOW_STOCK' ? 'outline' : 'secondary';
   const percent = product.inventory.total ? (product.inventory.available / product.inventory.total) * 100 : 0;
 

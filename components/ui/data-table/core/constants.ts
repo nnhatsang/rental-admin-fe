@@ -1,34 +1,26 @@
-import {
-  EXPAND_COLUMN_ID,
-  ROW_DRAG_COLUMN_ID,
-  ROW_NUMBER_COLUMN_ID,
-} from "../injected-columns/injected-columns"
-import { ROW_ACTIONS_COLUMN_ID } from "../injected-columns/data-table-row-actions"
-import { SELECTION_COLUMN_ID } from "../injected-columns/selection-column"
-import type { Density } from "./types"
+import { EXPAND_COLUMN_ID, ROW_DRAG_COLUMN_ID, ROW_NUMBER_COLUMN_ID } from '../injected-columns/injected-columns';
+import { ROW_ACTIONS_COLUMN_ID } from '../injected-columns/data-table-row-actions';
+import { SELECTION_COLUMN_ID } from '../injected-columns/selection-column';
+import type { Density } from './types';
 
-export const DENSITY_ORDER: Density[] = ["comfortable", "compact", "spacious"]
+export const DENSITY_ORDER: Density[] = ['comfortable', 'compact', 'spacious'];
 
 /** Vertical padding utility per density level, applied to header + body cells. */
 export const DENSITY_CELL_PADDING: Record<Density, string> = {
-  compact: "py-1",
-  comfortable: "py-2.5",
-  spacious: "py-4",
-}
+  compact: 'py-1',
+  comfortable: 'py-2.5',
+  spacious: 'py-4',
+};
 
 /** Horizontal alignment → text-align utility, applied to body cells. */
 export const ALIGN_CELL = {
-  left: "text-left",
-  center: "text-center",
-  right: "text-right",
-} as const
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+} as const;
 
 /** Injected columns that should never be draggable in the header. */
-export const DISPLAY_COLUMN_IDS = new Set([
-  SELECTION_COLUMN_ID,
-  ROW_NUMBER_COLUMN_ID,
-  ROW_DRAG_COLUMN_ID,
-])
+export const DISPLAY_COLUMN_IDS = new Set([SELECTION_COLUMN_ID, ROW_NUMBER_COLUMN_ID, ROW_DRAG_COLUMN_ID]);
 
 // All injected (non-user) columns, used to find the first real data column so
 // tree (sub-row) rows can be indented by depth there.
@@ -38,4 +30,14 @@ export const NON_DATA_COLUMN_IDS = new Set([
   ROW_DRAG_COLUMN_ID,
   EXPAND_COLUMN_ID,
   ROW_ACTIONS_COLUMN_ID,
-])
+]);
+
+/**
+ * Selected-row styling shared by the virtualized row and the DnD/normal row
+ * so both paths stay in sync: a primary-tinted background (hover variants
+ * keep it stable under the base row hover) plus the 2px inset accent bar.
+ * `group` lets cells clear their opaque background via
+ * `group-data-[state=selected]` so the tint shows through.
+ */
+export const SELECTED_ROW_CLASS =
+  'group transition-colors hover:bg-accent/50! data-[state=selected]:bg-primary/20 data-[state=selected]:hover:bg-primary/20 data-[state=selected]:shadow-[inset_2px_0_0_0_var(--primary)]';

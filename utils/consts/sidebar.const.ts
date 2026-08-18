@@ -4,15 +4,14 @@ import { PermissionCode as Permission, PermissionCode } from '@/utils/consts/rba
 import {
   IconCamera,
   IconClipboardList,
-  IconCreditCard,
   IconDashboard,
   IconDevices,
+  IconExclamationMarkOff,
   IconPackages,
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
   IconTimeline,
-  IconTruckReturn,
   IconUsers
 } from '@tabler/icons-react';
 
@@ -63,17 +62,12 @@ export const sidebarItems: NavGroup[] = [
         requiredPermissions: [Permission.OrdersRead],
       },
       {
-        title: 'Thanh toán',
-        url: '/payments',
-        icon: IconCreditCard,
-        requiredPermissions: [Permission.OrdersRecordPayment, Permission.OrdersRefund],
+        title: 'Danh sách đen',
+        url: '/blacklist',
+        icon: IconExclamationMarkOff,
+        requiredPermissions: [Permission.CustomersRead, Permission.CustomersUpdate],
       },
-      {
-        title: 'Trả thiết bị',
-        url: '/returns',
-        icon: IconTruckReturn,
-        requiredPermissions: [Permission.OrdersUpdateStatus],
-      },
+
       {
         title: 'Khách hàng',
         url: '/customers',

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { useState } from 'react';
 import { columns } from '../columns';
@@ -35,7 +35,7 @@ export const useUsersLogic = (): IUsersLogic => {
     columns,
   });
 
-  const { data, isLoading, isFetching } = useGetUsers(queryParams);
+  const { data, isLoading, isFetching, refetch } = useGetUsers(queryParams);
 
   const table = useDataTable<IUserOut>({
     data: data?.items ?? [],
@@ -68,15 +68,20 @@ export const useUsersLogic = (): IUsersLogic => {
     onColumnFiltersChange,
     onGlobalFilterChange,
     renderToolbarActions: () => (
-      <Button
-        size="lg"
-        onClick={() => {
-          setCurrentRow(null);
-          setOpen('add');
-        }}
-      >
-        <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.USERS.ACTIONS.CREATE}
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          onClick={() => {
+            setCurrentRow(null);
+            setOpen('add');
+          }}
+        >
+          <IconPlus className="mr-1.5 size-4" /> {TITLE_PAGE.USERS.ACTIONS.CREATE}
+        </Button>
+        <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>
+          <IconRefresh className="mr-1.5 size-4" />
+          Làm mới
+        </Button>
+      </div>
     ),
   });
 

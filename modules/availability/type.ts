@@ -3,7 +3,6 @@ import type { DefaultParamsRequest } from '@/types/api';
 import type { IPaginationResponse } from '@/types/api';
 
 export type AvailabilityFilter = 'ALL' | 'AVAILABLE' | 'UNAVAILABLE';
-export type ProductAvailabilityState = 'AVAILABLE' | 'LOW_STOCK' | 'UNAVAILABLE';
 export type AssetAvailabilityState = 'AVAILABLE' | 'BOOKED' | 'UNASSIGNABLE';
 export type AssetAvailabilityReason =
   | 'BOOKED'
@@ -26,7 +25,7 @@ export interface IGetAvailabilityProductsParams extends DefaultParamsRequest {
 }
 
 export interface IGetAvailabilityAssetsParams extends IGetAvailabilityProductsParams {
-  productId: string;
+  productId?: string;
 }
 
 export type IGetAvailabilityTimelineParams = IGetAvailabilityProductsParams;
@@ -36,22 +35,23 @@ export interface IAvailabilityProduct {
   productId: string;
   name: string;
   sku: string;
-  dailyPrice: string;
-  halfDayPrice: string;
+  dailyPrice: number;
+  halfDayPrice: number;
+  hourlyOveragePrice: number;
   rentalPriceTiers: Array<{
     id: string;
     minDays: number;
     maxDays: number | null;
-    dailyPrice: string;
+    dailyPrice: number;
     name: string | null;
     sortOrder: number;
   }>;
+  depositAmount: number;
   inventory: {
     total: number;
     reserved: number;
     available: number;
   };
-  availabilityState: ProductAvailabilityState;
 }
 
 export interface IAvailabilityProductsData {
@@ -61,6 +61,7 @@ export interface IAvailabilityProductsData {
   endDate: string;
   blockedEndDate: string;
   turnaroundMinutes: number;
+  bookingHoldAmountPerUnit: number;
 }
 
 export interface IAvailabilityAsset {
@@ -71,15 +72,16 @@ export interface IAvailabilityAsset {
   availability: AssetAvailabilityState;
   reasonCode: AssetAvailabilityReason | null;
   conflictBlockedEndDate: string | null;
+  product: Omit<IAvailabilityProduct, 'inventory'>;
 }
 
 export interface IAvailabilityAssetsData {
   items: IAvailabilityAsset[];
   pagination: IPaginationResponse<IAvailabilityAsset>['pagination'];
-  productId: string;
   availableQuantity: number;
   selectionLimit: number;
   blockedEndDate: string;
+  bookingHoldAmountPerUnit: number;
 }
 
 export interface IAvailabilityTimelineBlock {

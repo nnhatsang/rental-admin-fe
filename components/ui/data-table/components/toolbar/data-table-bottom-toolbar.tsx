@@ -1,15 +1,15 @@
-"use client"
+'use client';
 
-import type { RowData } from "@tanstack/react-table"
+import type { RowData } from '@tanstack/react-table';
 
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
-import type { DataTableInstance } from "../../core/types"
-import { DataTablePagination } from "./data-table-pagination"
+import type { DataTableInstance } from '../../core/types';
+import { DataTablePagination } from './data-table-pagination';
 
 interface DataTableBottomToolbarProps<TData extends RowData> {
-  table: DataTableInstance<TData>
-  pageSizeOptions?: number[]
+  table: DataTableInstance<TData>;
+  pageSizeOptions?: number[];
 }
 
 /**
@@ -28,29 +28,27 @@ export function DataTableBottomToolbar<TData extends RowData>({
     renderBottomToolbar,
     renderBottomToolbarCustomActions,
     refs,
-  } = table.cnTable
+  } = table.cnTable;
 
-  if (renderBottomToolbar) return <>{renderBottomToolbar({ table })}</>
-  if (!enableBottomToolbar) return null
+  if (renderBottomToolbar) return <>{renderBottomToolbar({ table })}</>;
+  if (!enableBottomToolbar) return null;
 
-  const customActions = renderBottomToolbarCustomActions?.({ table })
-  const showBottomPagination =
-    enablePagination &&
-    (positionPagination === "bottom" || positionPagination === "both")
+  const customActions = renderBottomToolbarCustomActions?.({ table });
+  const showBottomPagination = enablePagination && (positionPagination === 'bottom' || positionPagination === 'both');
   const pagination = showBottomPagination ? (
     <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
-  ) : null
+  ) : null;
 
-  if (customActions == null && pagination == null) return null
+  if (customActions == null && pagination == null) return null;
 
   return (
     <div
+      // Forwarding the exposed DOM ref object as a JSX ref (not reading
+      // .current during render).
+      // eslint-disable-next-line react-hooks/refs
       ref={refs.bottomToolbarRef}
       data-slot="data-table-bottom-toolbar"
-      className={cn(
-        customActions != null &&
-          "flex flex-wrap items-center justify-between gap-4"
-      )}
+      className={cn(customActions != null && 'flex flex-wrap items-center justify-between gap-4')}
     >
       {customActions != null ? (
         <>
@@ -61,5 +59,5 @@ export function DataTableBottomToolbar<TData extends RowData>({
         pagination
       )}
     </div>
-  )
+  );
 }

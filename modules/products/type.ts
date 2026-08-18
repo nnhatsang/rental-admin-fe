@@ -19,7 +19,7 @@ export type IProductRentalPriceTierOut = {
   id: string;
   minDays: number;
   maxDays: number | null;
-  dailyPrice: string;
+  dailyPrice: number;
   name: string | null;
   sortOrder: number;
   createdAt: string;
@@ -44,12 +44,12 @@ export type IProductOut = {
   usageGuide: string | null;
   category: IProductRelationOut | null;
   brand: IProductRelationOut | null;
-  dailyPrice: string;
-  halfDayPrice: string;
-  hourlyOveragePrice: string | null;
+  dailyPrice: number;
+  halfDayPrice: number;
+  hourlyOveragePrice: number | null;
   rentalPriceTiers: IProductRentalPriceTierOut[];
-  depositAmount: string;
-  replacementValue: string | null;
+  depositAmount: number;
+  replacementValue: number | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

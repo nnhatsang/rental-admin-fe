@@ -46,14 +46,14 @@ export function DateFilterField<TData extends RowData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          className={cn(FIELD_CLASS, "w-full justify-start gap-2 px-2 font-normal")}
+          className={cn(FIELD_CLASS, 'w-full justify-start gap-2 px-2 font-normal')}
           aria-label={localization.filterByColumn(getColumnLabel(column))}
         >
           <icons.calendar className="text-muted-foreground" />
           {value ? (
-            format(value, "PP")
+            <span className="truncate">{format(value, 'PP')}</span>
           ) : (
-            <span className="text-muted-foreground">{localization.pickDate}</span>
+            <span className="truncate text-muted-foreground">{localization.pickDate}</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -67,5 +67,5 @@ export function DateFilterField<TData extends RowData, TValue>({
         />
       </PopoverContent>
     </Popover>
-  )
+  );
 }

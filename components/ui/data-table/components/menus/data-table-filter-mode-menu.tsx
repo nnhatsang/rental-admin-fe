@@ -5,6 +5,7 @@ import type { Column, RowData } from "@tanstack/react-table"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -65,7 +66,7 @@ export function DataTableFilterModeMenu<TData extends RowData, TValue>({
               type="button"
               aria-label={localization.changeFilterMode}
               className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 aria-expanded:text-foreground"
+                'flex size-8 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 aria-expanded:text-foreground',
               )}
             >
               <icons.filter className="size-3.5" />
@@ -75,7 +76,11 @@ export function DataTableFilterModeMenu<TData extends RowData, TValue>({
         <TooltipContent>{localization.filterMode}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="start" className="w-52">
-        <DropdownMenuLabel>{localization.filterMode}</DropdownMenuLabel>
+        {/* Base UI's GroupLabel requires a Group ancestor; Radix renders the
+            group as an inert wrapper. */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{localization.filterMode}</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         {renderColumnFilterModeMenuItems ? (
           renderColumnFilterModeMenuItems({
@@ -88,9 +93,7 @@ export function DataTableFilterModeMenu<TData extends RowData, TValue>({
         ) : (
           <DropdownMenuRadioGroup
             value={current}
-            onValueChange={(value) =>
-              setColumnFilterMode(column.id, value as FilterMode)
-            }
+            onValueChange={(value) => setColumnFilterMode(column.id, value as FilterMode)}
           >
             {modes.map((mode) => (
               <DropdownMenuRadioItem key={mode} value={mode}>
@@ -101,5 +104,5 @@ export function DataTableFilterModeMenu<TData extends RowData, TValue>({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

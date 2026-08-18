@@ -48,18 +48,18 @@ export function MultiSelectFilterField<TData extends RowData, TValue>({
         <Button
           variant="outline"
           size="sm"
-          className={cn(FIELD_CLASS, "w-full justify-between px-2 font-normal")}
+          className={cn(FIELD_CLASS, 'w-full justify-between px-2 font-normal')}
           aria-label={localization.filterByColumn(getColumnLabel(column))}
         >
           {selected.length > 0 ? (
-            <span className="flex items-center gap-1">
+            <span className="flex min-w-0 items-center gap-1">
               <Badge variant="secondary" className="rounded-sm px-1">
                 {selected.length}
               </Badge>
-              <span className="truncate">{selected.join(", ")}</span>
+              <span className="truncate">{selected.join(', ')}</span>
             </span>
           ) : (
-            <span className="text-muted-foreground">
+            <span className="truncate text-muted-foreground">
               {localization.filterPlaceholder(getColumnLabel(column))}
             </span>
           )}
@@ -72,7 +72,7 @@ export function MultiSelectFilterField<TData extends RowData, TValue>({
             <CommandEmpty>{localization.noRecordsToDisplay}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
-                const isSelected = selected.includes(option.value)
+                const isSelected = selected.includes(option.value);
                 return (
                   <CommandItem
                     key={option.value}
@@ -82,16 +82,14 @@ export function MultiSelectFilterField<TData extends RowData, TValue>({
                   >
                     <Checkbox checked={isSelected} className="pointer-events-none" />
                     <span className="flex-1 truncate">{option.label}</span>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {counts.get(option.value) ?? 0}
-                    </span>
+                    <span className="text-xs tabular-nums text-muted-foreground">{counts.get(option.value) ?? 0}</span>
                   </CommandItem>
-                )
+                );
               })}
             </CommandGroup>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

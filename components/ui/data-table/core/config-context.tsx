@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 
-import type { DataTableIcons } from "./icons"
-import type { DataTableLocalization } from "./localization"
+import type { DataTableIcons } from './icons';
+import type { DataTableLocalization } from './localization';
 
 /**
  * App-wide defaults for every table below it. `useDataTable` merges these
@@ -13,29 +13,21 @@ import type { DataTableLocalization } from "./localization"
  * passing it to each table.
  */
 export interface DataTableConfigContextValue {
-  icons?: Partial<DataTableIcons>
-  localization?: Partial<DataTableLocalization>
+  icons?: Partial<DataTableIcons>;
+  localization?: Partial<DataTableLocalization>;
 }
 
-const DataTableConfigContext =
-  React.createContext<DataTableConfigContextValue>({})
+const DataTableConfigContext = React.createContext<DataTableConfigContextValue>({});
 
 export function DataTableConfigProvider({
   icons,
   localization,
   children,
 }: DataTableConfigContextValue & { children: React.ReactNode }) {
-  const value = React.useMemo(
-    () => ({ icons, localization }),
-    [icons, localization]
-  )
-  return (
-    <DataTableConfigContext.Provider value={value}>
-      {children}
-    </DataTableConfigContext.Provider>
-  )
+  const value = React.useMemo(() => ({ icons, localization }), [icons, localization]);
+  return <DataTableConfigContext.Provider value={value}>{children}</DataTableConfigContext.Provider>;
 }
 
 export function useDataTableConfigContext(): DataTableConfigContextValue {
-  return React.useContext(DataTableConfigContext)
+  return React.useContext(DataTableConfigContext);
 }

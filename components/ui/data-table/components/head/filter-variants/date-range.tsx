@@ -1,50 +1,40 @@
-"use client"
+'use client';
 
-import type { RowData } from "@tanstack/react-table"
-import { format } from "date-fns"
+import type { RowData } from '@tanstack/react-table';
+import { format } from 'date-fns';
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
-import { getColumnLabel } from "../../../helpers/column-label"
-import {
-  CALENDAR_NAV_PROPS,
-  FIELD_CLASS,
-  type FilterFieldProps,
-} from "./shared"
+import { getColumnLabel } from '../../../helpers/column-label';
+import { CALENDAR_NAV_PROPS, FIELD_CLASS, type FilterFieldProps } from './shared';
 
 export function DateRangeFilterField<TData extends RowData, TValue>({
   column,
   table,
 }: FilterFieldProps<TData, TValue>) {
-  const { localization, icons } = table.cnTable
-  const value = (column.getFilterValue() as [Date?, Date?]) ?? [undefined, undefined]
-  const from = value[0]
-  const to = value[1]
+  const { localization, icons } = table.cnTable;
+  const value = (column.getFilterValue() as [Date?, Date?]) ?? [undefined, undefined];
+  const from = value[0];
+  const to = value[1];
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           size="sm"
-          className={cn(FIELD_CLASS, "w-full justify-start gap-2 px-2 font-normal")}
+          className={cn(FIELD_CLASS, 'w-full justify-start gap-2 px-2 font-normal')}
           aria-label={localization.filterByColumn(getColumnLabel(column))}
         >
           <icons.calendar className="text-muted-foreground" />
           {from || to ? (
-            <span>
-              {from ? format(from, "PP") : "…"} – {to ? format(to, "PP") : "…"}
+            <span className="truncate">
+              {from ? format(from, 'PP') : '…'} – {to ? format(to, 'PP') : '…'}
             </span>
           ) : (
-            <span className="text-muted-foreground">
-              {localization.pickDateRange}
-            </span>
+            <span className="truncate text-muted-foreground">{localization.pickDateRange}</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -52,15 +42,11 @@ export function DateRangeFilterField<TData extends RowData, TValue>({
         <Calendar
           mode="range"
           selected={{ from, to }}
-          onSelect={(range) =>
-            column.setFilterValue(
-              range?.from || range?.to ? [range?.from, range?.to] : undefined
-            )
-          }
+          onSelect={(range) => column.setFilterValue(range?.from || range?.to ? [range?.from, range?.to] : undefined)}
           autoFocus
           {...CALENDAR_NAV_PROPS}
         />
       </PopoverContent>
     </Popover>
-  )
+  );
 }

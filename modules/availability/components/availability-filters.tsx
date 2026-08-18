@@ -44,6 +44,7 @@ export function AvailabilityFilters({
         <DateTimeRangePicker
           value={range}
           className="w-full"
+          updateMode="manual"
           onUpdate={({ range: nextRange }) => {
             form.setValue('startDate', nextRange.from ? toLocalValue(nextRange.from) : '', {
               shouldDirty: true,

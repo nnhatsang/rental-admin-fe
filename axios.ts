@@ -65,6 +65,20 @@ apiAuth.interceptors.request.use((config) => {
   return config;
 });
 let refreshPromise: Promise<void> | null = null;
+let isRedirectingToAuth = false;
+
+const clearAuthAndRedirect = () => {
+  const { clearAuth } = useAuthStore.getState();
+
+  clearAuth();
+
+  if (typeof window === 'undefined' || isRedirectingToAuth) {
+    return;
+  }
+
+  isRedirectingToAuth = true;
+  window.location.href = '/auth';
+};
 
 const refreshSession = () => {
   if (!refreshPromise) {
@@ -90,9 +104,12 @@ apiAuth.interceptors.response.use(
         await refreshSession();
         return apiAuth(originalRequest);
       } catch {
-        const { clearAuth } = useAuthStore.getState();
-        clearAuth();
+        clearAuthAndRedirect();
       }
+    }
+
+    if (error.response?.status === 401 && isRefreshRequest) {
+      clearAuthAndRedirect();
     }
 
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
