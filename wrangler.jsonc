@@ -1,0 +1,22 @@
+{
+    "$schema": "./node_modules/wrangler/config-schema.json",
+    "name": "rental-admin-fe",
+    "main": ".open-next/worker.js",
+    "compatibility_date": "2026-08-18",
+    "compatibility_flags": [
+        "nodejs_compat"
+    ],
+    "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+    },
+    "vars": {
+        "NEXT_PRIVATE_MINIMAL_MODE": "1"
+    },
+    "routes": [
+        {
+            "pattern": "rental.nnhtasang.top",
+            "custom_domain": true
+        }
+    ]
+}

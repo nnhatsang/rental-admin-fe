@@ -3,10 +3,6 @@ import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { toast } from 'sonner';
 import { ESocketEmit, ESocketReason, type IPermissionsUpdatedPayload } from '@/utils/consts/socket.const';
-import { deleteCookie } from 'cookies-next';
-import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from '@/utils/consts/token.const';
-import { useRouter } from 'next/navigation';
-import { PATHNAME } from '@/utils/consts/pathname.const';
 
 // Biến instance chạy độc bản (Singleton) để quản lý kết nối socket toàn cục
 let socketInstance: ReturnType<typeof io> | null = null;
