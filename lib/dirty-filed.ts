@@ -1,6 +1,7 @@
 export type DirtyFieldsType =
   | boolean
   | null
+  | undefined
   | {
       [key: string]: DirtyFieldsType;
     }

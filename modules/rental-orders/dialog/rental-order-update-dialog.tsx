@@ -1,15 +1,5 @@
 ﻿'use client';
 
-import {
-  Timeline,
-  TimelineContent,
-  TimelineDate,
-  TimelineHeader,
-  TimelineIndicator,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineTitle,
-} from '@/components/reui/timeline';
 import { BadgeCustom } from '@/components/shared/badge-custom';
 import { DetailCard, Info } from '@/components/shared/card-custom';
 import { CopyText } from '@/components/shared/copy-text';
@@ -41,6 +31,8 @@ import {
   IconArrowBackUp,
   IconCalendarTime,
   IconCash,
+  IconCreditCard,
+  IconEdit,
   IconHistory,
   IconLoader,
   IconNotes,
@@ -52,17 +44,19 @@ import { useState, type ReactNode } from 'react';
 import { Controller } from 'react-hook-form';
 import {
   orderStatusConfig,
-  paymentKindConfig,
   paymentStatusConfig,
   pickupMethodConfig,
+  refundStatusConfig,
   rentalOrderEditableLineFilterConfig,
   rentalOrderEditableLineFilterOptions,
-  rentalOrderEditableLineStateConfig,
+  rentalOrderEditableLineStateConfig
 } from '../display-config';
 import { useRentalOrderUpdateLogic } from '../hooks/use-rental-order-update-logic';
+import { useRentalOrders } from '../rental-orders-provider';
 import type { IRentalOrderOut, PickupMethod } from '../type';
 import { formatRentalDuration } from '../utils';
 import { RentalOrderAssetSelectionTable } from './rental-order-asset-selection-table';
+import { OrderLogsTimeline, PaymentsList, StatusTimeline } from './rental-order-detail-dialog';
 
 type RentalOrderUpdateDialogProps = {
   orderId?: string;
@@ -74,53 +68,7 @@ function EmptyBox({ children }: { children: ReactNode }) {
   return <p className="rounded-md border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">{children}</p>;
 }
 
-function PaymentsHistory({ order }: { order: IRentalOrderOut }) {
-  if (!order.payments.length) return <EmptyBox>Chưa ghi nhận thanh toán.</EmptyBox>;
 
-  return (
-    <Timeline defaultValue={order.payments.length - 1}>
-      {order.payments.map((payment, index) => (
-        <TimelineItem key={payment.id} step={index}>
-          <TimelineHeader>
-            <TimelineDate>{formatDate(payment.createdAt)}</TimelineDate>
-            <TimelineTitle>{paymentKindConfig[payment.kind]?.label ?? payment.kind}</TimelineTitle>
-          </TimelineHeader>
-          <TimelineIndicator />
-          <TimelineSeparator />
-          <TimelineContent>
-            <div className="space-y-1">
-              <div className="font-medium text-foreground">{formatCurrency(payment.amount)}</div>
-              {payment.referenceCode ? (
-                <div className="text-xs text-muted-foreground">Mã tham chiếu: {payment.referenceCode}</div>
-              ) : null}
-              {payment.note ? <div>{payment.note}</div> : null}
-            </div>
-          </TimelineContent>
-        </TimelineItem>
-      ))}
-    </Timeline>
-  );
-}
-
-function StatusHistory({ order }: { order: IRentalOrderOut }) {
-  if (!order.statusHistories.length) return <EmptyBox>Chưa có lịch sử trạng thái.</EmptyBox>;
-
-  return (
-    <Timeline defaultValue={order.statusHistories.length - 1}>
-      {order.statusHistories.map((history, index) => (
-        <TimelineItem key={history.id} step={index}>
-          <TimelineHeader>
-            <TimelineDate>{formatDate(history.createdAt)}</TimelineDate>
-            <TimelineTitle>{orderStatusConfig[history.toStatus]?.label ?? history.toStatus}</TimelineTitle>
-          </TimelineHeader>
-          <TimelineIndicator />
-          <TimelineSeparator />
-          <TimelineContent>{history.note || '-'}</TimelineContent>
-        </TimelineItem>
-      ))}
-    </Timeline>
-  );
-}
 
 function DetailSkeleton() {
   return (
@@ -157,6 +105,7 @@ export function RentalOrderUpdateDialog({ orderId, open, onOpenChange }: RentalO
     currentDepositTotal,
     currentEstimatedRefund,
     currentForfeitedBookingHoldTotal,
+    currentHandoverRequiredTotal,
     currentNetRental,
     currentPaidCreditTotal,
     currentRentalTotal,
@@ -188,6 +137,7 @@ export function RentalOrderUpdateDialog({ orderId, open, onOpenChange }: RentalO
     open,
     onClose: () => onOpenChange(false),
   });
+  const { setOpen } = useRentalOrders();
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
@@ -646,17 +596,50 @@ export function RentalOrderUpdateDialog({ orderId, open, onOpenChange }: RentalO
                           </div>
                         </TabsContent>
 
-                        <TabsContent value="history" className="mt-0 space-y-5">
-                          <PaymentsHistory order={order} />
+                        <TabsContent value="history" className="mt-0">
+                          <div className="grid gap-4 xl:grid-cols-2">
+                            <DetailCard
+                              icon={<IconHistory className="size-4 text-primary" />}
+                              title="Lịch sử trạng thái"
+                            >
+                              <StatusTimeline order={order} />
+                            </DetailCard>
 
-                          <StatusHistory order={order} />
+                            <DetailCard
+                              icon={<IconCreditCard className="size-4 text-primary" />}
+                              title="Lịch sử thanh toán"
+                              action={
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="shrink-0"
+                                  // disabled={!canRecordPayment}
+                                  onClick={() => setOpen('payment')}
+                                >
+                                  <IconCreditCard className="mr-1.5 size-4" />
+                                  Ghi nhận thanh toán
+                                </Button>
+                              }
+                            >
+                              <PaymentsList order={order} />
+                            </DetailCard>
+                            <div className="xl:col-end-2">
+                              <DetailCard icon={<IconEdit className="size-4 text-primary" />} title="Nhật ký thay đổi">
+                                <OrderLogsTimeline order={order} />
+                              </DetailCard>
+                            </div>
+                          </div>
                         </TabsContent>
                       </CardContent>
                     </Card>
                   </Tabs>
 
                   <aside className="min-w-0 space-y-5 lg:sticky lg:top-5 lg:self-start">
-                    <DetailCard icon={<IconCash className="size-4" />} title="Tóm tắt sau cập nhật">
+                    <DetailCard
+                      icon={<IconCash className="size-4" />}
+                      title="Tóm tắt sau cập nhật"
+                      className="uppercase"
+                    >
                       <div className="space-y-3">
                         <Info
                           line
@@ -669,7 +652,7 @@ export function RentalOrderUpdateDialog({ orderId, open, onOpenChange }: RentalO
                         />
                         <Info line label="Số thiết bị" value={`${activeLines.length} máy`} />
                         <Info line label="Tiền thuê hiện tại" value={formatCurrency(order.rentalFeeTotal)} />
-                        <Info line label="Tiền cọc hiện tại" value={formatCurrency(order.depositTotal)} />
+                        <Info line label="Cọc theo thiết bị hiện tại" value={formatCurrency(order.depositTotal)} />
                         <Separator />
                         <Info line label="Tạm tính tiền thuê" value={formatCurrency(currentRentalTotal)} />
                         <Info line label="Phí giao" value={formatCurrency(currentDeliveryFeeTotal)} />
@@ -688,11 +671,16 @@ export function RentalOrderUpdateDialog({ orderId, open, onOpenChange }: RentalO
 
                         <Info
                           line
-                          label="Tiền cọc áp dụng"
+                          label="Tiền cọc cần thu"
                           value={formatCurrency(currentDepositTotal)}
                           tone="warning"
                         />
-                        <Info line label="Phí giữ lịch còn cấn trừ" value={formatCurrency(currentBookingHoldTotal)} />
+                        <Info
+                          line
+                          label="Tổng yêu cầu khi giao"
+                          value={formatCurrency(currentHandoverRequiredTotal)}
+                          tone="warning"
+                        />
                         {currentForfeitedBookingHoldTotal > 0 ? (
                           <Info
                             line
@@ -760,6 +748,7 @@ function OrderHeader({ order }: { order: IRentalOrderOut }) {
         </CopyText>
         <BadgeCustom status={order.status} config={orderStatusConfig} />
         <BadgeCustom status={order.paymentStatus} config={paymentStatusConfig} />
+        <BadgeCustom status={order.refundStatus} config={refundStatusConfig} />
       </DialogTitle>
       <DialogDescription className="mt-1 flex flex-wrap items-center gap-1 font-medium">
         {periodLabel} -{' '}

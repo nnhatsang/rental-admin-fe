@@ -28,6 +28,38 @@ const rentalOrdersUrl = '/rental-orders';
 const availabilityUrl = '/availability';
 const customersUrl = '/customers';
 
+const calculateSettlementFinancials = (
+  financials: Pick<
+    IRentalOrderOut['financials'],
+    | 'rentalFeeTotal'
+    | 'deliveryFeeTotal'
+    | 'discountTotal'
+    | 'lateFeeTotal'
+    | 'damageFeeTotal'
+    | 'compensationFeeTotal'
+    | 'paidTotal'
+    | 'actualRefundTotal'
+  >,
+) => {
+  const rentalRevenueTotal = Math.max(financials.rentalFeeTotal + financials.deliveryFeeTotal - financials.discountTotal, 0);
+  const incidentFeeTotal = Math.max(financials.lateFeeTotal + financials.damageFeeTotal + financials.compensationFeeTotal, 0);
+  const finalPayableTotal = Math.max(rentalRevenueTotal + incidentFeeTotal, 0);
+  const refundDue = Math.max(financials.paidTotal - finalPayableTotal - financials.actualRefundTotal, 0);
+  const additionalChargeDue = Math.max(finalPayableTotal + financials.actualRefundTotal - financials.paidTotal, 0);
+
+  return {
+    rentalRevenueTotal,
+    incidentFeeTotal,
+    finalPayableTotal,
+    refundDue,
+    additionalChargeDue,
+    settlementStatus: additionalChargeDue > 0 ? 'NEED_COLLECT' : refundDue > 0 ? 'NEED_REFUND' : 'SETTLED',
+  } satisfies Pick<
+    IRentalOrderOut['financials'],
+    'rentalRevenueTotal' | 'incidentFeeTotal' | 'finalPayableTotal' | 'refundDue' | 'additionalChargeDue' | 'settlementStatus'
+  >;
+};
+
 const normalizeRentalOrderDetail = (order: IRentalOrderOut): IRentalOrderOut => {
   const rentalPeriod = order.rentalPeriod ?? {
     startDate: order.startDate,
@@ -58,6 +90,16 @@ const normalizeRentalOrderDetail = (order: IRentalOrderOut): IRentalOrderOut => 
     handoverRequiredTotal: order.handoverRequiredTotal ?? 0,
     handoverAmountDue: order.handoverAmountDue ?? 0,
   };
+  const settlementFinancials = calculateSettlementFinancials(financials);
+  const normalizedFinancials = {
+    ...financials,
+    rentalRevenueTotal: financials.rentalRevenueTotal ?? settlementFinancials.rentalRevenueTotal,
+    incidentFeeTotal: financials.incidentFeeTotal ?? settlementFinancials.incidentFeeTotal,
+    finalPayableTotal: financials.finalPayableTotal ?? settlementFinancials.finalPayableTotal,
+    refundDue: financials.refundDue ?? settlementFinancials.refundDue,
+    additionalChargeDue: financials.additionalChargeDue ?? settlementFinancials.additionalChargeDue,
+    settlementStatus: financials.settlementStatus ?? settlementFinancials.settlementStatus,
+  };
   const notes = order.notes ?? {
     customerNote: order.note,
     internalNote: order.internalNote,
@@ -68,7 +110,7 @@ const normalizeRentalOrderDetail = (order: IRentalOrderOut): IRentalOrderOut => 
     ...order,
     rentalPeriod,
     fulfillment,
-    financials,
+    financials: normalizedFinancials,
     notes,
     startDate: rentalPeriod.startDate,
     endDate: rentalPeriod.endDate,
@@ -76,21 +118,27 @@ const normalizeRentalOrderDetail = (order: IRentalOrderOut): IRentalOrderOut => 
     actualReturnDate: rentalPeriod.actualReturnDate ?? null,
     pickupMethod: fulfillment.pickupMethod,
     deliveryAddress: fulfillment.deliveryAddress,
-    deliveryFeeTotal: financials.deliveryFeeTotal,
-    rentalFeeTotal: financials.rentalFeeTotal,
-    depositTotal: financials.depositTotal,
-    bookingHoldTotal: financials.bookingHoldTotal,
-    lateFeeTotal: financials.lateFeeTotal,
-    damageFeeTotal: financials.damageFeeTotal,
-    discountTotal: financials.discountTotal,
-    compensationFeeTotal: financials.compensationFeeTotal,
-    chargeTotal: financials.chargeTotal,
-    paidTotal: financials.paidTotal,
-    estimatedRefundTotal: financials.estimatedRefundTotal,
-    actualRefundTotal: financials.actualRefundTotal,
-    adjustedDepositTotal: financials.adjustedDepositTotal,
-    handoverRequiredTotal: financials.handoverRequiredTotal,
-    handoverAmountDue: financials.handoverAmountDue,
+    deliveryFeeTotal: normalizedFinancials.deliveryFeeTotal,
+    rentalFeeTotal: normalizedFinancials.rentalFeeTotal,
+    depositTotal: normalizedFinancials.depositTotal,
+    bookingHoldTotal: normalizedFinancials.bookingHoldTotal,
+    lateFeeTotal: normalizedFinancials.lateFeeTotal,
+    damageFeeTotal: normalizedFinancials.damageFeeTotal,
+    discountTotal: normalizedFinancials.discountTotal,
+    compensationFeeTotal: normalizedFinancials.compensationFeeTotal,
+    chargeTotal: normalizedFinancials.chargeTotal,
+    paidTotal: normalizedFinancials.paidTotal,
+    estimatedRefundTotal: normalizedFinancials.estimatedRefundTotal,
+    actualRefundTotal: normalizedFinancials.actualRefundTotal,
+    adjustedDepositTotal: normalizedFinancials.adjustedDepositTotal,
+    handoverRequiredTotal: normalizedFinancials.handoverRequiredTotal,
+    handoverAmountDue: normalizedFinancials.handoverAmountDue,
+    rentalRevenueTotal: normalizedFinancials.rentalRevenueTotal,
+    incidentFeeTotal: normalizedFinancials.incidentFeeTotal,
+    finalPayableTotal: normalizedFinancials.finalPayableTotal,
+    refundDue: normalizedFinancials.refundDue,
+    additionalChargeDue: normalizedFinancials.additionalChargeDue,
+    settlementStatus: normalizedFinancials.settlementStatus,
     note: notes.customerNote,
     internalNote: notes.internalNote,
     cancelReason: notes.cancelReason,

@@ -15,7 +15,7 @@ function asText(value: ReactNode) {
 export function DetailCard({ title, icon, action, children, className }: DetailCardProps) {
   return (
     <Card className={cn('gap-0 p-0', className)}>
-      <CardHeader className="pb-0! px-4 py-2! border-b bg-muted/50">
+      <CardHeader className="pb-0! px-4 py-2! border-b">
         <div className={cn("flex items-center flex-wrap justify-between gap-3 w-full")}>
           <CardTitle className="flex min-w-0 items-center gap-2 text-sm">
             {icon && (

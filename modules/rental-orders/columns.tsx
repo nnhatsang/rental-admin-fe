@@ -1,6 +1,8 @@
-'use client';
+﻿'use client';
 
+import { BadgeCustom } from '@/components/shared/badge-custom';
 import { ProtectedAction } from '@/components/shared/protected-action';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import {
   IconArrowBack,
@@ -22,26 +24,36 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
-import { orderStatusConfig, orderStatusOptions, paymentStatusConfig, paymentStatusOptions } from './display-config';
+import {
+  orderStatusConfig,
+  orderStatusOptions,
+  paymentStatusConfig,
+  paymentStatusOptions,
+  refundStatusConfig,
+  refundStatusOptions,
+  rentalOrderScheduleBadgeConfig,
+} from './display-config';
 import { useRentalOrders } from './rental-orders-provider';
 import type { IRentalOrderListItemOut } from './type';
 import {
+  calculateAmountDueAtHandover,
+  calculateOrderOutstandingAmount,
+  calculateRefundDue,
+  calculateRentalOrderSettlementFinancials,
   canUseRecordPaymentAction,
   canUseRefundAction,
   canUseRentalOrderAction,
   formatRentalDuration,
+  getRentalOrderScheduleBadges,
   shouldShowRecordPaymentAction,
   shouldShowRefundAction,
   shouldShowRentalOrderAction,
 } from './utils';
-import { BadgeCustom } from '@/components/shared/badge-custom';
-
-
 
 function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) {
   const { setOpen, setCurrentRow } = useRentalOrders();
   const order = row.original;
-  const canEdit = canUseRentalOrderAction(order.status, 'updateCustomerSnapshot');
+  const canEdit = order.status === 'CREATED' || order.status === 'CONFIRMED';
   const canRecordPayment = canUseRecordPaymentAction(order);
   const canHandover = canUseRentalOrderAction(order.status, 'handover');
   const canComplete = canUseRentalOrderAction(order.status, 'complete');
@@ -68,19 +80,21 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             Xem chi tiết
           </DropdownMenuItem>
         </ProtectedAction>
-        <ProtectedAction permission={PermissionCode.OrdersUpdate}>
-          <DropdownMenuItem
-            disabled={!canEdit}
-            onClick={() => {
-              if (!canEdit) return;
-              setCurrentRow(order);
-              setOpen('edit');
-            }}
-          >
-            <IconEdit className="mr-2 size-4" />
-            Cập nhật đơn thuê
-          </DropdownMenuItem>
-        </ProtectedAction>
+
+        {canEdit ? (
+          <ProtectedAction permission={PermissionCode.OrdersUpdate}>
+            <DropdownMenuItem
+              onClick={() => {
+                setCurrentRow(order);
+                setOpen('edit');
+              }}
+            >
+              <IconEdit className="mr-2 size-4" />
+              Cập nhật đơn thuê
+            </DropdownMenuItem>
+          </ProtectedAction>
+        ) : null}
+
         {shouldShowRecordPaymentAction(order) ? (
           <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
             <DropdownMenuItem
@@ -96,6 +110,7 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
+
         {shouldShowRentalOrderAction(order.status, 'handover') ? (
           <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
             <DropdownMenuItem
@@ -111,6 +126,7 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
+
         {shouldShowRentalOrderAction(order.status, 'complete') ? (
           <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
             <DropdownMenuItem
@@ -126,6 +142,7 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
+
         {shouldShowRefundAction(order) ? (
           <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
             <DropdownMenuItem
@@ -141,6 +158,7 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
+
         {shouldShowRentalOrderAction(order.status, 'cancel') ? (
           <ProtectedAction permission={PermissionCode.OrdersCancel}>
             <DropdownMenuItem
@@ -156,6 +174,7 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
+
         {shouldShowRentalOrderAction(order.status, 'delete') ? (
           <ProtectedAction permission={PermissionCode.OrdersCancel}>
             <DropdownMenuItem
@@ -181,49 +200,65 @@ export const columns: ColumnDef<IRentalOrderListItemOut>[] = [
   {
     accessorKey: 'code',
     header: 'Mã đơn',
-    cell: ({ row }) => (
-      <div className="min-w-0">
-        <div className="font-medium">{row.original.code}</div>
-        <div className="text-xs text-muted-foreground">{row.original.source}</div>
-      </div>
-    ),
-    enableSorting: false,
+    cell: ({ row }) => {
+      const order = row.original;
+
+      return (
+        <div className="min-w-[150px]">
+          <div className="font-medium whitespace-nowrap">{order.code}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</div>
+          <div className={cn('text-xs font-bold', order.source === 'ADMIN' ? 'text-primary' : 'text-second')}>
+            {order.source}
+          </div>
+        </div>
+      );
+    },
     enableColumnFilter: false,
   },
-
   {
     id: 'customer',
     header: 'Khách hàng',
     cell: ({ row }) => (
       <div>
         <div className="text-sm font-medium">{row.original.customerSnapshot.name ?? '-'}</div>
-
         <div className="text-xs text-muted-foreground">{row.original.customerSnapshot.phone ?? '-'}</div>
       </div>
     ),
-
     enableSorting: false,
   },
-
   {
     id: 'rentalPeriod',
-    header: 'Thời gian thuê',
-    cell: ({ row }) => (
-      <div className="flex flex-col gap-0.5">
-        <div className="whitespace-nowrap text-sm">
-          {formatDate(row.original.startDate)} → {formatDate(row.original.endDate)}
-        </div>
+    header: 'Lịch thuê',
+    cell: ({ row }) => {
+      const order = row.original;
+      const scheduleBadges = getRentalOrderScheduleBadges(order);
 
-        <div className="whitespace-nowrap text-xs text-muted-foreground">
-          {formatRentalDuration({
-            from: new Date(row.original.startDate),
-            to: new Date(row.original.endDate),
-          })}
+      return (
+        <div className="flex flex-col gap-1">
+          <div className="whitespace-nowrap text-sm">
+            {formatDate(order.startDate)} → {formatDate(order.endDate)}
+          </div>
+          <div className="flex max-w-[220px] flex-wrap items-center gap-1">
+            <Badge variant="outline" className="w-fit border-muted-foreground/20 bg-muted text-[11px] text-muted-foreground">
+              {formatRentalDuration({
+                from: new Date(order.startDate),
+                to: new Date(order.endDate),
+              })}
+            </Badge>
+            {scheduleBadges.map((badge) => {
+              const config = rentalOrderScheduleBadgeConfig[badge];
+
+              return (
+                <Badge key={badge} variant="outline" className={cn('w-fit text-[11px]', config.className)}>
+                  {config.label}
+                </Badge>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
-
   {
     accessorKey: 'status',
     header: 'Trạng thái',
@@ -234,42 +269,209 @@ export const columns: ColumnDef<IRentalOrderListItemOut>[] = [
       options: orderStatusOptions,
     },
   },
-
   {
     accessorKey: 'paymentStatus',
     header: 'Thanh toán',
-    cell: ({ row }) => <BadgeCustom status={row.original.paymentStatus} config={paymentStatusConfig} />,
+    cell: ({ row }) => {
+      const order = row.original;
+      const handoverDue = calculateAmountDueAtHandover(order);
+      const settlement = calculateRentalOrderSettlementFinancials(order);
+      const helperText =
+        order.status === 'DONE'
+          ? settlement.additionalChargeDue > 0
+            ? `Cần thu thêm ${formatCurrency(settlement.additionalChargeDue)}`
+            : settlement.refundDue > 0
+              ? `Cần hoàn ${formatCurrency(settlement.refundDue)}`
+              : 'Đã quyết toán'
+          : handoverDue > 0
+            ? `Còn khi giao ${formatCurrency(handoverDue)}`
+            : 'Đã đủ yêu cầu';
+
+      return (
+        <div className="min-w-[145px] space-y-1">
+          <BadgeCustom status={order.paymentStatus} config={paymentStatusConfig} />
+          <div className="whitespace-nowrap text-xs text-muted-foreground">{helperText}</div>
+        </div>
+      );
+    },
     meta: {
       label: 'Thanh toán',
       variant: 'select',
       options: paymentStatusOptions,
     },
   },
-
   {
-    id: 'amounts',
-    header: 'Chi phí',
+    accessorKey: 'rentalFeeTotal',
+    header: 'Doanh thu thuê',
     cell: ({ row }) => {
+      const order = row.original;
+      const settlement = calculateRentalOrderSettlementFinancials(order);
+      const rentalFee = order.rentalFeeTotal ?? 0;
+      const deliveryFee = order.deliveryFeeTotal ?? 0;
+      const discount = order.discountTotal ?? 0;
+
       return (
-        <div className="flex flex-col gap-0.5 whitespace-nowrap">
-          <div className="">Tiền cọc: {formatCurrency(row.original.depositTotal)}</div>
-          <div className="">Tiền thuê: {formatCurrency(row.original.rentalFeeTotal)}</div>
+        <div className="min-w-[165px]">
+          <div className="whitespace-nowrap text-sm font-medium">{formatCurrency(settlement.rentalRevenueTotal)}</div>
+          <div className="whitespace-nowrap text-xs text-muted-foreground">
+            Thuê {formatCurrency(rentalFee)}
+            {deliveryFee > 0 ? <> · Giao {formatCurrency(deliveryFee)}</> : null}
+            {discount > 0 ? <> · Giảm {formatCurrency(discount)}</> : null}
+          </div>
         </div>
       );
     },
+    // enableSorting: false,
+    enableColumnFilter: false,
   },
   {
-    id: 'rentalFeeTotal',
+    accessorKey: 'paidTotal',
     header: 'Đã thu',
     cell: ({ row }) => {
+      const order = row.original;
+      const paidTotal = order.paidTotal ?? 0;
+      const bookingHoldTotal = order.bookingHoldTotal ?? 0;
+
       return (
-        <div className="whitespace-nowrap">
-          <div className="font-medium">{formatCurrency(row.original.paidTotal)}</div>
+        <div className="min-w-[120px] whitespace-nowrap">
+          <div className="text-sm font-medium">{formatCurrency(paidTotal)}</div>
+          <div className="text-xs text-muted-foreground">
+            {bookingHoldTotal > 0 ? `Giữ lịch ${formatCurrency(bookingHoldTotal)}` : 'Chưa có giữ lịch'}
+          </div>
         </div>
       );
     },
+    enableSorting: false,
+    enableColumnFilter: false,
   },
+  {
+    accessorKey: 'handoverRequiredTotal',
+    header: 'Yêu cầu khi giao',
+    cell: ({ row }) => {
+      const order = row.original;
+      const handoverRequiredTotal = order.handoverRequiredTotal ?? 0;
+      const estimatedRefundTotal = order.estimatedRefundTotal ?? 0;
 
+      return (
+        <div className="min-w-[150px]">
+          <div className="whitespace-nowrap text-sm font-medium">{formatCurrency(handoverRequiredTotal)}</div>
+          <div className="whitespace-nowrap text-xs text-muted-foreground">
+            Hoàn dự kiến {formatCurrency(estimatedRefundTotal)}
+          </div>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableColumnFilter: false,
+  },
+  {
+    id: 'amountDue',
+    header: 'Quyết toán',
+    cell: ({ row }) => {
+      const order = row.original;
+      const amount = calculateOrderOutstandingAmount(order);
+      const handoverDue = calculateAmountDueAtHandover(order);
+      const settlement = calculateRentalOrderSettlementFinancials(order);
+      const helperText =
+        order.status === 'DONE'
+          ? settlement.additionalChargeDue > 0
+            ? 'Cần thu thêm'
+            : settlement.refundDue > 0
+              ? 'Cần hoàn'
+              : 'Đã quyết toán'
+          : order.status === 'CREATED'
+            ? 'Giữ lịch'
+            : handoverDue > 0
+              ? `Khi giao ${formatCurrency(handoverDue)}`
+              : 'Đã đủ';
+
+      return (
+        <div className="min-w-[145px]">
+          <div
+            className={cn(
+              'whitespace-nowrap text-sm font-medium',
+              amount > 0 && 'text-destructive',
+              order.status === 'DONE' && settlement.refundDue > 0 && 'text-primary',
+            )}
+          >
+            {formatCurrency(amount > 0 ? amount : settlement.refundDue)}
+          </div>
+          <div className="whitespace-nowrap text-xs text-muted-foreground">{helperText}</div>
+        </div>
+      );
+    },
+    enableColumnFilter: false,
+    enableSorting: false,
+  },
+  {
+    accessorKey: 'refundStatus',
+    header: 'Hoàn cọc',
+    cell: ({ row }) => {
+      const order = row.original;
+      const refundDue = calculateRefundDue(order);
+      const refundedAmount = order.actualRefundTotal ?? 0;
+      const amountLabel = refundDue > 0 ? 'Cần hoàn' : refundedAmount > 0 ? 'Đã hoàn' : 'Không phát sinh';
+      const amountValue = refundDue > 0 ? refundDue : refundedAmount;
+
+      return (
+        <div className="min-w-[145px] space-y-1">
+          <BadgeCustom status={order.refundStatus} config={refundStatusConfig} />
+          <div className="space-y-0.5">
+            <div className="whitespace-nowrap text-xs text-muted-foreground">{amountLabel}</div>
+            <div
+              className={cn(
+                'whitespace-nowrap text-sm font-medium',
+                refundDue > 0 ? 'text-primary' : 'text-muted-foreground',
+              )}
+            >
+              {amountValue > 0 ? formatCurrency(amountValue) : '—'}
+            </div>
+          </div>
+        </div>
+      );
+    },
+    meta: {
+      label: 'Hoàn cọc',
+      variant: 'select',
+      options: refundStatusOptions,
+    },
+  },
+  {
+    id: 'extraFees',
+    header: 'Phí phát sinh',
+    cell: ({ row }) => {
+      const lateFee = row.original.lateFeeTotal ?? 0;
+      const damageFee = row.original.damageFeeTotal ?? 0;
+      const compensationFee = row.original.compensationFeeTotal ?? 0;
+      const amount = calculateRentalOrderSettlementFinancials(row.original).incidentFeeTotal;
+
+      return (
+        <div className="min-w-[135px] whitespace-nowrap">
+          {amount > 0 ? (
+            <div>
+              <div className="font-medium">+{formatCurrency(amount)}</div>
+              <div className="text-xs text-muted-foreground">
+                {lateFee > 0 ? <>Trễ {formatCurrency(lateFee)}</> : null}
+                {damageFee > 0 ? (
+                  <>
+                    {lateFee > 0 ? ' · ' : ''}Hư hỏng {formatCurrency(damageFee)}
+                  </>
+                ) : null}
+                {compensationFee > 0 ? (
+                  <>
+                    {lateFee + damageFee > 0 ? ' · ' : ''}Bồi thường {formatCurrency(compensationFee)}
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+      );
+    },
+    enableSorting: false,
+  },
   {
     id: 'actions',
     cell: RentalOrderActionsCell,

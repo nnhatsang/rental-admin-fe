@@ -1,6 +1,5 @@
-import {
+﻿import {
   IconAlertCircle,
-  IconAlertTriangle,
   IconArrowBack,
   IconBan,
   IconBuildingStore,
@@ -11,6 +10,7 @@ import {
   IconCircleX,
   IconClock,
   IconCreditCard,
+  IconMinus,
   IconPackage,
   IconPackageImport,
   IconTruckDelivery,
@@ -25,9 +25,11 @@ import type {
   PaymentRecordStatus,
   PaymentStatus,
   PickupMethod,
+  RefundStatus,
   RentalOrderEditableLineFilter,
   RentalOrderEditableLineState,
   RentalOrderItemStatus,
+  RentalOrderScheduleBadge,
 } from './type';
 
 type PickupMethodDisplayConfig = DisplayConfig & {
@@ -53,12 +55,6 @@ export const orderStatusConfig = {
     label: 'Đang thuê',
     icon: IconCamera,
     className: 'border-transparent bg-primary/10 text-primary hover:bg-primary/15',
-  },
-
-  OVERDUE: {
-    label: 'Quá hạn',
-    icon: IconAlertTriangle,
-    className: 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/15',
   },
 
   RETURNED: {
@@ -212,13 +208,13 @@ export const collateralTypeConfig = {
     label: 'Không thế chấp',
   },
   IDENTITY_CARD: {
-    label: 'Giữ CCCD/CMND',
+    label: 'Căn cước/CCCD',
   },
   VEHICLE_OR_HIGH_VALUE: {
     label: 'Tài sản giá trị cao',
   },
   OTHER_ASSET: {
-    label: 'Tài sản khác',
+    label: 'Tài sản giá trị cao',
   },
 } satisfies Record<CollateralType, DisplayConfig>;
 
@@ -252,10 +248,69 @@ export const rentalOrderEditableLineFilterConfig = {
   CHANGED: rentalOrderEditableLineStateConfig.CHANGED,
 } satisfies Record<RentalOrderEditableLineFilter, DisplayConfig>;
 
+export const rentalOrderScheduleBadgeConfig = {
+  PICKUP_UPCOMING: {
+    label: 'Sắp giao',
+    className: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  },
+  PICKUP_DUE_SOON: {
+    label: 'Gần đến giờ giao',
+    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  },
+  PICKUP_OVERDUE: {
+    label: 'Quá giờ giao máy',
+    className: 'border-destructive/30 bg-destructive/10 text-destructive',
+  },
+  RETURN_DUE_SOON: {
+    label: 'Sắp tới giờ trả máy',
+    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  },
+  RETURN_LATE: {
+    label: 'Trả trễ',
+    className: 'border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300',
+  },
+  RETURN_LATE_OVER_GRACE: {
+    label: 'Trễ quá ngưỡng',
+    className: 'border-destructive/30 bg-destructive/10 text-destructive',
+  },
+} satisfies Record<RentalOrderScheduleBadge, DisplayConfig>;
+
+export const refundStatusConfig = {
+  NOT_REQUIRED: {
+    label: 'Không cần hoàn',
+    icon: IconMinus,
+    className: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80',
+  },
+
+  PARTIALLY_REFUNDED: {
+    label: 'Hoàn một phần',
+    icon: IconArrowBack,
+    className: 'border-amber-500/20 bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400',
+  },
+
+  REFUNDED: {
+    label: 'Đã hoàn tiền',
+    icon: IconCircleCheck,
+    className: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400',
+  },
+
+  FAILED: {
+    label: 'Hoàn tiền thất bại',
+    icon: IconCircleX,
+    className: 'border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15',
+  },
+} satisfies Record<RefundStatus, DisplayConfig>;
+
+export const refundStatusOptions = toOptions(refundStatusConfig);
+
 export const orderStatusOptions = toOptions(orderStatusConfig);
 export const paymentStatusOptions = toOptions(paymentStatusConfig);
 export const pickupMethodOptions = toOptions(pickupMethodConfig);
 export const paymentKindOptions = toOptions(paymentKindConfig);
 export const paymentMethodOptions = toOptions(paymentMethodConfig);
-export const collateralTypeOptions = toOptions(collateralTypeConfig);
+export const collateralTypeOptions = [
+  { value: 'NONE', ...collateralTypeConfig.NONE },
+  { value: 'IDENTITY_CARD', ...collateralTypeConfig.IDENTITY_CARD },
+  { value: 'VEHICLE_OR_HIGH_VALUE', ...collateralTypeConfig.VEHICLE_OR_HIGH_VALUE },
+] satisfies Array<DisplayConfig & { value: CollateralType }>;
 export const rentalOrderEditableLineFilterOptions = toOptions(rentalOrderEditableLineFilterConfig);

@@ -1,14 +1,16 @@
-'use client';
+﻿'use client';
 
+import { BadgeCustom } from '@/components/shared/badge-custom';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { CopyText } from '@/components/shared/copy-text';
 import { Info } from '@/components/shared/card-custom';
+import { Badge } from '@/components/ui/badge';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { RentalOrderCompleteDialog } from './dialog/rental-order-complete-dialog';
@@ -18,13 +20,43 @@ import { RentalOrderHandoverDialog } from './dialog/rental-order-handover-dialog
 import { RentalOrderPaymentDialog } from './dialog/rental-order-payment-dialog';
 import { RentalOrderRefundDialog } from './dialog/rental-order-refund-dialog';
 import { RentalOrderUpdateDialog } from './dialog/rental-order-update-dialog';
+import { orderStatusConfig, paymentStatusConfig, refundStatusConfig } from './display-config';
 import { useCancelRentalOrder } from './hooks/use-cancel-rental-order';
 import { useDeleteRentalOrders } from './hooks/use-delete-rental-orders';
 import { useRentalOrders } from './rental-orders-provider';
 import { rentalOrderCancelFormSchema, type RentalOrderCancelFormValues } from './schema';
 import type { IRentalOrderListItemOut } from './type';
+import { formatRentalDuration } from './utils';
 
 type CancelPaymentHandling = 'KEEP_PAID_AMOUNT_AS_PENALTY' | 'REFUND_BOOKING_HOLD';
+
+function RentalOrderConfirmSummary({ order }: { order: IRentalOrderListItemOut }) {
+  const durationLabel = formatRentalDuration({ from: new Date(order.startDate), to: new Date(order.endDate) });
+  const periodLabel =
+    [formatDate(order.startDate, 'shortDateTime'), formatDate(order.endDate, 'shortDateTime')]
+      .filter(Boolean)
+      .join(' - ') || '-';
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span>Đơn thuê</span>
+        <CopyText text={order.code} className="font-semibold text-primary">
+          #{order.code}
+        </CopyText>
+        <BadgeCustom status={order.status} config={orderStatusConfig} />
+        <BadgeCustom status={order.paymentStatus} config={paymentStatusConfig} />
+        <BadgeCustom status={order.refundStatus} config={refundStatusConfig} />
+      </div>
+      <div className="flex flex-wrap items-center gap-1 font-medium">
+        {periodLabel}
+        <Badge variant="outline" className="shrink-0">
+          {durationLabel}
+        </Badge>
+      </div>
+    </div>
+  );
+}
 
 function RentalOrderCancelConfirmDialog({
   order,
@@ -83,13 +115,10 @@ function RentalOrderCancelConfirmDialog({
       onOpenChange={handleOpenChange}
       title="Hủy đơn thuê"
       desc={
-        <>
-          Đơn thuê{' '}
-          <CopyText text={order.code} className="font-semibold text-primary">
-            # {order.code}
-          </CopyText>{' '}
-          sẽ được huỷ.
-        </>
+        <div className="space-y-2">
+          <RentalOrderConfirmSummary order={order} />
+          <p>Đơn sẽ được huỷ và lịch thiết bị sẽ được giải phóng.</p>
+        </div>
       }
       cancelBtnText="Đóng"
       confirmText="Xác nhận hủy"
@@ -225,13 +254,10 @@ function RentalOrderDeleteConfirmDialog({
       onOpenChange={onOpenChange}
       title="Xóa đơn thuê"
       desc={
-        <>
-          Xóa mềm đơn{' '}
-          <CopyText text={order.code} className="font-semibold text-primary">
-            # {order.code}
-          </CopyText>
-          . Thao tác này chỉ áp dụng cho đơn mới tạo hoặc đã hủy.
-        </>
+        <div className="space-y-2">
+          <RentalOrderConfirmSummary order={order} />
+          <p>Thao tác này chỉ áp dụng cho đơn mới tạo hoặc đã hủy.</p>
+        </div>
       }
       cancelBtnText="Đóng"
       confirmText="Xóa đơn"

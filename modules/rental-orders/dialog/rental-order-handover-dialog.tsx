@@ -1,16 +1,12 @@
-'use client';
+﻿'use client';
 
-import { CopyText } from '@/components/shared/copy-text';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -28,6 +24,8 @@ import { useGetRentalOrderById } from '../hooks/use-get-rental-order-by-id';
 import { useHandoverRentalOrder } from '../hooks/use-handover-rental-order';
 import { rentalOrderHandoverFormSchema, type RentalOrderHandoverFormValues } from '../schema';
 import type { CollateralType } from '../type';
+import { calculateHandoverRequiredTotal } from '../utils';
+import { RentalOrderDialogHeader } from './rental-order-dialog-header';
 
 type RentalOrderHandoverDialogProps = {
   orderId?: string;
@@ -44,38 +42,33 @@ const toDateTimeLocalValue = (value: Date | string = new Date()) => {
 
 const toIsoDateTime = (value: string) => new Date(value).toISOString();
 
+const normalizeHandoverCollateralType = (value: CollateralType | null | undefined): RentalOrderHandoverFormValues['collateralType'] =>
+  value === 'IDENTITY_CARD' || value === 'VEHICLE_OR_HIGH_VALUE' ? value : value === 'OTHER_ASSET' ? 'VEHICLE_OR_HIGH_VALUE' : 'NONE';
+
 const calculateHandoverPreview = ({
   depositTotal,
   chargeTotal,
+  currentDiscountTotal,
+  discountTotal,
   paidTotal,
   collateralType,
 }: {
   depositTotal: number;
   chargeTotal: number;
+  currentDiscountTotal: number;
+  discountTotal: number;
   paidTotal: number;
   collateralType: CollateralType;
 }) => {
-  let adjustedDepositTotal = Math.max(depositTotal, 0);
-
-  if (adjustedDepositTotal <= 0 && chargeTotal > 0) {
-    adjustedDepositTotal = chargeTotal * 2;
-  }
-
-  while (adjustedDepositTotal / 2 < chargeTotal) {
-    adjustedDepositTotal *= 2;
-  }
-
-  const handoverRequiredTotal =
-    collateralType === 'VEHICLE_OR_HIGH_VALUE'
-      ? chargeTotal
-      : collateralType === 'IDENTITY_CARD' || collateralType === 'OTHER_ASSET'
-        ? (adjustedDepositTotal + chargeTotal) / 2
-        : adjustedDepositTotal;
+  const grossChargeTotal = Math.max(chargeTotal + currentDiscountTotal, 0);
+  const nextChargeTotal = Math.max(grossChargeTotal - Math.max(discountTotal, 0), 0);
+  const handoverTotals = calculateHandoverRequiredTotal(depositTotal, nextChargeTotal, collateralType);
 
   return {
-    adjustedDepositTotal,
-    handoverRequiredTotal,
-    handoverAmountDue: Math.max(handoverRequiredTotal - paidTotal, 0),
+    chargeTotal: nextChargeTotal,
+    adjustedDepositTotal: handoverTotals.adjustedDepositTotal,
+    handoverRequiredTotal: handoverTotals.handoverRequiredTotal,
+    handoverAmountDue: Math.max(handoverTotals.handoverRequiredTotal - paidTotal, 0),
   };
 };
 
@@ -114,6 +107,7 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
       actualPickupDate: toDateTimeLocalValue(),
       collateralType: 'NONE',
       collateralDescription: '',
+      discountTotal: 0,
       paymentAmount: 0,
       paymentMethod: 'CASH',
       referenceCode: '',
@@ -121,6 +115,7 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
     },
   });
   const collateralType = useWatch({ control: form.control, name: 'collateralType' });
+  const discountTotal = useWatch({ control: form.control, name: 'discountTotal' });
 
   const preview = useMemo(() => {
     if (!order) return null;
@@ -128,25 +123,31 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
     return calculateHandoverPreview({
       depositTotal: order.financials.depositTotal,
       chargeTotal: order.financials.chargeTotal,
+      currentDiscountTotal: order.financials.discountTotal,
+      discountTotal,
       paidTotal: order.financials.paidTotal,
       collateralType,
     });
-  }, [collateralType, order]);
+  }, [collateralType, discountTotal, order]);
 
   useEffect(() => {
     if (!open || !order) return;
+    const nextCollateralType = normalizeHandoverCollateralType(order.fulfillment.collateralType);
     const nextPreview = calculateHandoverPreview({
       depositTotal: order.financials.depositTotal,
       chargeTotal: order.financials.chargeTotal,
+      currentDiscountTotal: order.financials.discountTotal,
+      discountTotal: order.financials.discountTotal,
       paidTotal: order.financials.paidTotal,
-      collateralType: order.fulfillment.collateralType ?? 'NONE',
+      collateralType: nextCollateralType,
     });
 
     queueMicrotask(() => {
       form.reset({
         actualPickupDate: toDateTimeLocalValue(order.rentalPeriod.actualPickupDate ?? new Date()),
-        collateralType: order.fulfillment.collateralType ?? 'NONE',
+        collateralType: nextCollateralType,
         collateralDescription: order.fulfillment.collateralDescription ?? '',
+        discountTotal: order.financials.discountTotal,
         paymentAmount: nextPreview.handoverAmountDue,
         paymentMethod: 'CASH',
         referenceCode: '',
@@ -176,6 +177,7 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
           actualPickupDate: toIsoDateTime(values.actualPickupDate),
           collateralType: values.collateralType,
           collateralDescription: values.collateralDescription.trim() || undefined,
+          discountTotal: values.discountTotal,
           payment:
             paymentAmount > 0
               ? {
@@ -195,17 +197,11 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-2xl" onPointerDownOutside={(event) => event.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2">
-            Bàn giao & thu cọc
-            {order ? (
-              <CopyText text={String(order.code)} className="py-1 font-bold text-primary underline">
-                <span>#{order.code}</span>
-              </CopyText>
-            ) : null}
-          </DialogTitle>
-          <DialogDescription>Ghi nhận giờ khách nhận máy, tài sản thế chấp và khoản thu tại quầy.</DialogDescription>
-        </DialogHeader>
+        <RentalOrderDialogHeader
+          order={order}
+          title="Bàn giao & thu cọc"
+          description="Ghi nhận giờ khách nhận máy, tài sản thế chấp và khoản thu tại quầy."
+        />
 
         <ScrollArea className="h-[58dvh]">
           <form id="rental-order-handover-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -227,14 +223,14 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
               <div className="grid gap-3 rounded-md border p-3 text-sm sm:grid-cols-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Tiền thuê & phí</span>
-                  <span className="font-medium">{formatCurrency(order.financials.chargeTotal)}</span>
+                  <span className="font-medium">{formatCurrency(preview.chargeTotal)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">Cọc gốc</span>
                   <span className="font-medium">{formatCurrency(order.financials.depositTotal)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Cọc áp dụng</span>
+                  <span className="text-muted-foreground">Tiền cọc cần thu</span>
                   <span className="font-medium">{formatCurrency(preview.adjustedDepositTotal)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
@@ -300,6 +296,26 @@ export function RentalOrderHandoverDialog({ orderId, open, onOpenChange }: Renta
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
+              <Controller
+                control={form.control}
+                name="discountTotal"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Giảm giá</FieldLabel>
+                    <CurrencyInput
+                      {...field}
+                      id={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      aria-invalid={fieldState.invalid}
+                      min={0}
+                    />
+                    <FieldDescription>Giảm giá cuối cùng của đơn tại thời điểm bàn giao.</FieldDescription>
+                    {fieldState.invalid ? <FieldError errors={[fieldState.error]} /> : null}
+                  </Field>
+                )}
+              />
+
               <Controller
                 control={form.control}
                 name="paymentAmount"

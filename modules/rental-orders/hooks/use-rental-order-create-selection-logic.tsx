@@ -24,6 +24,7 @@ type UseRentalOrderCreateSelectionLogicProps = {
   selectedCustomerId?: string;
   selectedCustomer?: ICustomerOut | null;
   selectedAssetUnitIds: string[];
+  hiddenAssetUnitIds?: string[];
   excludeOrderId?: string;
   onAddAssets: (assets: IAvailabilityAsset[]) => void;
   onRemoveAsset: (assetUnitId: string) => void;
@@ -47,6 +48,7 @@ export function useRentalOrderCreateSelectionLogic({
   selectedCustomerId,
   selectedCustomer,
   selectedAssetUnitIds,
+  hiddenAssetUnitIds = [],
   excludeOrderId,
   onAddAssets,
   onRemoveAsset,
@@ -57,6 +59,7 @@ export function useRentalOrderCreateSelectionLogic({
   const queryClient = useQueryClient();
   const [assetRowSelection, setAssetRowSelection] = useState<RowSelectionState>({});
   const selectedAssetUnitIdSet = useMemo(() => new Set(selectedAssetUnitIds), [selectedAssetUnitIds]);
+  const hiddenAssetUnitIdSet = useMemo(() => new Set(hiddenAssetUnitIds), [hiddenAssetUnitIds]);
   const selectedAssetRowSelection = useMemo<RowSelectionState>(
     () => Object.fromEntries(selectedAssetUnitIds.map((assetUnitId) => [assetUnitId, true])),
     [selectedAssetUnitIds],
@@ -217,7 +220,7 @@ export function useRentalOrderCreateSelectionLogic({
   );
 
   const assetTable = useDataTable<IAvailabilityAsset>({
-    data: open ? (assetsQuery.data?.items ?? []) : [],
+    data: open ? (assetsQuery.data?.items ?? []).filter((asset) => !hiddenAssetUnitIdSet.has(asset.assetUnitId)) : [],
     columns: assetColumns,
     pageCount: assetsQuery.data?.pagination?.totalPage ?? 1,
     state: {

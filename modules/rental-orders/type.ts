@@ -1,9 +1,25 @@
 import type { DefaultParamsRequest } from '@/types/api';
 
-export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'RENTING' | 'OVERDUE' | 'RETURNED' | 'DONE' | 'CANCELLED' | 'DISPUTED';
+export type OrderStatus =
+  | 'CREATED'
+  | 'CONFIRMED'
+  | 'RENTING'
+  | 'RETURNED'
+  | 'DONE'
+  | 'CANCELLED'
+  | 'DISPUTED';
 export type RentalOrderItemStatus = 'PENDING' | 'ACTIVE' | 'RETURNED' | 'CANCELLED';
 export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
 export type RefundStatus = 'NOT_REQUIRED' | 'PARTIALLY_REFUNDED' | 'REFUNDED' | 'FAILED';
+export type RentalOrderSettlementStatus = 'NEED_COLLECT' | 'NEED_REFUND' | 'SETTLED';
+export type RentalOrderScheduleBadge =
+  | 'PICKUP_UPCOMING'
+  | 'PICKUP_DUE_SOON'
+  | 'PICKUP_OVERDUE'
+  | 'RETURN_DUE_SOON'
+  | 'RETURN_LATE'
+  | 'RETURN_LATE_OVER_GRACE';
+export type OrderSource = 'ADMIN' | 'WEBSITE';
 export type PickupMethod = 'PICKUP_AT_STORE' | 'DELIVERY';
 export type CollateralType = 'NONE' | 'IDENTITY_CARD' | 'VEHICLE_OR_HIGH_VALUE' | 'OTHER_ASSET';
 export type PaymentKind =
@@ -16,11 +32,15 @@ export type PaymentKind =
   | 'REFUND';
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'CARD' | 'E_WALLET' | 'OTHER';
 export type PaymentRecordStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+export type RentalOrderLateFeePolicy = 'CHARGE' | 'WAIVE' | 'CUSTOM';
 
 export interface IGetRentalOrdersParams extends DefaultParamsRequest {
   customerId?: string;
   status?: OrderStatus;
   paymentStatus?: PaymentStatus;
+  refundStatus?: RefundStatus;
+  source?: OrderSource;
+  pickupMethod?: PickupMethod;
   fromDate?: string;
   toDate?: string;
 }
@@ -126,6 +146,12 @@ export type RentalOrderFinancials = {
   adjustedDepositTotal: number;
   handoverRequiredTotal: number;
   handoverAmountDue: number;
+  rentalRevenueTotal: number;
+  incidentFeeTotal: number;
+  finalPayableTotal: number;
+  refundDue: number;
+  additionalChargeDue: number;
+  settlementStatus: RentalOrderSettlementStatus;
 };
 
 export type RentalOrderNotes = {
@@ -203,10 +229,36 @@ export interface IRentalOrderStatusHistory {
   createdAt: string;
 }
 
+export interface IRentalOrderLogChange {
+  field: string;
+  label: string;
+  oldValue: unknown;
+  newValue: unknown;
+}
+
+export interface IRentalOrderLogActorSnapshot {
+  id?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}
+
+export interface IRentalOrderLog {
+  id: string;
+  orderId: string;
+  actorId: string | null;
+  action: string;
+  entity: string;
+  changes: IRentalOrderLogChange[];
+  actorSnapshot: IRentalOrderLogActorSnapshot | null;
+  note: string | null;
+  createdAt: string;
+}
+
 export interface IRentalOrderOut {
   id: string;
   code: string;
-  source: string;
+  source: OrderSource;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   refundStatus: RefundStatus;
@@ -239,6 +291,12 @@ export interface IRentalOrderOut {
   adjustedDepositTotal: number;
   handoverRequiredTotal: number;
   handoverAmountDue: number;
+  rentalRevenueTotal: number;
+  incidentFeeTotal: number;
+  finalPayableTotal: number;
+  refundDue: number;
+  additionalChargeDue: number;
+  settlementStatus: RentalOrderSettlementStatus;
   note: string | null;
   internalNote: string | null;
   cancelReason: string | null;
@@ -246,6 +304,7 @@ export interface IRentalOrderOut {
   items: IRentalOrderItem[];
   payments: IRentalOrderPaymentRecord[];
   statusHistories: IRentalOrderStatusHistory[];
+  logs: IRentalOrderLog[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -263,6 +322,7 @@ export type IRentalOrderListItemOut = Pick<
   | 'startDate'
   | 'endDate'
   | 'rentalFeeTotal'
+  | 'deliveryFeeTotal'
   | 'depositTotal'
   | 'bookingHoldTotal'
   | 'chargeTotal'
@@ -271,8 +331,18 @@ export type IRentalOrderListItemOut = Pick<
   | 'actualRefundTotal'
   | 'handoverRequiredTotal'
   | 'handoverAmountDue'
+  | 'rentalRevenueTotal'
+  | 'incidentFeeTotal'
+  | 'finalPayableTotal'
+  | 'refundDue'
+  | 'additionalChargeDue'
+  | 'settlementStatus'
+  | 'discountTotal'
   | 'createdAt'
   | 'updatedAt'
+  | 'lateFeeTotal'
+  | 'damageFeeTotal'
+  | 'compensationFeeTotal'
 >;
 
 export interface IRentalOrderCreateItemReq {
@@ -334,6 +404,7 @@ export interface IHandoverRentalOrderReq {
   actualPickupDate?: string;
   collateralType?: CollateralType;
   collateralDescription?: string;
+  discountTotal?: number;
   payment?: IHandoverRentalOrderPaymentReq;
   note?: string;
 }
@@ -348,8 +419,13 @@ export interface ICompleteRentalOrderSettlementPaymentReq {
 
 export interface ICompleteRentalOrderReq {
   actualReturnDate?: string;
+  lateFeePolicy?: RentalOrderLateFeePolicy;
+  customLateFeeTotal?: number;
+  lateFeeNote?: string;
   damageFeeTotal?: number;
   damageNote?: string;
+  compensationFeeTotal?: number;
+  compensationNote?: string;
   settlementPayment?: ICompleteRentalOrderSettlementPaymentReq;
   note?: string;
 }

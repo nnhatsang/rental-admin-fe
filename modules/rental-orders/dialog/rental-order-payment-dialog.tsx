@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,7 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -24,10 +21,11 @@ import { paymentKindOptions, paymentMethodOptions } from '../display-config';
 import { useGetRentalOrderById } from '../hooks/use-get-rental-order-by-id';
 import { useRecordRentalOrderPayment } from '../hooks/use-record-rental-order-payment';
 import type { PaymentKind, PaymentMethod } from '../type';
-import { CopyText } from '@/components/shared/copy-text';
+import { calculateRentalOrderSettlementFinancials } from '../utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { rentalOrderPaymentFormSchema } from '../schema';
+import { RentalOrderDialogHeader } from './rental-order-dialog-header';
 
 type RentalOrderPaymentDialogProps = {
   orderId?: string;
@@ -104,7 +102,8 @@ export function RentalOrderPaymentDialog({ orderId, open, onOpenChange }: Rental
   const amount = useWatch({ control: form.control, name: 'amount' });
 
   const financials = order?.financials;
-  const remainingCharge = financials ? Math.max(financials.chargeTotal - financials.paidTotal, 0) : 0;
+  const settlement = financials ? calculateRentalOrderSettlementFinancials({ status: order.status, ...financials }) : null;
+  const additionalChargeDue = settlement?.additionalChargeDue ?? 0;
   const bookingHoldDue = financials ? Math.max(financials.bookingHoldTotal - financials.paidTotal, 0) : 0;
   const handoverDue = financials
     ? financials.handoverAmountDue > 0
@@ -115,17 +114,31 @@ export function RentalOrderPaymentDialog({ orderId, open, onOpenChange }: Rental
     if (!financials) return 0;
     if (kind === 'BOOKING_HOLD') return bookingHoldDue;
     if (kind === 'HANDOVER_PAYMENT') return handoverDue;
-    if (kind === 'ADDITIONAL_CHARGE') return remainingCharge;
+    if (kind === 'ADDITIONAL_CHARGE') return additionalChargeDue;
     return 0;
-  }, [bookingHoldDue, financials, handoverDue, kind, remainingCharge]);
+  }, [additionalChargeDue, bookingHoldDue, financials, handoverDue, kind]);
 
   useEffect(() => {
     if (!open || !order) return;
+    const nextSettlement = calculateRentalOrderSettlementFinancials({ status: order.status, ...order.financials });
+    const defaultKind =
+      order.status === 'DONE' && nextSettlement.additionalChargeDue > 0
+        ? 'ADDITIONAL_CHARGE'
+        : order.status === 'CREATED'
+          ? 'BOOKING_HOLD'
+          : 'HANDOVER_PAYMENT';
+    const defaultAmount =
+      defaultKind === 'ADDITIONAL_CHARGE'
+        ? nextSettlement.additionalChargeDue
+        : defaultKind === 'BOOKING_HOLD'
+          ? Math.max(order.financials.bookingHoldTotal - order.financials.paidTotal, 0)
+          : order.financials.handoverAmountDue;
+
     queueMicrotask(() => {
       form.reset({
-        kind: 'BOOKING_HOLD',
+        kind: defaultKind,
         method: 'BANK_TRANSFER',
-        amount: Math.max(order.financials.bookingHoldTotal - order.financials.paidTotal, 0),
+        amount: defaultAmount,
         referenceCode: '',
         note: '',
       });
@@ -163,17 +176,11 @@ export function RentalOrderPaymentDialog({ orderId, open, onOpenChange }: Rental
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-2xl" onPointerDownOutside={(event) => event.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle className="flex flex-wrap items-center gap-2">
-            Ghi nhận thanh toán
-            {order ? (
-              <CopyText text={String(order.code)} className="py-1 font-bold text-primary underline">
-                <span>#{order.code}</span>
-              </CopyText>
-            ) : null}
-          </DialogTitle>
-          <DialogDescription>Nhập khoản tiền khách đã thanh toán cho đơn thuê.</DialogDescription>
-        </DialogHeader>
+        <RentalOrderDialogHeader
+          order={order}
+          title="Ghi nhận thanh toán"
+          description="Nhập khoản tiền khách đã thanh toán cho đơn thuê."
+        />
         <ScrollArea className="h-[45dvh]">
           <form id="rental-order-payment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {orderQuery.isLoading || !financials ? (
@@ -184,11 +191,11 @@ export function RentalOrderPaymentDialog({ orderId, open, onOpenChange }: Rental
               </div>
             ) : (
               <div className="grid grid-cols-3 divide-x rounded-lg border bg-muted/30 p-2">
-                <SummaryMetric label="Tiền thuê & phí" value={formatCurrency(financials.chargeTotal)} />
+                <SummaryMetric label="Tổng khách phải trả" value={formatCurrency(settlement?.finalPayableTotal ?? financials.chargeTotal)} />
                 <SummaryMetric label="Đã thu" value={formatCurrency(financials.paidTotal)} tone="success" />
                 <SummaryMetric
-                  label="Còn lại"
-                  value={formatCurrency(Math.max(handoverDue, remainingCharge))}
+                  label={order.status === 'DONE' ? 'Cần thu thêm' : 'Còn lại'}
+                  value={formatCurrency(order.status === 'DONE' ? additionalChargeDue : Math.max(handoverDue, additionalChargeDue))}
                   tone="danger"
                 />
               </div>

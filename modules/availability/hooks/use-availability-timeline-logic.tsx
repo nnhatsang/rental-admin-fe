@@ -28,7 +28,6 @@ const statusColor: Record<string, string> = {
   READY_FOR_PICKUP: 'var(--color-cyan-500)',
   DELIVERING: 'var(--color-orange-500)',
   RENTING: 'var(--color-emerald-500)',
-  OVERDUE: 'var(--color-rose-500)',
 };
 
 const GANTT_SCALES: GanttScale[] = ['day', 'week', 'month', 'quarter', 'year'];
