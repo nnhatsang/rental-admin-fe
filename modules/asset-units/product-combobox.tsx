@@ -18,6 +18,7 @@ import { useGetProductsLogic, type ProductOption } from './hooks/use-get-product
 export type ProductComboboxProps = {
   value?: string;
   onChange?: (value: string) => void;
+  onProductChange?: (product: ProductOption | null) => void;
   disabled?: boolean;
   ariaInvalid?: boolean;
   className?: string;
@@ -28,11 +29,14 @@ export type ProductComboboxProps = {
   fetchEnabled?: boolean;
 };
 
+export type { ProductOption } from './hooks/use-get-products-logic';
+
 const productLabel = (product: Pick<IProductOut, 'name' | 'sku'>) => product.name || product.sku;
 
 export function ProductCombobox({
   value,
   onChange,
+  onProductChange,
   disabled,
   ariaInvalid,
   className,
@@ -72,8 +76,10 @@ export function ProductCombobox({
       items={productIds}
       value={selectedValue}
       onValueChange={(nextValue) => {
+        const nextProduct = nextValue ? productById.get(nextValue) ?? null : null;
         rememberSelectedProduct(nextValue);
         clearSearchAfterSelect();
+        onProductChange?.(nextProduct);
 
         if (syncToUrl) {
           updateProductId(nextValue ?? undefined);

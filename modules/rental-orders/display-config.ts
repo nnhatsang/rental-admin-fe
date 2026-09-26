@@ -1,316 +1,302 @@
-﻿import {
-  IconAlertCircle,
-  IconArrowBack,
+import {
+  IconAlertTriangle,
   IconBan,
-  IconBuildingStore,
-  IconCalendarCheck,
   IconCamera,
   IconCheck,
   IconCircleCheck,
-  IconCircleX,
   IconClock,
   IconCreditCard,
-  IconMinus,
   IconPackage,
   IconPackageImport,
-  IconTruckDelivery,
+  IconRefresh,
+  IconTool,
   IconX,
 } from '@tabler/icons-react';
 import { toOptions, type DisplayConfig } from '@/types/display-config';
 import type {
-  CollateralType,
-  OrderStatus,
-  PaymentKind,
-  PaymentMethod,
-  PaymentRecordStatus,
-  PaymentStatus,
-  PickupMethod,
-  RefundStatus,
-  RentalOrderEditableLineFilter,
-  RentalOrderEditableLineState,
-  RentalOrderItemStatus,
-  RentalOrderScheduleBadge,
-} from './type';
+  HandoverStatus,
+  PaymentTransactionStatus,
+  RentalInspectionCondition,
+  RentalOrderAllocation,
+  RentalOrderStatus,
+  RentalRefundStatus,
+  RentalSettlementStatus,
+  ReturnStatus,
+} from './model';
+import type { RentalOrderScheduleBadge } from './display-utils';
 
-type PickupMethodDisplayConfig = DisplayConfig & {
-  address: string;
-  badge: string;
-  badgeColor: string;
+type RentalStatusDisplayConfig = DisplayConfig & {
+  description: string;
 };
+
+const chartBlue = 'border-chart-4/40 bg-chart-4/10 text-chart-4 hover:bg-chart-4/20';
+const chartGreen = 'border-chart-1/40 bg-chart-1/10 text-chart-1 hover:bg-chart-1/20';
+const chartTeal = 'border-chart-2/40 bg-chart-2/10 text-chart-2 hover:bg-chart-2/20';
+const chartLime = 'border-chart-3/40 bg-chart-3/10 text-chart-3 hover:bg-chart-3/20';
+const chartAmber = 'border-chart-5/40 bg-chart-5/10 text-chart-5 hover:bg-chart-5/20';
+const neutral = 'border-muted-foreground/25 bg-muted text-muted-foreground hover:bg-muted/80';
+const danger = 'border-destructive/35 bg-destructive/10 text-destructive hover:bg-destructive/20';
 
 export const orderStatusConfig = {
   CREATED: {
     label: 'Mới tạo',
+    description: 'Đơn vừa được tạo và đang chờ xác nhận hoặc thanh toán.',
     icon: IconClock,
-    className: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80',
+    className: chartBlue,
   },
-
   CONFIRMED: {
     label: 'Đã xác nhận',
+    description: 'Đơn đã được xác nhận và sẵn sàng cho bước bàn giao.',
     icon: IconCircleCheck,
-    className: 'border-transparent bg-blue-500/10 text-blue-600 hover:bg-blue-500/15 dark:text-blue-400',
+    className: chartGreen,
   },
-
   RENTING: {
     label: 'Đang thuê',
+    description: 'Thiết bị đang ở phía khách hàng trong thời gian thuê.',
     icon: IconCamera,
-    className: 'border-transparent bg-primary/10 text-primary hover:bg-primary/15',
+    className: chartTeal,
   },
-
   RETURNED: {
-    label: 'Đã trả',
+    label: 'Đã trả máy',
+    description: 'Khách đã trả máy và đơn đang chờ kiểm tra, quyết toán.',
     icon: IconPackageImport,
-    className: 'border-transparent bg-sky-500/10 text-sky-600 hover:bg-sky-500/15 dark:text-sky-400',
+    className: chartLime,
   },
-
   DONE: {
     label: 'Hoàn tất',
+    description: 'Đơn đã hoàn tất toàn bộ quy trình và nghĩa vụ tài chính.',
     icon: IconCheck,
-    className: 'border-transparent bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400',
+    className: chartGreen,
   },
-
   CANCELLED: {
     label: 'Đã hủy',
-    icon: IconX,
-    className: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80',
+    description: 'Đơn đã bị hủy và không còn hiệu lực giữ thiết bị.',
+    icon: IconBan,
+    className: neutral,
   },
-
   DISPUTED: {
     label: 'Tranh chấp',
-    icon: IconAlertCircle,
-    className: 'border-transparent bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400',
+    description: 'Đơn cần được xử lý thủ công do phát sinh tranh chấp.',
+    icon: IconAlertTriangle,
+    className: danger,
   },
-} satisfies Record<OrderStatus, DisplayConfig>;
+} satisfies Record<RentalOrderStatus, RentalStatusDisplayConfig>;
 
-export const paymentStatusConfig = {
-  UNPAID: {
-    label: 'Chưa thanh toán',
-    icon: IconCircleX,
-    className: 'border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15',
-  },
-
-  PARTIALLY_PAID: {
-    label: 'Thanh toán một phần',
+export const settlementStatusConfig = {
+  NOT_STARTED: {
+    label: 'Chưa quyết toán',
+    description: 'Chưa phát sinh bước quyết toán cuối đơn.',
     icon: IconClock,
-    className: 'border-amber-500/20 bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400',
+    className: neutral,
   },
-
-  PAID: {
-    label: 'Đã thanh toán',
+  PAYMENT_DUE: {
+    label: 'Cần thu thêm',
+    description: 'Khách còn nghĩa vụ thanh toán trước hoặc sau khi trả máy.',
+    icon: IconCreditCard,
+    className: danger,
+  },
+  REFUND_DUE: {
+    label: 'Cần hoàn tiền',
+    description: 'Đơn đang có khoản tiền cần hoàn lại cho khách hàng.',
+    icon: IconRefresh,
+    className: chartAmber,
+  },
+  SETTLED: {
+    label: 'Đã quyết toán',
+    description: 'Các khoản thu, hoàn và phí phát sinh đã được chốt.',
     icon: IconCircleCheck,
-    className: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400',
+    className: chartGreen,
   },
-} satisfies Record<PaymentStatus, DisplayConfig>;
+  DISPUTED: {
+    label: 'Tranh chấp',
+    description: 'Khoản quyết toán đang cần nhân viên xử lý thủ công.',
+    icon: IconAlertTriangle,
+    className: danger,
+  },
+} satisfies Record<RentalSettlementStatus, RentalStatusDisplayConfig>;
 
-export const rentalOrderItemStatusConfig = {
-  PENDING: {
-    label: 'Chờ giữ lịch',
+export const handoverStatusConfig = {
+  PENDING_PAYMENT: {
+    label: 'Chờ thanh toán',
+    description: 'Chưa đủ điều kiện tài chính để bàn giao thiết bị.',
     icon: IconClock,
-    className: 'border-transparent bg-zinc-500/10 text-zinc-600',
+    className: chartAmber,
   },
-  ACTIVE: {
-    label: 'Đang giữ lịch',
-    icon: IconCalendarCheck,
-    className: 'border-transparent bg-blue-500/10 text-blue-600',
+  READY: {
+    label: 'Sẵn sàng bàn giao',
+    description: 'Đã đủ điều kiện để thực hiện bàn giao thiết bị.',
+    icon: IconCircleCheck,
+    className: chartGreen,
+  },
+  HANDED_OVER: {
+    label: 'Đã bàn giao',
+    description: 'Thiết bị đã được bàn giao cho khách hàng.',
+    icon: IconPackage,
+    className: chartTeal,
+  },
+} satisfies Record<HandoverStatus, RentalStatusDisplayConfig>;
+
+export const returnStatusConfig = {
+  NOT_RETURNED: {
+    label: 'Chưa trả máy',
+    description: 'Thiết bị chưa được ghi nhận trả về kho.',
+    icon: IconClock,
+    className: neutral,
+  },
+  RETURNED: {
+    label: 'Chờ kiểm tra',
+    description: 'Đã nhận máy và đang chờ nhân viên kiểm tra tình trạng.',
+    icon: IconPackageImport,
+    className: chartAmber,
+  },
+  INSPECTED: {
+    label: 'Đã kiểm tra',
+    description: 'Tình trạng thiết bị sau khi trả đã được ghi nhận.',
+    icon: IconCheck,
+    className: chartGreen,
+  },
+} satisfies Record<ReturnStatus, RentalStatusDisplayConfig>;
+
+export const rentalOrderScheduleBadgeConfig = {
+  STARTING_SOON: {
+    label: 'Sắp nhận máy',
+    description: 'Thời điểm bắt đầu thuê đang đến gần.',
+    icon: IconClock,
+    className: chartAmber,
+  },
+  START_OVERDUE: {
+    label: 'Quá giờ nhận',
+    description: 'Đã quá thời điểm dự kiến nhận máy.',
+    icon: IconAlertTriangle,
+    className: danger,
+  },
+  RETURNING_SOON: {
+    label: 'Sắp đến giờ trả',
+    description: 'Thời điểm kết thúc thuê đang đến gần.',
+    icon: IconClock,
+    className: chartAmber,
+  },
+  RETURN_OVERDUE: {
+    label: 'Quá hạn trả',
+    description: 'Đã quá thời điểm dự kiến trả máy.',
+    icon: IconAlertTriangle,
+    className: danger,
+  },
+} satisfies Record<RentalOrderScheduleBadge['kind'], RentalStatusDisplayConfig>;
+
+export const rentalOrderAllocationStatusConfig = {
+  REQUESTED: {
+    label: 'Đang yêu cầu',
+    description: 'Đang chờ hệ thống hoặc nhân viên phân bổ thiết bị.',
+    icon: IconClock,
+    className: chartBlue,
+  },
+  RESERVED: {
+    label: 'Đã giữ máy',
+    description: 'Thiết bị đã được giữ cho khoảng thời gian của đơn.',
+    icon: IconCircleCheck,
+    className: chartGreen,
+  },
+  HANDED_OVER: {
+    label: 'Đã bàn giao',
+    description: 'Thiết bị đã được giao cho khách hàng.',
+    icon: IconPackage,
+    className: chartTeal,
   },
   RETURNED: {
     label: 'Đã trả',
+    description: 'Thiết bị đã được trả về.',
     icon: IconPackageImport,
-    className: 'border-transparent bg-emerald-500/10 text-emerald-600',
+    className: chartLime,
   },
-  CANCELLED: {
-    label: 'Đã hủy',
+  RELEASED: {
+    label: 'Đã giải phóng',
+    description: 'Lượt giữ thiết bị đã được giải phóng.',
     icon: IconX,
-    className: 'border-transparent bg-rose-500/10 text-rose-600',
+    className: neutral,
   },
-} satisfies Record<RentalOrderItemStatus, DisplayConfig>;
+} satisfies Record<RentalOrderAllocation['status'], RentalStatusDisplayConfig>;
 
-export const pickupMethodConfig = {
-  PICKUP_AT_STORE: {
-    label: 'Nhận tại cửa hàng',
-    icon: IconBuildingStore,
-    address: '72 Âu Dương Lân',
-    badge: 'Miễn phí',
-    badgeColor: 'bg-green-50 py-0.5 px-2 text-green-700 dark:bg-green-950 dark:text-green-300',
-  },
-  DELIVERY: {
-    label: 'Giao tận nơi',
-    icon: IconTruckDelivery,
-    address: 'Phí tính theo Grab/Bee',
-    badge: 'Tính phí',
-    badgeColor: 'bg-yellow-50 py-0.5 px-2 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300',
-  },
-} satisfies Record<PickupMethod, PickupMethodDisplayConfig>;
-
-export const paymentKindConfig = {
-  BOOKING_HOLD: {
-    label: 'Giữ lịch',
-    icon: IconClock,
-  },
-  DEPOSIT: {
-    label: 'Tiền cọc',
-    icon: IconCreditCard,
-  },
-  RENTAL_PAYMENT: {
-    label: 'Tiền thuê',
-    icon: IconCreditCard,
-  },
-  HANDOVER_PAYMENT: {
-    label: 'Thanh toán lúc giao',
-    icon: IconCreditCard,
-  },
-  ADDITIONAL_CHARGE: {
-    label: 'Thu thêm',
-    icon: IconPackage,
-  },
-  REFUND: {
-    label: 'Hoàn tiền',
-    icon: IconArrowBack,
-  },
-  OTHER: {
-    label: 'Khác',
-  },
-} satisfies Record<PaymentKind, DisplayConfig>;
-
-export const paymentMethodConfig = {
-  CASH: { label: 'Tiền mặt' },
-  BANK_TRANSFER: { label: 'Chuyển khoản' },
-  CARD: { label: 'Thẻ' },
-  E_WALLET: { label: 'Ví điện tử' },
-  OTHER: { label: 'Khác' },
-} satisfies Record<PaymentMethod, DisplayConfig>;
-
-export const paymentRecordStatusConfig = {
+export const rentalOrderPaymentStatusConfig = {
   PENDING: {
-    label: 'Chờ xử lý',
+    label: 'Chờ xác nhận',
+    description: 'Giao dịch đang chờ được xác nhận.',
     icon: IconClock,
-    className: 'bg-yellow-500/10 text-yellow-600',
+    className: chartAmber,
   },
   SUCCESS: {
     label: 'Thành công',
+    description: 'Giao dịch đã được ghi nhận thành công.',
     icon: IconCircleCheck,
-    className: 'bg-emerald-500/10 text-emerald-600',
+    className: chartGreen,
   },
   FAILED: {
     label: 'Thất bại',
-    icon: IconCircleX,
-    className: 'bg-rose-500/10 text-rose-600',
+    description: 'Giao dịch không được ghi nhận thành công.',
+    icon: IconX,
+    className: danger,
   },
   CANCELLED: {
     label: 'Đã hủy',
+    description: 'Giao dịch đã bị hủy.',
     icon: IconBan,
-    className: 'bg-zinc-500/10 text-zinc-600',
+    className: neutral,
   },
-} satisfies Record<PaymentRecordStatus, DisplayConfig>;
+} satisfies Record<PaymentTransactionStatus, RentalStatusDisplayConfig>;
 
-export const collateralTypeConfig = {
-  NONE: {
-    label: 'Không thế chấp',
+export const rentalOrderRefundStatusConfig = {
+  PENDING: {
+    label: 'Chờ xử lý',
+    description: 'Yêu cầu hoàn tiền đang chờ xử lý.',
+    icon: IconClock,
+    className: chartAmber,
   },
-  IDENTITY_CARD: {
-    label: 'Căn cước/CCCD',
+  PROCESSING: {
+    label: 'Đang xử lý',
+    description: 'Yêu cầu hoàn tiền đang được thực hiện.',
+    icon: IconRefresh,
+    className: chartBlue,
   },
-  VEHICLE_OR_HIGH_VALUE: {
-    label: 'Tài sản giá trị cao',
-  },
-  OTHER_ASSET: {
-    label: 'Tài sản giá trị cao',
-  },
-} satisfies Record<CollateralType, DisplayConfig>;
-
-export const rentalOrderEditableLineStateConfig = {
-  UNCHANGED: {
-    label: 'Đang thuê',
-    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  },
-  ADDED: {
-    label: 'Thêm mới',
-    className: 'border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300',
-  },
-  REMOVED: {
-    label: 'Hủy khỏi đơn',
-    className: 'border-destructive/30 bg-destructive/10 text-destructive',
-  },
-  CHANGED: {
-    label: 'Đã chỉnh sửa',
-    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  },
-} satisfies Record<RentalOrderEditableLineState, DisplayConfig>;
-
-export const rentalOrderEditableLineFilterConfig = {
-  ALL: {
-    label: 'Tất cả',
-    className: 'border-muted-foreground/20 bg-muted text-muted-foreground',
-  },
-  UNCHANGED: rentalOrderEditableLineStateConfig.UNCHANGED,
-  ADDED: rentalOrderEditableLineStateConfig.ADDED,
-  REMOVED: rentalOrderEditableLineStateConfig.REMOVED,
-  CHANGED: rentalOrderEditableLineStateConfig.CHANGED,
-} satisfies Record<RentalOrderEditableLineFilter, DisplayConfig>;
-
-export const rentalOrderScheduleBadgeConfig = {
-  PICKUP_UPCOMING: {
-    label: 'Sắp giao',
-    className: 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300',
-  },
-  PICKUP_DUE_SOON: {
-    label: 'Gần đến giờ giao',
-    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  },
-  PICKUP_OVERDUE: {
-    label: 'Quá giờ giao máy',
-    className: 'border-destructive/30 bg-destructive/10 text-destructive',
-  },
-  RETURN_DUE_SOON: {
-    label: 'Sắp tới giờ trả máy',
-    className: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300',
-  },
-  RETURN_LATE: {
-    label: 'Trả trễ',
-    className: 'border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-300',
-  },
-  RETURN_LATE_OVER_GRACE: {
-    label: 'Trễ quá ngưỡng',
-    className: 'border-destructive/30 bg-destructive/10 text-destructive',
-  },
-} satisfies Record<RentalOrderScheduleBadge, DisplayConfig>;
-
-export const refundStatusConfig = {
-  NOT_REQUIRED: {
-    label: 'Không cần hoàn',
-    icon: IconMinus,
-    className: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80',
-  },
-
-  PARTIALLY_REFUNDED: {
-    label: 'Hoàn một phần',
-    icon: IconArrowBack,
-    className: 'border-amber-500/20 bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400',
-  },
-
   REFUNDED: {
-    label: 'Đã hoàn tiền',
+    label: 'Đã hoàn',
+    description: 'Khoản tiền đã được hoàn cho khách hàng.',
     icon: IconCircleCheck,
-    className: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400',
+    className: chartGreen,
   },
-
   FAILED: {
-    label: 'Hoàn tiền thất bại',
-    icon: IconCircleX,
-    className: 'border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15',
+    label: 'Hoàn thất bại',
+    description: 'Yêu cầu hoàn tiền chưa thực hiện thành công.',
+    icon: IconX,
+    className: danger,
   },
-} satisfies Record<RefundStatus, DisplayConfig>;
+} satisfies Record<RentalRefundStatus, RentalStatusDisplayConfig>;
 
-export const refundStatusOptions = toOptions(refundStatusConfig);
+export const rentalInspectionConditionConfig = {
+  GOOD: {
+    label: 'Tốt',
+    description: 'Thiết bị không ghi nhận hư hỏng.',
+    icon: IconCheck,
+    className: chartGreen,
+  },
+  DAMAGED: {
+    label: 'Hư hỏng',
+    description: 'Thiết bị có hư hỏng cần ghi nhận hoặc xử lý.',
+    icon: IconAlertTriangle,
+    className: danger,
+  },
+  MISSING: {
+    label: 'Mất máy',
+    description: 'Không tìm thấy thiết bị khi kiểm tra.',
+    icon: IconX,
+    className: danger,
+  },
+  NEEDS_MAINTENANCE: {
+    label: 'Cần bảo trì',
+    description: 'Thiết bị cần được bảo trì trước khi cho thuê tiếp.',
+    icon: IconTool,
+    className: chartAmber,
+  },
+} satisfies Record<RentalInspectionCondition, RentalStatusDisplayConfig>;
 
 export const orderStatusOptions = toOptions(orderStatusConfig);
-export const paymentStatusOptions = toOptions(paymentStatusConfig);
-export const pickupMethodOptions = toOptions(pickupMethodConfig);
-export const paymentKindOptions = toOptions(paymentKindConfig);
-export const paymentMethodOptions = toOptions(paymentMethodConfig);
-export const collateralTypeOptions = [
-  { value: 'NONE', ...collateralTypeConfig.NONE },
-  { value: 'IDENTITY_CARD', ...collateralTypeConfig.IDENTITY_CARD },
-  { value: 'VEHICLE_OR_HIGH_VALUE', ...collateralTypeConfig.VEHICLE_OR_HIGH_VALUE },
-] satisfies Array<DisplayConfig & { value: CollateralType }>;
-export const rentalOrderEditableLineFilterOptions = toOptions(rentalOrderEditableLineFilterConfig);
+export const settlementStatusOptions = toOptions(settlementStatusConfig);

@@ -1,13 +1,9 @@
-import type { IGetCustomersParams, IGetRentalOrdersParams } from '../type';
+import type { IGetRentalOrdersParams } from '../model';
 
 export const rentalOrderQueryKeys = {
   all: ['rental-orders'] as const,
   lists: () => [...rentalOrderQueryKeys.all, 'list'] as const,
   list: (params: IGetRentalOrdersParams) => [...rentalOrderQueryKeys.lists(), params] as const,
-  detail: (id: string) => [...rentalOrderQueryKeys.all, 'detail', id] as const,
-};
-
-export const rentalOrderCustomerQueryKeys = {
-  all: ['rental-order-customers'] as const,
-  list: (params: IGetCustomersParams) => [...rentalOrderCustomerQueryKeys.all, params] as const,
+  details: () => [...rentalOrderQueryKeys.all, 'detail'] as const,
+  detail: (id: string) => [...rentalOrderQueryKeys.details(), id] as const,
 };

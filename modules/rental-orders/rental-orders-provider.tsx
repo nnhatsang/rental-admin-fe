@@ -2,46 +2,28 @@
 
 import useDialogState from '@/hooks/use-dialog-state';
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useMemo, useState } from 'react';
-import type { IRentalOrderListItemOut } from './type';
+import type { RentalOrderListItem } from './model';
 
-export type RentalOrdersDialogType =
-  | 'create'
-  | 'view'
-  | 'edit'
-  | 'payment'
-  | 'handover'
-  | 'complete'
-  | 'refund'
-  | 'cancel'
-  | 'delete';
-
+export type RentalOrderDialogType = 'create' | 'update' | 'detail' | 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel';
 
 type RentalOrdersContextValue = {
-  open: RentalOrdersDialogType | null;
-  setOpen: (value: RentalOrdersDialogType | null) => void;
-  currentRow: IRentalOrderListItemOut | null;
-  setCurrentRow: Dispatch<SetStateAction<IRentalOrderListItemOut | null>>;
+  open: RentalOrderDialogType | null;
+  setOpen: (value: RentalOrderDialogType | null) => void;
+  currentRow: RentalOrderListItem | null;
+  setCurrentRow: Dispatch<SetStateAction<RentalOrderListItem | null>>;
 };
 
 const RentalOrdersContext = createContext<RentalOrdersContextValue | null>(null);
 
 export function RentalOrdersProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useDialogState<RentalOrdersDialogType>(null);
-  const [currentRow, setCurrentRow] = useState<IRentalOrderListItemOut | null>(null);
-  const value = useMemo(
-    () => ({ open, setOpen, currentRow, setCurrentRow }),
-    [open, setOpen, currentRow, setCurrentRow],
-  );
-
+  const [open, setOpen] = useDialogState<RentalOrderDialogType>(null);
+  const [currentRow, setCurrentRow] = useState<RentalOrderListItem | null>(null);
+  const value = useMemo(() => ({ open, setOpen, currentRow, setCurrentRow }), [open, setOpen, currentRow]);
   return <RentalOrdersContext value={value}>{children}</RentalOrdersContext>;
 }
 
 export function useRentalOrders() {
   const context = useContext(RentalOrdersContext);
-
-  if (!context) {
-    throw new Error('useRentalOrders must be used within <RentalOrdersProvider>');
-  }
-
+  if (!context) throw new Error('useRentalOrders must be used within <RentalOrdersProvider>');
   return context;
 }

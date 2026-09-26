@@ -1,5 +1,6 @@
 'use client';
 
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useGetProducts } from '@/modules/products/hooks/use-get-products';
 import type { IProductOut } from '@/modules/products/type';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -20,6 +21,7 @@ export const useGetProductsLogic = ({
 }: UseGetProductsLogicProps = {}) => {
   const ignoreNextInputChangeRef = useRef(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [localSelectedProduct, setLocalSelectedProduct] = useState<ProductOption | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -29,7 +31,7 @@ export const useGetProductsLogic = ({
     {
       page: 1,
       perPage: 20,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
     },
     { enabled },
   );

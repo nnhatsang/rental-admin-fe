@@ -1,54 +1,42 @@
 'use client';
 
 import { DateTimeRangePicker, type DateTimeRange } from '@/components/shared/date-time-range-picker';
+import { ProtectedAction } from '@/components/shared/protected-action';
 import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { PermissionCode } from '@/utils/consts/rbac.const';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { columns } from '../columns';
+import type { IGetRentalOrdersParams, RentalOrderListItem } from '../model';
 import { useRentalOrders } from '../rental-orders-provider';
-import type { IGetRentalOrdersParams, IRentalOrderListItemOut } from '../type';
-import { useGetRentalOrders } from './use-get-rental-orders';
-
-export interface IRentalOrdersLogic {
-  table: DataTableInstance<IRentalOrderListItemOut>;
-}
+import { useGetRentalOrders } from './queries';
 
 const parseDateFilter = (value: string) => {
   if (!value) return undefined;
+
   const [year, month, day] = value.split('-').map(Number);
   if (!year || !month || !day) return undefined;
+
   const date = new Date(year, month - 1, day);
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
 const toDateFilterParam = (date: Date | undefined) => (date ? format(date, 'yyyy-MM-dd') : undefined);
 
-export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
-  const { setOpen } = useRentalOrders();
+export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderListItem> } {
+  const { setCurrentRow, setOpen } = useRentalOrders();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
-  const {
-    queryParams,
-    pagination,
-    sorting,
-    columnFilters,
-    globalFilter,
-    onColumnFiltersChange,
-    onGlobalFilterChange,
-    onPaginationChange,
-    onSortingChange,
-  } = useTableQueryState<IGetRentalOrdersParams>({
-    defaultPageSize: 10,
-    columns,
-  });
+  const tableState = useTableQueryState<IGetRentalOrdersParams>({ defaultPageSize: 10, columns });
+
   const fromDateInput = searchParams.get('fromDate') ?? '';
   const toDateInput = searchParams.get('toDate') ?? '';
   const dateRangeFilter = useMemo<DateTimeRange>(
@@ -58,20 +46,23 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
     }),
     [fromDateInput, toDateInput],
   );
+
   const rentalOrderQueryParams = useMemo<IGetRentalOrdersParams>(
     () => ({
-      ...queryParams,
+      ...tableState.queryParams,
       fromDate: fromDateInput ? `${fromDateInput}T00:00:00.000` : undefined,
       toDate: toDateInput ? `${toDateInput}T23:59:59.999` : undefined,
     }),
-    [fromDateInput, queryParams, toDateInput],
+    [fromDateInput, tableState.queryParams, toDateInput],
   );
+
   const { data, isLoading, isFetching, refetch } = useGetRentalOrders(rentalOrderQueryParams);
 
   const setDateRangeFilter = useCallback(
     (range: DateTimeRange) => {
       const params = new URLSearchParams(searchParams.toString());
       params.delete('page');
+
       const nextFromDate = toDateFilterParam(range.from);
       const nextToDate = toDateFilterParam(range.to);
 
@@ -87,16 +78,16 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
     [pathname, router, searchParams],
   );
 
-  const table = useDataTable<IRentalOrderListItemOut>({
+  const table = useDataTable<RentalOrderListItem>({
     data: data?.items ?? [],
     columns,
-    pageCount: data?.pagination?.totalPage ?? 1,
+    pageCount: data?.pagination.totalPage ?? 1,
     state: {
-      pagination,
+      pagination: tableState.pagination,
       rowSelection,
-      sorting,
-      columnFilters,
-      globalFilter,
+      sorting: tableState.sorting,
+      columnFilters: tableState.columnFilters,
+      globalFilter: tableState.globalFilter,
     },
     getRowId: (row) => row.id,
     defaultGlobalFilterMode: 'fuzzy',
@@ -108,14 +99,14 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
     enableExport: true,
     exportFileName: 'rental-orders',
     title: 'Quản lý đơn thuê',
-    description: 'Theo dõi đơn thuê, trạng thái vận hành và thanh toán',
+    description: 'Theo dõi lịch thuê, trạng thái vận hành, thanh toán và quyết toán',
     isLoading,
     showLoadingOverlay: isFetching,
-    onPaginationChange,
+    onPaginationChange: tableState.onPaginationChange,
     onRowSelectionChange: setRowSelection,
-    onSortingChange,
-    onColumnFiltersChange,
-    onGlobalFilterChange,
+    onSortingChange: tableState.onSortingChange,
+    onColumnFiltersChange: tableState.onColumnFiltersChange,
+    onGlobalFilterChange: tableState.onGlobalFilterChange,
     renderToolbarActions: () => (
       <div className="flex flex-wrap items-center gap-2">
         <DateTimeRangePicker
@@ -128,16 +119,23 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
           allowPastDates
           className="w-full sm:w-[320px]"
         />
-        <Button onClick={() => setOpen('create')}>
-          <IconPlus className="mr-1.5 size-4" />
-          Tạo đơn thuê
-        </Button>
+        <ProtectedAction permission={PermissionCode.OrdersCreate}>
+          <Button
+            onClick={() => {
+              setCurrentRow(null);
+              setOpen('create');
+            }}
+          >
+            <IconPlus aria-hidden="true" data-icon="inline-start" />
+            Tạo đơn thuê
+          </Button>
+        </ProtectedAction>
         <Button
           variant="outline"
           disabled={isFetching}
           onClick={() => void refetch()}
         >
-          <IconRefresh className="mr-1.5 size-4" />
+          <IconRefresh aria-hidden="true" data-icon="inline-start" />
           Làm mới
         </Button>
       </div>
@@ -145,4 +143,4 @@ export const useRentalOrdersLogic = (): IRentalOrdersLogic => {
   });
 
   return { table };
-};
+}

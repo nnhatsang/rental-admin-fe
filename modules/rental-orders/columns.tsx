@@ -1,193 +1,275 @@
-﻿'use client';
+'use client';
 
-import { BadgeCustom } from '@/components/shared/badge-custom';
 import { ProtectedAction } from '@/components/shared/protected-action';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import {
-  IconArrowBack,
-  IconCreditCard,
   IconDots,
   IconEdit,
   IconEye,
   IconPackageExport,
   IconPackageImport,
-  IconTrash,
+  IconReceipt,
+  IconRotateClockwise,
+  IconTool,
+  IconWallet,
   IconX,
 } from '@tabler/icons-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
+import { RentalOrderBadge } from './components/status-badge';
+import { sourceLabel } from './constants';
 import {
+  handoverStatusConfig,
   orderStatusConfig,
   orderStatusOptions,
-  paymentStatusConfig,
-  paymentStatusOptions,
-  refundStatusConfig,
-  refundStatusOptions,
   rentalOrderScheduleBadgeConfig,
+  returnStatusConfig,
+  settlementStatusConfig,
+  settlementStatusOptions,
 } from './display-config';
-import { useRentalOrders } from './rental-orders-provider';
-import type { IRentalOrderListItemOut } from './type';
-import {
-  calculateAmountDueAtHandover,
-  calculateOrderOutstandingAmount,
-  calculateRefundDue,
-  calculateRentalOrderSettlementFinancials,
-  canUseRecordPaymentAction,
-  canUseRefundAction,
-  canUseRentalOrderAction,
-  formatRentalDuration,
-  getRentalOrderScheduleBadges,
-  shouldShowRecordPaymentAction,
-  shouldShowRefundAction,
-  shouldShowRentalOrderAction,
-} from './utils';
+import { formatRentalDuration, getRentalOrderScheduleBadge } from './display-utils';
+import { useRentalOrders, type RentalOrderDialogType } from './rental-orders-provider';
+import type { RentalOrderListItem } from './model';
 
-function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) {
-  const { setOpen, setCurrentRow } = useRentalOrders();
+function useCurrentTime() {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return now;
+}
+
+function CodeCell({ order }: { order: RentalOrderListItem }) {
+  return (
+    <div className="min-w-[135px]">
+      <div className="font-medium">{order.code}</div>
+      <div className="text-xs text-muted-foreground">{formatDate(order.createdAt, 'shortDateTime')}</div>
+      <Badge variant="outline" className="mt-1">
+        {sourceLabel[order.source]}
+      </Badge>
+    </div>
+  );
+}
+
+function RentalPeriodCell({ order }: { order: RentalOrderListItem }) {
+  const now = useCurrentTime();
+  const scheduleBadge = getRentalOrderScheduleBadge(order, now);
+
+  return (
+    <div className="min-w-[210px] text-sm">
+      <div className="font-medium">{formatDate(order.startDate, 'shortDateTime')}</div>
+      <div className="text-muted-foreground">{formatDate(order.endDate, 'shortDateTime')}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{formatRentalDuration(order.startDate, order.endDate)}</div>
+      {scheduleBadge ? (
+        <RentalOrderBadge
+          config={rentalOrderScheduleBadgeConfig[scheduleBadge.kind]}
+          label={scheduleBadge.label}
+          className="mt-1"
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function OperationStatusCell({ order }: { order: RentalOrderListItem }) {
+  return (
+    <div className="min-w-[170px] grid gap-1">
+      <RentalOrderBadge config={orderStatusConfig[order.status]} />
+      <div className="text-xs text-muted-foreground">
+        Bàn giao: {handoverStatusConfig[order.handoverStatus].label}
+      </div>
+      <div className="text-xs text-muted-foreground">
+        Trả máy: {returnStatusConfig[order.returnStatus].label}
+      </div>
+    </div>
+  );
+}
+
+function SettlementCell({ order }: { order: RentalOrderListItem }) {
+  return (
+    <div className="min-w-[165px] grid gap-1">
+      <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
+      <div className="text-xs text-muted-foreground">
+        Đã thu {formatCurrency(order.paidTotal)} / {formatCurrency(order.totalCustomerObligation)}
+      </div>
+      {order.bookingHoldTotal > 0 ? (
+        <div className="text-xs text-muted-foreground">
+          Giữ lịch {formatCurrency(order.bookingHoldTotal)}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DueCell({ order }: { order: RentalOrderListItem }) {
+  if (order.refundDue > 0) {
+    return (
+      <div className="min-w-[135px]">
+        <RentalOrderBadge config={settlementStatusConfig.REFUND_DUE} label="Cần hoàn" />
+        <div className="mt-1 font-medium">{formatCurrency(order.refundDue)}</div>
+      </div>
+    );
+  }
+
+  if (order.additionalChargeDue > 0) {
+    return (
+      <div className="min-w-[135px]">
+        <RentalOrderBadge config={settlementStatusConfig.PAYMENT_DUE} label="Thu thêm" />
+        <div className="mt-1 font-medium">{formatCurrency(order.additionalChargeDue)}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-w-[135px]">
+      <RentalOrderBadge
+        config={order.amountDueBeforeHandover > 0 ? handoverStatusConfig.PENDING_PAYMENT : handoverStatusConfig.READY}
+        label={order.amountDueBeforeHandover > 0 ? 'Còn trước giao' : 'Đủ điều kiện giao'}
+      />
+      <div className="mt-1 text-sm text-muted-foreground">
+        {formatCurrency(order.amountDueBeforeHandover)}
+      </div>
+    </div>
+  );
+}
+
+function ActionsCell({ row }: { row: Row<RentalOrderListItem> }) {
+  const { setCurrentRow, setOpen } = useRentalOrders();
   const order = row.original;
-  const canEdit = order.status === 'CREATED' || order.status === 'CONFIRMED';
-  const canRecordPayment = canUseRecordPaymentAction(order);
-  const canHandover = canUseRentalOrderAction(order.status, 'handover');
-  const canComplete = canUseRentalOrderAction(order.status, 'complete');
-  const canRefund = canUseRefundAction(order);
-  const canCancel = canUseRentalOrderAction(order.status, 'cancel');
-  const canDelete = canUseRentalOrderAction(order.status, 'delete');
+  const open = (dialog: RentalOrderDialogType) => {
+    setCurrentRow(order);
+    setOpen(dialog);
+  };
+
+  const canRecordPayment =
+    order.status !== 'DONE' &&
+    order.status !== 'CANCELLED' &&
+    (order.settlementStatus === 'PAYMENT_DUE' ||
+      order.amountDueBeforeHandover > 0 ||
+      order.additionalChargeDue > 0);
+  const canRefund = order.refundDue > 0;
+  const canInspect = order.status === 'RETURNED' && order.returnStatus === 'RETURNED';
+  const canSettle =
+    order.status === 'RETURNED' &&
+    order.returnStatus === 'INSPECTED' &&
+    order.settlementStatus === 'SETTLED';
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
-          <IconDots className="size-4" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Thao tác đơn ${order.code}`}
+          className="data-[state=open]:bg-muted"
+        >
+          <IconDots aria-hidden="true" data-icon="inline-start" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <ProtectedAction permission={PermissionCode.OrdersRead}>
-          <DropdownMenuItem
-            onClick={() => {
-              setCurrentRow(order);
-              setOpen('view');
-            }}
-          >
-            <IconEye className="mr-2 size-4" />
-            Xem chi tiết
-          </DropdownMenuItem>
-        </ProtectedAction>
-
-        {canEdit ? (
-          <ProtectedAction permission={PermissionCode.OrdersUpdate}>
-            <DropdownMenuItem
-              onClick={() => {
-                setCurrentRow(order);
-                setOpen('edit');
-              }}
-            >
-              <IconEdit className="mr-2 size-4" />
-              Cập nhật đơn thuê
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuGroup>
+          <ProtectedAction permission={PermissionCode.OrdersRead}>
+            <DropdownMenuItem onClick={() => open('detail')}>
+              <IconEye aria-hidden="true" data-icon="inline-start" />
+              Xem chi tiết
             </DropdownMenuItem>
           </ProtectedAction>
+          {order.status === 'CREATED' ? (
+            <ProtectedAction permission={PermissionCode.OrdersUpdate}>
+              <DropdownMenuItem onClick={() => open('update')}>
+                <IconEdit aria-hidden="true" data-icon="inline-start" />
+                Sửa đơn thuê
+              </DropdownMenuItem>
+            </ProtectedAction>
+          ) : null}
+        </DropdownMenuGroup>
+
+        {canRecordPayment ? (
+          <>
+            <DropdownMenuSeparator />
+            <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
+              <DropdownMenuItem onClick={() => open('payment')}>
+                <IconWallet aria-hidden="true" data-icon="inline-start" />
+                Ghi nhận thanh toán
+              </DropdownMenuItem>
+            </ProtectedAction>
+          </>
         ) : null}
 
-        {shouldShowRecordPaymentAction(order) ? (
-          <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
-            <DropdownMenuItem
-              disabled={!canRecordPayment}
-              onClick={() => {
-                if (!canRecordPayment) return;
-                setCurrentRow(order);
-                setOpen('payment');
-              }}
-            >
-              <IconCreditCard className="mr-2 size-4" />
-              Ghi nhận thanh toán
-            </DropdownMenuItem>
-          </ProtectedAction>
+        {order.status === 'CONFIRMED' ? (
+          <>
+            <DropdownMenuSeparator />
+            <ProtectedAction permission={PermissionCode.OrdersUpdateStatus} actionType="disable">
+              <DropdownMenuItem
+                disabled={order.handoverStatus !== 'READY'}
+                onClick={() => open('handover')}
+                title={order.handoverStatus !== 'READY' ? 'Cần thanh toán đủ trước khi bàn giao' : undefined}
+              >
+                <IconPackageExport aria-hidden="true" data-icon="inline-start" />
+                Bàn giao máy
+              </DropdownMenuItem>
+            </ProtectedAction>
+          </>
         ) : null}
 
-        {shouldShowRentalOrderAction(order.status, 'handover') ? (
+        {order.status === 'RENTING' ? (
+          <>
+            <DropdownMenuSeparator />
+            <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
+              <DropdownMenuItem onClick={() => open('return')}>
+                <IconPackageImport aria-hidden="true" data-icon="inline-start" />
+                Nhận trả máy
+              </DropdownMenuItem>
+            </ProtectedAction>
+          </>
+        ) : null}
+
+        {canInspect || canSettle ? <DropdownMenuSeparator /> : null}
+        {canInspect ? (
           <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
-            <DropdownMenuItem
-              disabled={!canHandover}
-              onClick={() => {
-                if (!canHandover) return;
-                setCurrentRow(order);
-                setOpen('handover');
-              }}
-            >
-              <IconPackageExport className="mr-2 size-4" />
-              Bàn giao & thu cọc
+            <DropdownMenuItem onClick={() => open('inspection')}>
+              <IconTool aria-hidden="true" data-icon="inline-start" />
+              Kiểm tra thiết bị
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
-
-        {shouldShowRentalOrderAction(order.status, 'complete') ? (
+        {canSettle ? (
           <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
-            <DropdownMenuItem
-              disabled={!canComplete}
-              onClick={() => {
-                if (!canComplete) return;
-                setCurrentRow(order);
-                setOpen('complete');
-              }}
-            >
-              <IconPackageImport className="mr-2 size-4" />
-              Nhận trả máy
+            <DropdownMenuItem onClick={() => open('settle')}>
+              <IconReceipt aria-hidden="true" data-icon="inline-start" />
+              Đóng đơn
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
 
-        {shouldShowRefundAction(order) ? (
-          <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
-            <DropdownMenuItem
-              disabled={!canRefund}
-              onClick={() => {
-                if (!canRefund) return;
-                setCurrentRow(order);
-                setOpen('refund');
-              }}
-            >
-              <IconArrowBack className="mr-2 size-4" />
+        {canRefund || order.status === 'CREATED' || order.status === 'CONFIRMED' ? <DropdownMenuSeparator /> : null}
+        {canRefund ? (
+          <ProtectedAction permission={PermissionCode.OrdersRefund}>
+            <DropdownMenuItem onClick={() => open('refund')}>
+              <IconRotateClockwise aria-hidden="true" data-icon="inline-start" />
               Hoàn tiền
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
-
-        {shouldShowRentalOrderAction(order.status, 'cancel') ? (
+        {order.status === 'CREATED' || order.status === 'CONFIRMED' ? (
           <ProtectedAction permission={PermissionCode.OrdersCancel}>
-            <DropdownMenuItem
-              disabled={!canCancel}
-              onClick={() => {
-                if (!canCancel) return;
-                setCurrentRow(order);
-                setOpen('cancel');
-              }}
-            >
-              <IconX className="mr-2 size-4" />
+            <DropdownMenuItem variant="destructive" onClick={() => open('cancel')}>
+              <IconX aria-hidden="true" data-icon="inline-start" />
               Hủy đơn
-            </DropdownMenuItem>
-          </ProtectedAction>
-        ) : null}
-
-        {shouldShowRentalOrderAction(order.status, 'delete') ? (
-          <ProtectedAction permission={PermissionCode.OrdersCancel}>
-            <DropdownMenuItem
-              disabled={!canDelete}
-              onClick={() => {
-                if (!canDelete) return;
-                setCurrentRow(order);
-                setOpen('delete');
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <IconTrash className="mr-2 size-4" />
-              Xóa đơn
             </DropdownMenuItem>
           </ProtectedAction>
         ) : null}
@@ -196,73 +278,36 @@ function RentalOrderActionsCell({ row }: { row: Row<IRentalOrderListItemOut> }) 
   );
 }
 
-export const columns: ColumnDef<IRentalOrderListItemOut>[] = [
+export const columns: ColumnDef<RentalOrderListItem>[] = [
   {
     accessorKey: 'code',
     header: 'Mã đơn',
-    cell: ({ row }) => {
-      const order = row.original;
-
-      return (
-        <div className="min-w-[150px]">
-          <div className="font-medium whitespace-nowrap">{order.code}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</div>
-          <div className={cn('text-xs font-bold', order.source === 'ADMIN' ? 'text-primary' : 'text-second')}>
-            {order.source}
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }) => <CodeCell order={row.original} />,
     enableColumnFilter: false,
   },
   {
     id: 'customer',
     header: 'Khách hàng',
     cell: ({ row }) => (
-      <div>
-        <div className="text-sm font-medium">{row.original.customerSnapshot.name ?? '-'}</div>
-        <div className="text-xs text-muted-foreground">{row.original.customerSnapshot.phone ?? '-'}</div>
+      <div className="min-w-[155px]">
+        <div className="font-medium">{row.original.customerSnapshot.name}</div>
+        <div className="text-xs text-muted-foreground">{row.original.customerSnapshot.phone ?? '—'}</div>
       </div>
     ),
     enableSorting: false,
+    enableColumnFilter: false,
   },
   {
-    id: 'rentalPeriod',
+    id: 'period',
     header: 'Lịch thuê',
-    cell: ({ row }) => {
-      const order = row.original;
-      const scheduleBadges = getRentalOrderScheduleBadges(order);
-
-      return (
-        <div className="flex flex-col gap-1">
-          <div className="whitespace-nowrap text-sm">
-            {formatDate(order.startDate)} → {formatDate(order.endDate)}
-          </div>
-          <div className="flex max-w-[220px] flex-wrap items-center gap-1">
-            <Badge variant="outline" className="w-fit border-muted-foreground/20 bg-muted text-[11px] text-muted-foreground">
-              {formatRentalDuration({
-                from: new Date(order.startDate),
-                to: new Date(order.endDate),
-              })}
-            </Badge>
-            {scheduleBadges.map((badge) => {
-              const config = rentalOrderScheduleBadgeConfig[badge];
-
-              return (
-                <Badge key={badge} variant="outline" className={cn('w-fit text-[11px]', config.className)}>
-                  {config.label}
-                </Badge>
-              );
-            })}
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }) => <RentalPeriodCell order={row.original} />,
+    enableSorting: false,
+    enableColumnFilter: false,
   },
   {
     accessorKey: 'status',
-    header: 'Trạng thái',
-    cell: ({ row }) => <BadgeCustom status={row.original.status} config={orderStatusConfig} />,
+    header: 'Vận hành',
+    cell: ({ row }) => <OperationStatusCell order={row.original} />,
     meta: {
       label: 'Trạng thái',
       variant: 'select',
@@ -270,215 +315,36 @@ export const columns: ColumnDef<IRentalOrderListItemOut>[] = [
     },
   },
   {
-    accessorKey: 'paymentStatus',
-    header: 'Thanh toán',
-    cell: ({ row }) => {
-      const order = row.original;
-      const handoverDue = calculateAmountDueAtHandover(order);
-      const settlement = calculateRentalOrderSettlementFinancials(order);
-      const helperText =
-        order.status === 'DONE'
-          ? settlement.additionalChargeDue > 0
-            ? `Cần thu thêm ${formatCurrency(settlement.additionalChargeDue)}`
-            : settlement.refundDue > 0
-              ? `Cần hoàn ${formatCurrency(settlement.refundDue)}`
-              : 'Đã quyết toán'
-          : handoverDue > 0
-            ? `Còn khi giao ${formatCurrency(handoverDue)}`
-            : 'Đã đủ yêu cầu';
-
-      return (
-        <div className="min-w-[145px] space-y-1">
-          <BadgeCustom status={order.paymentStatus} config={paymentStatusConfig} />
-          <div className="whitespace-nowrap text-xs text-muted-foreground">{helperText}</div>
-        </div>
-      );
-    },
-    meta: {
-      label: 'Thanh toán',
-      variant: 'select',
-      options: paymentStatusOptions,
-    },
-  },
-  {
-    accessorKey: 'rentalFeeTotal',
-    header: 'Doanh thu thuê',
-    cell: ({ row }) => {
-      const order = row.original;
-      const settlement = calculateRentalOrderSettlementFinancials(order);
-      const rentalFee = order.rentalFeeTotal ?? 0;
-      const deliveryFee = order.deliveryFeeTotal ?? 0;
-      const discount = order.discountTotal ?? 0;
-
-      return (
-        <div className="min-w-[165px]">
-          <div className="whitespace-nowrap text-sm font-medium">{formatCurrency(settlement.rentalRevenueTotal)}</div>
-          <div className="whitespace-nowrap text-xs text-muted-foreground">
-            Thuê {formatCurrency(rentalFee)}
-            {deliveryFee > 0 ? <> · Giao {formatCurrency(deliveryFee)}</> : null}
-            {discount > 0 ? <> · Giảm {formatCurrency(discount)}</> : null}
-          </div>
-        </div>
-      );
-    },
-    // enableSorting: false,
-    enableColumnFilter: false,
-  },
-  {
-    accessorKey: 'paidTotal',
-    header: 'Đã thu',
-    cell: ({ row }) => {
-      const order = row.original;
-      const paidTotal = order.paidTotal ?? 0;
-      const bookingHoldTotal = order.bookingHoldTotal ?? 0;
-
-      return (
-        <div className="min-w-[120px] whitespace-nowrap">
-          <div className="text-sm font-medium">{formatCurrency(paidTotal)}</div>
-          <div className="text-xs text-muted-foreground">
-            {bookingHoldTotal > 0 ? `Giữ lịch ${formatCurrency(bookingHoldTotal)}` : 'Chưa có giữ lịch'}
-          </div>
-        </div>
-      );
-    },
-    enableSorting: false,
-    enableColumnFilter: false,
-  },
-  {
-    accessorKey: 'handoverRequiredTotal',
-    header: 'Yêu cầu khi giao',
-    cell: ({ row }) => {
-      const order = row.original;
-      const handoverRequiredTotal = order.handoverRequiredTotal ?? 0;
-      const estimatedRefundTotal = order.estimatedRefundTotal ?? 0;
-
-      return (
-        <div className="min-w-[150px]">
-          <div className="whitespace-nowrap text-sm font-medium">{formatCurrency(handoverRequiredTotal)}</div>
-          <div className="whitespace-nowrap text-xs text-muted-foreground">
-            Hoàn dự kiến {formatCurrency(estimatedRefundTotal)}
-          </div>
-        </div>
-      );
-    },
-    enableSorting: false,
-    enableColumnFilter: false,
-  },
-  {
-    id: 'amountDue',
+    accessorKey: 'settlementStatus',
     header: 'Quyết toán',
-    cell: ({ row }) => {
-      const order = row.original;
-      const amount = calculateOrderOutstandingAmount(order);
-      const handoverDue = calculateAmountDueAtHandover(order);
-      const settlement = calculateRentalOrderSettlementFinancials(order);
-      const helperText =
-        order.status === 'DONE'
-          ? settlement.additionalChargeDue > 0
-            ? 'Cần thu thêm'
-            : settlement.refundDue > 0
-              ? 'Cần hoàn'
-              : 'Đã quyết toán'
-          : order.status === 'CREATED'
-            ? 'Giữ lịch'
-            : handoverDue > 0
-              ? `Khi giao ${formatCurrency(handoverDue)}`
-              : 'Đã đủ';
-
-      return (
-        <div className="min-w-[145px]">
-          <div
-            className={cn(
-              'whitespace-nowrap text-sm font-medium',
-              amount > 0 && 'text-destructive',
-              order.status === 'DONE' && settlement.refundDue > 0 && 'text-primary',
-            )}
-          >
-            {formatCurrency(amount > 0 ? amount : settlement.refundDue)}
-          </div>
-          <div className="whitespace-nowrap text-xs text-muted-foreground">{helperText}</div>
-        </div>
-      );
-    },
-    enableColumnFilter: false,
-    enableSorting: false,
-  },
-  {
-    accessorKey: 'refundStatus',
-    header: 'Hoàn cọc',
-    cell: ({ row }) => {
-      const order = row.original;
-      const refundDue = calculateRefundDue(order);
-      const refundedAmount = order.actualRefundTotal ?? 0;
-      const amountLabel = refundDue > 0 ? 'Cần hoàn' : refundedAmount > 0 ? 'Đã hoàn' : 'Không phát sinh';
-      const amountValue = refundDue > 0 ? refundDue : refundedAmount;
-
-      return (
-        <div className="min-w-[145px] space-y-1">
-          <BadgeCustom status={order.refundStatus} config={refundStatusConfig} />
-          <div className="space-y-0.5">
-            <div className="whitespace-nowrap text-xs text-muted-foreground">{amountLabel}</div>
-            <div
-              className={cn(
-                'whitespace-nowrap text-sm font-medium',
-                refundDue > 0 ? 'text-primary' : 'text-muted-foreground',
-              )}
-            >
-              {amountValue > 0 ? formatCurrency(amountValue) : '—'}
-            </div>
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }) => <SettlementCell order={row.original} />,
     meta: {
-      label: 'Hoàn cọc',
+      label: 'Quyết toán',
       variant: 'select',
-      options: refundStatusOptions,
+      options: settlementStatusOptions,
     },
   },
   {
-    id: 'extraFees',
-    header: 'Phí phát sinh',
-    cell: ({ row }) => {
-      const lateFee = row.original.lateFeeTotal ?? 0;
-      const damageFee = row.original.damageFeeTotal ?? 0;
-      const compensationFee = row.original.compensationFeeTotal ?? 0;
-      const amount = calculateRentalOrderSettlementFinancials(row.original).incidentFeeTotal;
-
-      return (
-        <div className="min-w-[135px] whitespace-nowrap">
-          {amount > 0 ? (
-            <div>
-              <div className="font-medium">+{formatCurrency(amount)}</div>
-              <div className="text-xs text-muted-foreground">
-                {lateFee > 0 ? <>Trễ {formatCurrency(lateFee)}</> : null}
-                {damageFee > 0 ? (
-                  <>
-                    {lateFee > 0 ? ' · ' : ''}Hư hỏng {formatCurrency(damageFee)}
-                  </>
-                ) : null}
-                {compensationFee > 0 ? (
-                  <>
-                    {lateFee + damageFee > 0 ? ' · ' : ''}Bồi thường {formatCurrency(compensationFee)}
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          )}
-        </div>
-      );
-    },
-    enableSorting: false,
+    accessorKey: 'totalCustomerObligation',
+    header: 'Tài chính',
+    cell: ({ row }) => (
+      <div className="min-w-[140px]">
+        <div className="font-medium">{formatCurrency(row.original.totalCustomerObligation)}</div>
+        <div className="text-xs text-muted-foreground">Đã thu {formatCurrency(row.original.paidTotal)}</div>
+      </div>
+    ),
+    enableColumnFilter: false,
+  },
+  {
+    accessorKey: 'amountDueBeforeHandover',
+    header: 'Cần xử lý',
+    cell: ({ row }) => <DueCell order={row.original} />,
+    enableColumnFilter: false,
   },
   {
     id: 'actions',
-    cell: RentalOrderActionsCell,
-    meta: {
-      disableColumnActions: true,
-      isActionsColumn: true,
-    },
-    size: 80,
+    cell: ActionsCell,
+    meta: { disableColumnActions: true, isActionsColumn: true },
+    size: 70,
   },
 ];
