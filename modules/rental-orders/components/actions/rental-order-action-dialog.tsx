@@ -4,10 +4,18 @@ import { CopyText } from '@/components/shared/copy-text';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { useRentalOrderActions } from '../../hooks/mutations';
@@ -40,7 +48,8 @@ const actionTitle: Record<RentalOrderAction, string> = {
   cancel: 'Hủy đơn thuê',
 };
 
-const actionFooterClass = '-mx-4 -mb-4 w-[calc(100%+2rem)] rounded-b-xl p-4';
+const actionFooterClass = 'shrink-0';
+const actionScrollAreaClass = 'h-[60dvh] max-h-[calc(100dvh-220px)] min-h-0';
 
 type AccessoryDraft = {
   name: string;
@@ -59,7 +68,10 @@ type InspectionDraft = {
 };
 
 function accessoryDrafts(snapshot: unknown): AccessoryDraft[] {
-  const text = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) && 'text' in snapshot ? String(snapshot.text ?? '') : '';
+  const text =
+    snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) && 'text' in snapshot
+      ? String(snapshot.text ?? '')
+      : '';
 
   return text
     .split(/[,;\n]+/)
@@ -68,7 +80,15 @@ function accessoryDrafts(snapshot: unknown): AccessoryDraft[] {
     .map((name) => ({ name, expectedQuantity: 1, actualQuantity: 1, status: 'OK' as const, note: '' }));
 }
 
-function ActionOverviewField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+function ActionOverviewField({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn('grid min-w-0 gap-1', className)}>
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -151,7 +171,9 @@ function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
         <span>Bàn giao: {handoverStatusConfig[order.handoverStatus].label}</span>
         <span>Trả máy: {returnStatusConfig[order.returnStatus].label}</span>
         <span>Tạo lúc: {formatDate(order.createdAt, 'shortDateTime')}</span>
-        {scheduleBadge && scheduleConfig ? <RentalOrderBadge config={scheduleConfig} label={scheduleBadge.label} /> : null}
+        {scheduleBadge && scheduleConfig ? (
+          <RentalOrderBadge config={scheduleConfig} label={scheduleBadge.label} />
+        ) : null}
       </div>
     </section>
   );
@@ -228,9 +250,12 @@ export function RentalOrderActionDialog({
   const handleSubmit = () => {
     if (!order || !action) return;
 
-    if (action === 'refund') actions.refund.mutate({ id: order.id, data: { amount, method, note: note || undefined } }, { onSuccess: close });
-    if (action === 'handover') actions.handover.mutate({ id: order.id, data: { note: note || undefined } }, { onSuccess: close });
-    if (action === 'return') actions.returnOrder.mutate({ id: order.id, data: { note: note || undefined } }, { onSuccess: close });
+    if (action === 'refund')
+      actions.refund.mutate({ id: order.id, data: { amount, method, note: note || undefined } }, { onSuccess: close });
+    if (action === 'handover')
+      actions.handover.mutate({ id: order.id, data: { note: note || undefined } }, { onSuccess: close });
+    if (action === 'return')
+      actions.returnOrder.mutate({ id: order.id, data: { note: note || undefined } }, { onSuccess: close });
     if (action === 'inspection') {
       actions.inspect.mutate(
         {
@@ -264,7 +289,7 @@ export function RentalOrderActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl ring-0">
+      <DialogContent className="grid max-h-[calc(100dvh-2rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden sm:max-w-xl ring-0">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -280,56 +305,72 @@ export function RentalOrderActionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {order ? <RentalOrderActionOverview order={order} /> : null}
-
         {order && action === 'payment' ? (
-          <form onSubmit={paymentForm.handleSubmit(handlePayment)} className="grid gap-4">
-            <Field data-invalid={Boolean(paymentForm.formState.errors.amount)}>
-              <FieldLabel htmlFor="rental-order-payment-amount">Số tiền</FieldLabel>
-              <CurrencyInput
-                id="rental-order-payment-amount"
-                value={paymentForm.watch('amount')}
-                min="0.01"
-                aria-invalid={Boolean(paymentForm.formState.errors.amount)}
-                onValueChange={(value) => paymentForm.setValue('amount', value, { shouldDirty: true, shouldValidate: true })}
-              />
-              <FieldError errors={[paymentForm.formState.errors.amount]} />
-            </Field>
-            <Field>
-              <FieldLabel>Phương thức</FieldLabel>
-              <Select value={paymentForm.watch('method')} onValueChange={(value: PaymentFormValues['method']) => paymentForm.setValue('method', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CASH">Tiền mặt</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
-                  <SelectItem value="CARD">Thẻ</SelectItem>
-                  <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel>Trạng thái giao dịch</FieldLabel>
-              <Select value={paymentForm.watch('status')} onValueChange={(value: PaymentFormValues['status']) => paymentForm.setValue('status', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SUCCESS">Đã thành công</SelectItem>
-                  <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel>Mã tham chiếu</FieldLabel>
-              <Input {...paymentForm.register('referenceCode')} />
-            </Field>
-            <Field>
-              <FieldLabel>Ghi chú</FieldLabel>
-              <Textarea {...paymentForm.register('note')} />
-            </Field>
+          <form onSubmit={paymentForm.handleSubmit(handlePayment)} className="grid min-h-0 gap-4">
+            <ScrollArea className={actionScrollAreaClass}>
+              <div className="grid gap-4 py-1">
+                <RentalOrderActionOverview order={order} />
+                <Field data-invalid={Boolean(paymentForm.formState.errors.amount)}>
+                  <FieldLabel htmlFor="rental-order-payment-amount">Số tiền</FieldLabel>
+                  <CurrencyInput
+                    id="rental-order-payment-amount"
+                    value={paymentForm.watch('amount')}
+                    min="0.01"
+                    aria-invalid={Boolean(paymentForm.formState.errors.amount)}
+                    onValueChange={(value) =>
+                      paymentForm.setValue('amount', value, { shouldDirty: true, shouldValidate: true })
+                    }
+                  />
+                  <FieldError errors={[paymentForm.formState.errors.amount]} />
+                </Field>
+                <Field>
+                  <FieldLabel>Phương thức</FieldLabel>
+                  <Select
+                    value={paymentForm.watch('method')}
+                    onValueChange={(value: PaymentFormValues['method']) => paymentForm.setValue('method', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CASH">Tiền mặt</SelectItem>
+                      <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
+                      <SelectItem value="CARD">Thẻ</SelectItem>
+                      <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
+                      <SelectItem value="OTHER">Khác</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Trạng thái giao dịch</FieldLabel>
+                  <Select
+                    value={paymentForm.watch('status')}
+                    onValueChange={(value: PaymentFormValues['status']) => paymentForm.setValue('status', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SUCCESS">Đã thành công</SelectItem>
+                      <SelectItem value="PENDING">Chờ xác nhận</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Mã tham chiếu</FieldLabel>
+                  <Input {...paymentForm.register('referenceCode')} />
+                </Field>
+                <Field>
+                  <FieldLabel>Ghi chú</FieldLabel>
+                  <Textarea {...paymentForm.register('note')} />
+                </Field>
+                {currentError ? (
+                  <div className="text-sm text-destructive">
+                    Thao tác chưa thành công. Backend đã từ chối yêu cầu theo trạng thái hoặc số tiền hiện tại.
+                  </div>
+                ) : null}
+              </div>
+            </ScrollArea>
             <DialogFooter className={actionFooterClass}>
               <Button type="button" variant="outline" onClick={close}>
                 Đóng
@@ -342,137 +383,84 @@ export function RentalOrderActionDialog({
           </form>
         ) : null}
 
-        {order && action === 'refund' ? (
-          <div className="grid gap-4">
-            <div className="rounded-lg bg-muted/30 p-3 text-sm">
-              Số tiền có thể hoàn: <strong>{formatCurrency(order.financials.refundDue)}</strong>
-            </div>
-            <Field>
-              <FieldLabel htmlFor="rental-order-refund-amount">Số tiền hoàn</FieldLabel>
-              <CurrencyInput id="rental-order-refund-amount" min="0.01" value={amount} onValueChange={setAmount} />
-            </Field>
-            <Field>
-              <FieldLabel>Phương thức</FieldLabel>
-              <Select value={method} onValueChange={(value) => setMethod(value as typeof method)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CASH">Tiền mặt</SelectItem>
-                  <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
-                  <SelectItem value="CARD">Thẻ</SelectItem>
-                  <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel>Ghi chú</FieldLabel>
-              <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
-            </Field>
-            <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Tạo yêu cầu hoàn" />
-          </div>
-        ) : null}
+        {order && action !== 'payment' ? (
+          <div className="grid min-h-0 gap-4">
+            <ScrollArea className={actionScrollAreaClass}>
+              <div className="grid gap-4 py-1">
+                <RentalOrderActionOverview order={order} />
 
-        {order && (action === 'handover' || action === 'return' || action === 'settle') ? (
-          <div className="grid gap-4">
-            <div className="rounded-lg bg-muted/30 p-4 text-sm">
-              {action === 'handover' ? (
-                <>
-                  Còn phải thu trước bàn giao: <strong>{formatCurrency(order.financials.amountDueBeforeHandover)}</strong>. Chỉ bàn giao khi payment thành công đủ và allocation đủ số lượng.
-                </>
-              ) : action === 'return' ? (
-                'Ghi nhận thời điểm trả máy. Sau bước này cần lập inspection return.'
-              ) : (
-                <>
-                  Thanh toán: <strong>{order.settlementStatus}</strong>. Chỉ đóng đơn khi không còn khoản phải thu hoặc hoàn.
-                </>
-              )}
-            </div>
-            <Field>
-              <FieldLabel>Ghi chú</FieldLabel>
-              <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
-            </Field>
-            <ActionFooter
-              onCancel={close}
-              onConfirm={handleSubmit}
-              pending={pending}
-              label={action === 'handover' ? 'Bàn giao' : action === 'return' ? 'Nhận trả máy' : 'Đóng đơn'}
-            />
-          </div>
-        ) : null}
+                {order && action === 'refund' ? (
+                  <div className="grid gap-4">
+                    <div className="rounded-lg bg-muted/30 p-3 text-sm">
+                      Số tiền có thể hoàn: <strong>{formatCurrency(order.financials.refundDue)}</strong>
+                    </div>
+                    <Field>
+                      <FieldLabel htmlFor="rental-order-refund-amount">Số tiền hoàn</FieldLabel>
+                      <CurrencyInput
+                        id="rental-order-refund-amount"
+                        min="0.01"
+                        value={amount}
+                        onValueChange={setAmount}
+                      />
+                    </Field>
+                    <Field>
+                      <FieldLabel>Phương thức</FieldLabel>
+                      <Select value={method} onValueChange={(value) => setMethod(value as typeof method)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CASH">Tiền mặt</SelectItem>
+                          <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
+                          <SelectItem value="CARD">Thẻ</SelectItem>
+                          <SelectItem value="E_WALLET">Ví điện tử</SelectItem>
+                          <SelectItem value="OTHER">Khác</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Ghi chú</FieldLabel>
+                      <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
 
-        {order && action === 'inspection' ? (
-          <div className="grid max-h-[55dvh] gap-4 overflow-y-auto">
-            {inspectionItems.map((item, index) => (
-              <div key={item.allocationId} className="grid gap-3 rounded-lg bg-muted/20 p-3">
-                <div className="font-medium">{item.serialNumber}</div>
-                <Select
-                  value={item.condition}
-                  onValueChange={(value: RentalInspectionCondition) =>
-                    setInspectionItems((current) => current.map((entry, entryIndex) => (entryIndex === index ? { ...entry, condition: value } : entry)))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GOOD">Tốt</SelectItem>
-                    <SelectItem value="DAMAGED">Hư hỏng</SelectItem>
-                    <SelectItem value="MISSING">Mất máy</SelectItem>
-                    <SelectItem value="NEEDS_MAINTENANCE">Cần bảo trì</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Ghi chú tình trạng"
-                  value={item.note}
-                  onChange={(event) =>
-                    setInspectionItems((current) => current.map((entry, entryIndex) => (entryIndex === index ? { ...entry, note: event.target.value } : entry)))
-                  }
-                />
-                {item.accessories.length ? (
-                  <div className="grid gap-2 rounded-md bg-muted/30 p-2">
-                    <div className="text-xs font-medium text-muted-foreground">Phụ kiện</div>
-                    {item.accessories.map((accessory, accessoryIndex) => (
-                      <div key={`${item.allocationId}-${accessory.name}-${accessoryIndex}`} className="grid gap-2 sm:grid-cols-[1fr_90px_150px]">
-                        <div className="text-sm">
-                          {accessory.name}{' '}
-                          <span className="text-xs text-muted-foreground">(cần {accessory.expectedQuantity})</span>
-                        </div>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={accessory.actualQuantity}
-                          onChange={(event) =>
-                            setInspectionItems((current) =>
-                              current.map((entry, entryIndex) =>
-                                entryIndex !== index
-                                  ? entry
-                                  : {
-                                      ...entry,
-                                      accessories: entry.accessories.map((itemAccessory, itemAccessoryIndex) =>
-                                        itemAccessoryIndex === accessoryIndex
-                                          ? { ...itemAccessory, actualQuantity: Number(event.target.value) }
-                                          : itemAccessory,
-                                      ),
-                                    },
-                              ),
-                            )
-                          }
-                        />
+                {order && (action === 'handover' || action === 'return' || action === 'settle') ? (
+                  <div className="grid gap-4">
+                    <div className="rounded-lg bg-muted/30 p-4 text-sm">
+                      {action === 'handover' ? (
+                        <>
+                          Còn phải thu trước bàn giao:{' '}
+                          <strong>{formatCurrency(order.financials.amountDueBeforeHandover)}</strong>. Chỉ bàn giao khi
+                          payment thành công đủ và allocation đủ số lượng.
+                        </>
+                      ) : action === 'return' ? (
+                        'Ghi nhận thời điểm trả máy. Sau bước này cần lập inspection return.'
+                      ) : (
+                        <>
+                          Thanh toán: <strong>{order.settlementStatus}</strong>. Chỉ đóng đơn khi không còn khoản phải
+                          thu hoặc hoàn.
+                        </>
+                      )}
+                    </div>
+                    <Field>
+                      <FieldLabel>Ghi chú</FieldLabel>
+                      <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {order && action === 'inspection' ? (
+                  <div className="grid gap-4">
+                    {inspectionItems.map((item, index) => (
+                      <div key={item.allocationId} className="grid gap-3 rounded-lg bg-muted/20 p-3">
+                        <div className="font-medium">{item.serialNumber}</div>
                         <Select
-                          value={accessory.status}
-                          onValueChange={(value: RentalAccessoryStatus) =>
+                          value={item.condition}
+                          onValueChange={(value: RentalInspectionCondition) =>
                             setInspectionItems((current) =>
                               current.map((entry, entryIndex) =>
-                                entryIndex !== index
-                                  ? entry
-                                  : {
-                                      ...entry,
-                                      accessories: entry.accessories.map((itemAccessory, itemAccessoryIndex) =>
-                                        itemAccessoryIndex === accessoryIndex ? { ...itemAccessory, status: value } : itemAccessory,
-                                      ),
-                                    },
+                                entryIndex === index ? { ...entry, condition: value } : entry,
                               ),
                             )
                           }
@@ -481,60 +469,169 @@ export function RentalOrderActionDialog({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="OK">Đủ/tốt</SelectItem>
-                            <SelectItem value="MISSING">Thiếu</SelectItem>
+                            <SelectItem value="GOOD">Tốt</SelectItem>
                             <SelectItem value="DAMAGED">Hư hỏng</SelectItem>
+                            <SelectItem value="MISSING">Mất máy</SelectItem>
+                            <SelectItem value="NEEDS_MAINTENANCE">Cần bảo trì</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Input
+                          placeholder="Ghi chú tình trạng"
+                          value={item.note}
+                          onChange={(event) =>
+                            setInspectionItems((current) =>
+                              current.map((entry, entryIndex) =>
+                                entryIndex === index ? { ...entry, note: event.target.value } : entry,
+                              ),
+                            )
+                          }
+                        />
+                        {item.accessories.length ? (
+                          <div className="grid gap-2 rounded-md bg-muted/30 p-2">
+                            <div className="text-xs font-medium text-muted-foreground">Phụ kiện</div>
+                            {item.accessories.map((accessory, accessoryIndex) => (
+                              <div
+                                key={`${item.allocationId}-${accessory.name}-${accessoryIndex}`}
+                                className="grid gap-2 sm:grid-cols-[1fr_90px_150px]"
+                              >
+                                <div className="text-sm">
+                                  {accessory.name}{' '}
+                                  <span className="text-xs text-muted-foreground">
+                                    (cần {accessory.expectedQuantity})
+                                  </span>
+                                </div>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={accessory.actualQuantity}
+                                  onChange={(event) =>
+                                    setInspectionItems((current) =>
+                                      current.map((entry, entryIndex) =>
+                                        entryIndex !== index
+                                          ? entry
+                                          : {
+                                              ...entry,
+                                              accessories: entry.accessories.map((itemAccessory, itemAccessoryIndex) =>
+                                                itemAccessoryIndex === accessoryIndex
+                                                  ? { ...itemAccessory, actualQuantity: Number(event.target.value) }
+                                                  : itemAccessory,
+                                              ),
+                                            },
+                                      ),
+                                    )
+                                  }
+                                />
+                                <Select
+                                  value={accessory.status}
+                                  onValueChange={(value: RentalAccessoryStatus) =>
+                                    setInspectionItems((current) =>
+                                      current.map((entry, entryIndex) =>
+                                        entryIndex !== index
+                                          ? entry
+                                          : {
+                                              ...entry,
+                                              accessories: entry.accessories.map((itemAccessory, itemAccessoryIndex) =>
+                                                itemAccessoryIndex === accessoryIndex
+                                                  ? { ...itemAccessory, status: value }
+                                                  : itemAccessory,
+                                              ),
+                                            },
+                                      ),
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="OK">Đủ/tốt</SelectItem>
+                                    <SelectItem value="MISSING">Thiếu</SelectItem>
+                                    <SelectItem value="DAMAGED">Hư hỏng</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     ))}
+                    <Field>
+                      <FieldLabel>Ghi chú biên bản</FieldLabel>
+                      <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {order && action === 'cancel' ? (
+                  <div className="grid gap-4">
+                    <Field>
+                      <FieldLabel>Lý do hủy</FieldLabel>
+                      <Textarea
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        placeholder="Bắt buộc"
+                      />
+                    </Field>
+                    <Field orientation="horizontal" className="items-start">
+                      <Checkbox
+                        id="rental-order-allow-refund"
+                        checked={allowRefund}
+                        onCheckedChange={(checked) => setAllowRefund(checked === true)}
+                      />
+                      <FieldContent>
+                        <FieldLabel htmlFor="rental-order-allow-refund">Cho phép hoàn tiền</FieldLabel>
+                        <FieldDescription>
+                          Bật nếu khoản đã thu được phép hoàn theo lý do hủy. Số tiền thực tế sẽ được backend kiểm tra
+                          theo chính sách.
+                        </FieldDescription>
+                      </FieldContent>
+                    </Field>
+                    {allowRefund ? (
+                      <Field>
+                        <FieldLabel htmlFor="rental-order-cancel-refund-amount">Số tiền hoàn đề xuất</FieldLabel>
+                        <CurrencyInput
+                          id="rental-order-cancel-refund-amount"
+                          min="0"
+                          value={amount}
+                          onValueChange={setAmount}
+                        />
+                        <FieldDescription>Đã thu: {formatCurrency(order.financials.paidTotal)}.</FieldDescription>
+                      </Field>
+                    ) : null}
+                    <Field>
+                      <FieldLabel>Ghi chú</FieldLabel>
+                      <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {currentError ? (
+                  <div className="text-sm text-destructive">
+                    Thao tác chưa thành công. Backend đã từ chối yêu cầu theo trạng thái hoặc số tiền hiện tại.
                   </div>
                 ) : null}
               </div>
-            ))}
-            <Field>
-              <FieldLabel>Ghi chú biên bản</FieldLabel>
-              <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
-            </Field>
-            <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Lưu kiểm tra" />
-          </div>
-        ) : null}
+            </ScrollArea>
 
-        {order && action === 'cancel' ? (
-          <div className="grid gap-4">
-            <Field>
-              <FieldLabel>Lý do hủy</FieldLabel>
-              <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Bắt buộc" />
-            </Field>
-            <Field orientation="horizontal" className="items-start">
-              <Checkbox
-                id="rental-order-allow-refund"
-                checked={allowRefund}
-                onCheckedChange={(checked) => setAllowRefund(checked === true)}
-              />
-              <FieldContent>
-                <FieldLabel htmlFor="rental-order-allow-refund">Cho phép hoàn tiền</FieldLabel>
-                <FieldDescription>
-                  Bật nếu khoản đã thu được phép hoàn theo lý do hủy. Số tiền thực tế sẽ được backend kiểm tra theo chính sách.
-                </FieldDescription>
-              </FieldContent>
-            </Field>
-            {allowRefund ? (
-              <Field>
-                <FieldLabel htmlFor="rental-order-cancel-refund-amount">Số tiền hoàn đề xuất</FieldLabel>
-                <CurrencyInput id="rental-order-cancel-refund-amount" min="0" value={amount} onValueChange={setAmount} />
-                <FieldDescription>Đã thu: {formatCurrency(order.financials.paidTotal)}.</FieldDescription>
-              </Field>
+            {action === 'refund' ? (
+              <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Tạo yêu cầu hoàn" />
             ) : null}
-            <Field>
-              <FieldLabel>Ghi chú</FieldLabel>
-              <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
-            </Field>
-            <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Hủy đơn" destructive />
+            {action === 'handover' || action === 'return' || action === 'settle' ? (
+              <ActionFooter
+                onCancel={close}
+                onConfirm={handleSubmit}
+                pending={pending}
+                label={action === 'handover' ? 'Bàn giao' : action === 'return' ? 'Nhận trả máy' : 'Đóng đơn'}
+              />
+            ) : null}
+            {action === 'inspection' ? (
+              <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Lưu kiểm tra" />
+            ) : null}
+            {action === 'cancel' ? (
+              <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Hủy đơn" destructive />
+            ) : null}
           </div>
         ) : null}
-
-        {currentError ? <div className="text-sm text-destructive">Thao tác chưa thành công. Backend đã từ chối yêu cầu theo trạng thái hoặc số tiền hiện tại.</div> : null}
       </DialogContent>
     </Dialog>
   );
