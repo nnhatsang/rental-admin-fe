@@ -570,6 +570,7 @@ export function RentalOrderActionDialog({
                         value={reason}
                         onChange={(event) => setReason(event.target.value)}
                         placeholder="Bắt buộc"
+                        required
                       />
                     </Field>
                     <Field orientation="horizontal" className="items-start">
@@ -628,7 +629,14 @@ export function RentalOrderActionDialog({
               <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Lưu kiểm tra" />
             ) : null}
             {action === 'cancel' ? (
-              <ActionFooter onCancel={close} onConfirm={handleSubmit} pending={pending} label="Hủy đơn" destructive />
+              <ActionFooter
+                onCancel={close}
+                onConfirm={handleSubmit}
+                pending={pending}
+                disabled={!reason.trim()}
+                label="Hủy đơn"
+                destructive
+              />
             ) : null}
           </div>
         ) : null}
@@ -641,12 +649,14 @@ function ActionFooter({
   onCancel,
   onConfirm,
   pending,
+  disabled = false,
   label,
   destructive = false,
 }: {
   onCancel: () => void;
   onConfirm: () => void;
   pending: boolean;
+  disabled?: boolean;
   label: string;
   destructive?: boolean;
 }) {
@@ -655,7 +665,7 @@ function ActionFooter({
       <Button type="button" variant="outline" onClick={onCancel}>
         Đóng
       </Button>
-      <Button type="button" variant={destructive ? 'destructive' : 'default'} onClick={onConfirm} disabled={pending}>
+      <Button type="button" variant={destructive ? 'destructive' : 'default'} onClick={onConfirm} disabled={pending || disabled}>
         {pending ? <IconLoader data-icon="inline-start" className="animate-spin" /> : null}
         {label}
       </Button>
