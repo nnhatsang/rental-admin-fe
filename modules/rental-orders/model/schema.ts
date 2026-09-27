@@ -26,6 +26,18 @@ export const quoteFormSchema = z
     }
   });
 
+export const rentalOrderCustomerSnapshotSchema = z.object({
+  name: z.string().trim().min(1, 'Vui lòng nhập tên khách hàng'),
+  phone: z.string().trim(),
+  email: z.string().trim().email('Email không hợp lệ').or(z.literal('')),
+  address: z.string(),
+  identityNumber: z.string().trim(),
+});
+
+export const updateQuoteFormSchema = quoteFormSchema.extend({
+  customerSnapshot: rentalOrderCustomerSnapshotSchema,
+});
+
 export const paymentFormSchema = z.object({
   amount: z.number().positive('Số tiền phải lớn hơn 0'),
   method: z.enum(['CASH', 'BANK_TRANSFER', 'CARD', 'E_WALLET', 'OTHER']),
@@ -35,4 +47,5 @@ export const paymentFormSchema = z.object({
 });
 
 export type QuoteFormValues = z.infer<typeof quoteFormSchema>;
+export type UpdateQuoteFormValues = z.infer<typeof updateQuoteFormSchema>;
 export type PaymentFormValues = z.infer<typeof paymentFormSchema>;

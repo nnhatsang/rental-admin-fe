@@ -7,7 +7,9 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from '@/components/reui/number-field';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Field,
   FieldContent,
@@ -15,11 +17,12 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
   FieldSet,
+  FieldTitle,
 } from '@/components/ui/field';
+import { formatCurrency } from '@/lib/utils';
 import { ProductCombobox, type ProductOption } from '@/modules/asset-units/product-combobox';
-import { IconTrash } from '@tabler/icons-react';
+import { IconPackage, IconTrash } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
 export type RentalOrderItemValue = {
@@ -50,7 +53,13 @@ export function RentalOrderItemsField({
   const [draftProductId, setDraftProductId] = useState('');
   const [draftProduct, setDraftProduct] = useState<ProductOption | null>(null);
   const initialProductsKey = useMemo(
-    () => initialProducts.map((product) => `${product.id}:${product.name}:${product.sku}`).join('|'),
+    () =>
+      initialProducts
+        .map(
+          (product) =>
+            `${product.id}:${product.name}:${product.sku}:${product.rentalPrice ?? ''}:${product.dailyPrice ?? ''}:${product.halfDayPrice ?? ''}`,
+        )
+        .join('|'),
     [initialProducts],
   );
   const initialProductMap = useMemo<Record<string, ProductOption>>(
@@ -95,48 +104,61 @@ export function RentalOrderItemsField({
   };
 
   return (
-    <FieldSet data-invalid={Boolean(error)}>
-      <FieldLegend variant="label">Sản phẩm thuê</FieldLegend>
-      <FieldDescription>
-        Chọn sản phẩm hoặc nhấn Enter để thêm. Số lượng được chỉnh ngay trên từng sản phẩm; hệ thống sẽ tự chọn các máy
-        còn trống theo khoảng thời gian.
-      </FieldDescription>
+    <FieldSet data-invalid={Boolean(error)} className="gap-4">
+      <Field>
+        <FieldLabel htmlFor="rental-order-product-search">Thiết bị thuê</FieldLabel>
+        <ProductCombobox
+          value={draftProductId}
+          selectedProduct={draftProduct}
+          onProductChange={handleProductChange}
+          ariaInvalid={Boolean(error)}
+          placeholder="Tìm theo tên hoặc SKU"
+          fetchEnabled
+          portalContainer={portalContainer}
+        />
+        <FieldDescription>
+          Chọn thiết bị thuê. Số lượng được chỉnh ngay trong danh sách; hệ thống sẽ tự tìm máy trống theo thời gian thuê.
+        </FieldDescription>
+      </Field>
 
-      <div className="grid gap-2">
-        <Field>
-          <FieldLabel htmlFor="rental-order-product-search">Tìm sản phẩm</FieldLabel>
-          <ProductCombobox
-            value={draftProductId}
-            selectedProduct={draftProduct}
-            onProductChange={handleProductChange}
-            ariaInvalid={Boolean(error)}
-            placeholder="Tìm theo tên hoặc SKU"
-            fetchEnabled
-            portalContainer={portalContainer}
-          />
-        </Field>
-      </div>
-
-      <FieldGroup className="gap-2">
+      <FieldGroup className="gap-0 divide-y divide-border/60 rounded-xl bg-muted/20 px-4">
         {value.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-            Chưa có sản phẩm nào được thêm.
-          </div>
+          <Empty className="min-h-32 py-8">
+            <EmptyMedia variant="icon">
+              <IconPackage aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle>Chưa có thiết bị</EmptyTitle>
+              <EmptyDescription>Tìm và chọn sản phẩm ở phía trên để thêm vào đơn thuê.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           value.map((item) => {
             const product = selectedProducts[item.productId];
             const productName = product?.name ?? item.productId;
             const productSku = product?.sku ?? 'Đang tải thông tin sản phẩm';
+            const priceDescription =
+              product?.rentalPrice != null
+                ? `Đơn giá: ${formatCurrency(product.rentalPrice, { noDecimals: true })}`
+                : product?.dailyPrice != null || product?.halfDayPrice != null
+                  ? `Ngày: ${product.dailyPrice != null ? formatCurrency(product.dailyPrice, { noDecimals: true }) : '-'} · Buổi: ${product.halfDayPrice != null ? formatCurrency(product.halfDayPrice, { noDecimals: true }) : '-'}`
+                  : 'Giá sẽ được tính theo thời gian thuê';
 
             return (
-              <Field key={item.productId} orientation="horizontal" className="items-start p-3">
+              <Field key={item.productId} orientation="responsive" className="gap-4 py-4 first:pt-4 last:pb-4">
                 <FieldContent className="gap-1">
-                  <FieldLabel className="font-medium">{productName}</FieldLabel>
-                  <FieldDescription>
-                    {productSku} · Product ID: {item.productId}
+                  <FieldTitle className="text-sm font-semibold">{productName}</FieldTitle>
+                  <FieldDescription className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <Badge variant="secondary" className="font-mono text-[11px]">
+                      SKU {productSku}
+                    </Badge>
+                    <span>{priceDescription}</span>
+                    <span className="text-xs text-muted-foreground/70">ID {item.productId}</span>
                   </FieldDescription>
                 </FieldContent>
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center justify-between gap-2 sm:shrink-0">
+                  <span className="text-xs text-muted-foreground">Số lượng</span>
                   <NumberField
                     id={`rental-order-quantity-${item.productId}`}
                     aria-label={`Số lượng ${productName}`}
@@ -144,7 +166,7 @@ export function RentalOrderItemsField({
                     step={1}
                     value={item.quantity}
                     onValueChange={(nextValue) => updateQuantity(item.productId, nextValue)}
-                    className="w-32"
+                    className="w-28"
                   >
                     <NumberFieldGroup size="sm">
                       <NumberFieldDecrement aria-label={`Giảm số lượng ${productName}`} />

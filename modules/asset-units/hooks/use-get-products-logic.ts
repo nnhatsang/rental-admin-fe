@@ -6,7 +6,10 @@ import type { IProductOut } from '@/modules/products/type';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-export type ProductOption = Pick<IProductOut, 'id' | 'name' | 'sku'>;
+export type ProductOption = Pick<IProductOut, 'id' | 'name' | 'sku'> &
+  Partial<Pick<IProductOut, 'dailyPrice' | 'halfDayPrice'>> & {
+    rentalPrice?: number;
+  };
 
 type UseGetProductsLogicProps = {
   selectedProduct?: ProductOption | null;

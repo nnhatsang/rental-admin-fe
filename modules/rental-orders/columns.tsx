@@ -1,6 +1,7 @@
 'use client';
 
 import { ProtectedAction } from '@/components/shared/protected-action';
+import { CopyText } from '@/components/shared/copy-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,10 +56,12 @@ function useCurrentTime() {
 
 function CodeCell({ order }: { order: RentalOrderListItem }) {
   return (
-    <div className="min-w-[135px]">
-      <div className="font-medium">{order.code}</div>
+    <div className="min-w-[135px] gap-1">
+      <CopyText text={String(order.code)} className="py-1 font-bold text-primary underline">
+        <span>#{order.code}</span>
+      </CopyText>
       <div className="text-xs text-muted-foreground">{formatDate(order.createdAt, 'shortDateTime')}</div>
-      <Badge variant="outline" className="mt-1">
+      <Badge variant="secondary" className="mt-1">
         {sourceLabel[order.source]}
       </Badge>
     </div>
@@ -89,12 +92,8 @@ function OperationStatusCell({ order }: { order: RentalOrderListItem }) {
   return (
     <div className="min-w-[170px] grid gap-1">
       <RentalOrderBadge config={orderStatusConfig[order.status]} />
-      <div className="text-xs text-muted-foreground">
-        Bàn giao: {handoverStatusConfig[order.handoverStatus].label}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        Trả máy: {returnStatusConfig[order.returnStatus].label}
-      </div>
+      <div className="text-xs text-muted-foreground">Bàn giao: {handoverStatusConfig[order.handoverStatus].label}</div>
+      <div className="text-xs text-muted-foreground">Trả máy: {returnStatusConfig[order.returnStatus].label}</div>
     </div>
   );
 }
@@ -104,12 +103,10 @@ function SettlementCell({ order }: { order: RentalOrderListItem }) {
     <div className="min-w-[165px] grid gap-1">
       <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
       <div className="text-xs text-muted-foreground">
-        Đã thu {formatCurrency(order.paidTotal)} / {formatCurrency(order.totalCustomerObligation)}
+        Đã thu {formatCurrency(order.paidTotal)} / Tổng {formatCurrency(order.totalCustomerObligation)}
       </div>
       {order.bookingHoldTotal > 0 ? (
-        <div className="text-xs text-muted-foreground">
-          Giữ lịch {formatCurrency(order.bookingHoldTotal)}
-        </div>
+        <div className="text-xs text-muted-foreground">Đặt lịch {formatCurrency(order.bookingHoldTotal)}</div>
       ) : null}
     </div>
   );
@@ -128,7 +125,7 @@ function DueCell({ order }: { order: RentalOrderListItem }) {
   if (order.additionalChargeDue > 0) {
     return (
       <div className="min-w-[135px]">
-        <RentalOrderBadge config={settlementStatusConfig.PAYMENT_DUE} label="Thu thêm" />
+        <RentalOrderBadge config={settlementStatusConfig.PAYMENT_DUE} label="Cần thu thêm" />
         <div className="mt-1 font-medium">{formatCurrency(order.additionalChargeDue)}</div>
       </div>
     );
@@ -138,11 +135,9 @@ function DueCell({ order }: { order: RentalOrderListItem }) {
     <div className="min-w-[135px]">
       <RentalOrderBadge
         config={order.amountDueBeforeHandover > 0 ? handoverStatusConfig.PENDING_PAYMENT : handoverStatusConfig.READY}
-        label={order.amountDueBeforeHandover > 0 ? 'Còn trước giao' : 'Đủ điều kiện giao'}
+        label={order.amountDueBeforeHandover > 0 ? 'Còn trước bàn giao' : 'Đủ điều kiện bàn giao'}
       />
-      <div className="mt-1 text-sm text-muted-foreground">
-        {formatCurrency(order.amountDueBeforeHandover)}
-      </div>
+      <div className="mt-1 text-sm text-muted-foreground">{formatCurrency(order.amountDueBeforeHandover)}</div>
     </div>
   );
 }
@@ -158,15 +153,11 @@ function ActionsCell({ row }: { row: Row<RentalOrderListItem> }) {
   const canRecordPayment =
     order.status !== 'DONE' &&
     order.status !== 'CANCELLED' &&
-    (order.settlementStatus === 'PAYMENT_DUE' ||
-      order.amountDueBeforeHandover > 0 ||
-      order.additionalChargeDue > 0);
+    (order.settlementStatus === 'PAYMENT_DUE' || order.amountDueBeforeHandover > 0 || order.additionalChargeDue > 0);
   const canRefund = order.refundDue > 0;
   const canInspect = order.status === 'RETURNED' && order.returnStatus === 'RETURNED';
   const canSettle =
-    order.status === 'RETURNED' &&
-    order.returnStatus === 'INSPECTED' &&
-    order.settlementStatus === 'SETTLED';
+    order.status === 'RETURNED' && order.returnStatus === 'INSPECTED' && order.settlementStatus === 'SETTLED';
 
   return (
     <DropdownMenu modal={false}>
@@ -316,28 +307,17 @@ export const columns: ColumnDef<RentalOrderListItem>[] = [
   },
   {
     accessorKey: 'settlementStatus',
-    header: 'Quyết toán',
+    header: 'Thanh toán',
     cell: ({ row }) => <SettlementCell order={row.original} />,
     meta: {
-      label: 'Quyết toán',
+      label: 'Thanh toán',
       variant: 'select',
       options: settlementStatusOptions,
     },
   },
   {
-    accessorKey: 'totalCustomerObligation',
-    header: 'Tài chính',
-    cell: ({ row }) => (
-      <div className="min-w-[140px]">
-        <div className="font-medium">{formatCurrency(row.original.totalCustomerObligation)}</div>
-        <div className="text-xs text-muted-foreground">Đã thu {formatCurrency(row.original.paidTotal)}</div>
-      </div>
-    ),
-    enableColumnFilter: false,
-  },
-  {
     accessorKey: 'amountDueBeforeHandover',
-    header: 'Cần xử lý',
+    header: 'Công nợ',
     cell: ({ row }) => <DueCell order={row.original} />,
     enableColumnFilter: false,
   },

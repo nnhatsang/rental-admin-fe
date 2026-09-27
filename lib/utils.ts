@@ -48,6 +48,18 @@ export function formatCurrency(
 
   return new Intl.NumberFormat(locale, formatOptions).format(amount);
 }
+
+export function parseDate(value?: Date | string | null) {
+  if (!value) return undefined;
+
+  const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+export function toIso(value?: Date | string | null) {
+  return parseDate(value)?.toISOString() ?? '';
+}
+
 export const LOCALE = {
   dateFormats: {
     datetime: 'dd/MM/yyyy HH:mm',

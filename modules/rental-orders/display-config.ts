@@ -1,5 +1,7 @@
 import {
   IconAlertTriangle,
+  IconArrowDown,
+  IconArrowUp,
   IconBan,
   IconCamera,
   IconCheck,
@@ -8,6 +10,7 @@ import {
   IconCreditCard,
   IconPackage,
   IconPackageImport,
+  IconPlus,
   IconRefresh,
   IconTool,
   IconX,
@@ -216,6 +219,36 @@ export const rentalOrderAllocationStatusConfig = {
     className: neutral,
   },
 } satisfies Record<RentalOrderAllocation['status'], RentalStatusDisplayConfig>;
+
+export type RentalOrderItemChangeState = 'UNCHANGED' | 'ADDED' | 'INCREASED' | 'DECREASED' | 'REMOVED';
+
+export const rentalOrderItemChangeStateConfig = {
+  UNCHANGED: {
+    label: 'Giữ nguyên',
+    icon: IconCircleCheck,
+    className: neutral,
+  },
+  ADDED: {
+    label: 'Thêm mới',
+    icon: IconPlus,
+    className: chartBlue,
+  },
+  INCREASED: {
+    label: 'Tăng số lượng',
+    icon: IconArrowUp,
+    className: chartAmber,
+  },
+  DECREASED: {
+    label: 'Giảm số lượng',
+    icon: IconArrowDown,
+    className: chartTeal,
+  },
+  REMOVED: {
+    label: 'Sẽ xóa',
+    icon: IconX,
+    className: danger,
+  },
+} satisfies Record<RentalOrderItemChangeState, DisplayConfig>;
 
 export const rentalOrderPaymentStatusConfig = {
   PENDING: {

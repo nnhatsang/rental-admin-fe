@@ -4,7 +4,7 @@ import useDialogState from '@/hooks/use-dialog-state';
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useMemo, useState } from 'react';
 import type { RentalOrderListItem } from './model';
 
-export type RentalOrderDialogType = 'create' | 'update' | 'detail' | 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel';
+export type RentalOrderDialogType = 'create' | 'update' | 'detail' | 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel' | 'delete-multi';
 
 type RentalOrdersContextValue = {
   open: RentalOrderDialogType | null;

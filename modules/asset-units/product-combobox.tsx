@@ -116,9 +116,13 @@ export function ProductCombobox({
                     <ItemTitle className="truncate text-sm font-medium">{product.name}</ItemTitle>
 
                     <ItemDescription className="text-muted-foreground mt-1 space-y-0.5 text-xs">
-                      {/* <div>SKU: {product.sku}</div> */}
-                      <div>Ngày: {formatCurrency(Number(product.dailyPrice))}</div>
-                      <div>Buổi: {formatCurrency(Number(product.halfDayPrice))}</div>
+                      <div>SKU: {product.sku}</div>
+                      <div>
+                        Ngày: {product.dailyPrice != null ? formatCurrency(Number(product.dailyPrice)) : 'Chưa có giá'}
+                      </div>
+                      <div>
+                        Buổi: {product.halfDayPrice != null ? formatCurrency(Number(product.halfDayPrice)) : 'Chưa có giá'}
+                      </div>
                     </ItemDescription>
                   </ItemContent>
                 </Item>

@@ -214,7 +214,7 @@ export interface CreateRentalOrderInput {
 
 export interface UpdateRentalOrderInput {
   quoteId?: string;
-  customerId?: string;
+  customerSnapshot?: RentalOrderCustomerSnapshot;
   startDate?: string;
   endDate?: string;
   pickupMethod?: 'PICKUP_AT_STORE' | 'DELIVERY';

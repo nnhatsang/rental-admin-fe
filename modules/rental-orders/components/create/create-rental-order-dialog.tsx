@@ -2,6 +2,7 @@
 
 import { DateTimeRangePicker, type DateTimeRange } from '@/components/shared/date-time-range-picker';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -16,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, parseDate, toIso } from '@/lib/utils';
 import { CustomerCombobox } from '@/modules/customers/customer-combobox';
 import { CustomerFormDialog } from '@/modules/customers/dialog';
 import type { ICustomerOut } from '@/modules/customers/type';
@@ -26,20 +27,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RentalOrderItemsField } from '../form/rental-order-items-field';
 import { useCreateRentalOrder, useCreateRentalQuote } from '../../hooks/mutations';
+import { formatRentalDuration } from '../../display-utils';
 import type { RentalOrderQuote } from '../../model';
 import { quoteFormSchema, type QuoteFormValues } from '../../model';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-function toIso(value?: string) {
-  if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+function formatRentalDate(value?: Date) {
+  return value
+    ? value.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', weekday: 'short', year: 'numeric' })
+    : 'Chưa chọn ngày';
 }
 
-function parseDate(value?: string) {
-  if (!value) return undefined;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date;
+function formatRentalTime(value?: Date) {
+  return value ? value.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 }
 
 export function CreateRentalOrderDialog({
@@ -73,6 +73,13 @@ export function CreateRentalOrderDialog({
   const dateRange = useMemo<DateTimeRange>(
     () => ({ from: parseDate(startDate), to: parseDate(endDate) }),
     [endDate, startDate],
+  );
+  const rentalDurationLabel = useMemo(
+    () =>
+      dateRange.from && dateRange.to
+        ? formatRentalDuration(dateRange.from.toISOString(), dateRange.to.toISOString())
+        : null,
+    [dateRange.from, dateRange.to],
   );
   const quoteMutation = useCreateRentalQuote();
   const createMutation = useCreateRentalOrder();
@@ -117,7 +124,7 @@ export function CreateRentalOrderDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-5xl">
+        <DialogContent className="sm:max-w-5xl ring-0">
           <div ref={setPortalContainer} className="contents">
             <DialogHeader>
               <DialogTitle>Tạo đơn thuê</DialogTitle>
@@ -129,7 +136,7 @@ export function CreateRentalOrderDialog({
 
             <form onSubmit={form.handleSubmit(submitQuote)}>
               <ScrollArea className="h-[calc(60dvh-105px)]">
-                <FieldGroup className="gap-5">
+                <FieldGroup className="gap-5 py-2">
                   <div className="grid gap-4 md:grid-cols-2">
                     <Field data-invalid={Boolean(form.formState.errors.customerId)}>
                       <FieldLabel htmlFor="rental-order-customer">Khách hàng</FieldLabel>
@@ -175,7 +182,12 @@ export function CreateRentalOrderDialog({
                         onUpdate={handleDateRangeUpdate}
                         portalContainer={portalContainer}
                       />
-                      <FieldDescription>Chọn giờ nhận và giờ trả theo giờ hoạt động của cửa hàng.</FieldDescription>
+                      <FieldDescription className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span>Chọn giờ nhận và giờ trả theo giờ hoạt động của cửa hàng.</span>
+                        {rentalDurationLabel ? (
+                          <span className="font-medium text-foreground">Thời lượng: {rentalDurationLabel}</span>
+                        ) : null}
+                      </FieldDescription>
                       <FieldError errors={[form.formState.errors.startDate, form.formState.errors.endDate]} />
                     </Field>
                   </div>
@@ -221,40 +233,87 @@ export function CreateRentalOrderDialog({
                   />
 
                   {quote ? (
-                    <div className="grid gap-3 rounded-lg border bg-muted/30 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="font-medium">Quote {quote.quoteId}</div>
-                        <div className="text-xs text-muted-foreground">
-                          Hết hạn {new Date(quote.expiresAt).toLocaleString('vi-VN')}
+                    <section className="grid gap-5 rounded-xl bg-muted/30 p-4 sm:p-5" aria-label="Thông tin báo giá">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="grid gap-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">Quote {quote.quoteId}</Badge>
+                            <span className="text-xs text-muted-foreground">Báo giá tạm tính</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Hết hạn {new Date(quote.expiresAt).toLocaleString('vi-VN')}
+                          </p>
+                        </div>
+                        <Badge variant={quote.availability.available ? 'secondary' : 'destructive'}>
+                          {quote.availability.available ? 'Đủ máy trống' : 'Thiếu máy trống'}
+                        </Badge>
+                      </div>
+
+                      <div className="grid gap-3 divide-y divide-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+                        <div className="grid gap-1 pb-3 sm:pr-5 sm:pb-0">
+                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Khoảng thuê</span>
+                          <span className="font-medium">
+                            {formatRentalDate(dateRange.from)} → {formatRentalDate(dateRange.to)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatRentalTime(dateRange.from)} → {formatRentalTime(dateRange.to)}
+                          </span>
+                        </div>
+                        <div className="grid gap-1 pt-3 sm:pl-5 sm:pt-0">
+                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Thời lượng thuê</span>
+                          <span className="font-medium">{rentalDurationLabel ?? 'Chưa đủ dữ liệu thời gian'}</span>
+                          <span className="text-sm text-muted-foreground">Thời lượng được dùng để tính giá thuê theo chính sách.</span>
                         </div>
                       </div>
-                      <div className="grid gap-2 text-sm">
+
+                      <div className="grid gap-0 divide-y divide-border/60">
                         {quote.lines.map((line) => (
-                          <div key={line.productId} className="flex flex-wrap items-center justify-between gap-2">
-                            <span>
-                              {line.productName} · {line.sku} × {line.quantity}
-                            </span>
-                            <strong>{formatCurrency(line.lineRentalTotal)}</strong>
+                          <div key={line.productId} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                            <div className="grid min-w-0 gap-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="truncate font-medium">{line.productName}</span>
+                                <Badge variant="secondary" className="font-mono text-[11px]">
+                                  {line.sku}
+                                </Badge>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {line.quantity} sản phẩm · {line.pricingLabel}
+                              </span>
+                            </div>
+                            <strong className="tabular-nums">{formatCurrency(line.lineRentalTotal)}</strong>
                           </div>
                         ))}
                       </div>
-                      <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-5">
-                        <div>
-                          Tiền thuê <strong>{formatCurrency(quote.summary.rentalFeeTotal)}</strong>
+
+                      <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-1">
+                          <span className="text-xs text-muted-foreground">Tiền thuê</span>
+                          <strong className="tabular-nums">{formatCurrency(quote.summary.rentalFeeTotal)}</strong>
                         </div>
-                        <div>
-                          Giữ lịch <strong>{formatCurrency(quote.summary.bookingHoldTotal)}</strong>
+                        <div className="grid gap-1">
+                          <span className="text-xs text-muted-foreground">Giữ lịch đã thu</span>
+                          <strong className="tabular-nums">{formatCurrency(quote.summary.bookingHoldTotal)}</strong>
                         </div>
-                        <div>
-                          Tiền cọc <strong>{formatCurrency(quote.summary.securityDepositTotal)}</strong>
+                        <div className="grid gap-1">
+                          <span className="text-xs text-muted-foreground">Tiền cọc</span>
+                          <strong className="tabular-nums">{formatCurrency(quote.summary.securityDepositTotal)}</strong>
                         </div>
-                        <div>
-                          Tổng nghĩa vụ <strong>{formatCurrency(quote.summary.totalCustomerObligation)}</strong>
+                        {quote.summary.deliveryFeeTotal > 0 ? (
+                          <div className="grid gap-1">
+                            <span className="text-xs text-muted-foreground">Phí giao máy</span>
+                            <strong className="tabular-nums">{formatCurrency(quote.summary.deliveryFeeTotal)}</strong>
+                          </div>
+                        ) : null}
+                        <div className="grid gap-1">
+                          <span className="text-xs text-muted-foreground">Tổng cần thanh toán</span>
+                          <strong className="tabular-nums">{formatCurrency(quote.summary.totalCustomerObligation)}</strong>
                         </div>
-                        <div>
-                          Còn trước giao <strong>{formatCurrency(quote.summary.amountDueBeforeHandover)}</strong>
+                        <div className="grid gap-1">
+                          <span className="text-xs text-muted-foreground">Còn trước bàn giao</span>
+                          <strong className="tabular-nums text-primary">{formatCurrency(quote.summary.amountDueBeforeHandover)}</strong>
                         </div>
                       </div>
+
                       {quote.availability.available ? (
                         <Field>
                           <FieldLabel htmlFor="rental-order-note">Ghi chú đơn</FieldLabel>
@@ -273,7 +332,7 @@ export function CreateRentalOrderDialog({
                           </AlertDescription>
                         </Alert>
                       )}
-                    </div>
+                    </section>
                   ) : null}
 
                   {quoteMutation.error || createMutation.error ? (

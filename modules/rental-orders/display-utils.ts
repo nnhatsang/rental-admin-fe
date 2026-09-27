@@ -1,3 +1,4 @@
+import { formatDate, parseDate } from '@/lib/utils';
 import type { RentalOrderListItem } from './model';
 
 export type RentalOrderScheduleBadge = {
@@ -21,19 +22,29 @@ const formatRelativeTime = (minutes: number) => {
   return `${remainingMinutes} phút`;
 };
 
-export const formatRentalDuration = (startDate: string, endDate: string) => {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 'Thời gian không hợp lệ';
+export const formatRentalDuration = (startDate?: string, endDate?: string) => {
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  if (!start || !end) return 'Chưa đủ dữ liệu thời gian';
+  if (end.getTime() <= start.getTime()) return 'Thời gian không hợp lệ';
 
-  const totalMinutes = Math.round((end - start) / (60 * 1000));
+  const totalMinutes = Math.round((end.getTime() - start.getTime()) / (60 * 1000));
   const days = Math.floor(totalMinutes / (24 * 60));
   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+  const minutes = totalMinutes % 60;
 
-  if (days > 0 && hours > 0) return `${days} ngày ${hours} giờ`;
-  if (days > 0) return `${days} ngày`;
-  if (hours > 0) return `${hours} giờ`;
-  return `${totalMinutes} phút`;
+  return [
+    days > 0 ? `${days} ngày` : null,
+    hours > 0 ? `${hours} giờ` : null,
+    minutes > 0 ? `${minutes} phút` : null,
+  ].filter(Boolean).join(' ') || 'Dưới 1 phút';
+};
+
+export const formatRentalPeriod = (startDate?: string, endDate?: string) => {
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+  if (!start || !end) return 'Chưa chọn đủ giờ nhận và giờ trả';
+  return `${formatDate(start, 'datetime')} → ${formatDate(end, 'datetime')}`;
 };
 
 export const getRentalOrderScheduleBadge = (

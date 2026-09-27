@@ -1,6 +1,7 @@
 'use client';
 
 import { ProtectedAction } from '@/components/shared/protected-action';
+import { CopyText } from '@/components/shared/copy-text';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +60,8 @@ import { useRentalOrders } from '../../rental-orders-provider';
 const paymentMethodLabel = (method: PaymentMethod) =>
   paymentMethods.find((option) => option.value === method)?.label ?? method;
 
+const detailSurfaceClass = 'bg-card shadow-xs border border-accent shadow-none ring-0';
+
 function DetailMetric({
   label,
   value,
@@ -71,7 +74,7 @@ function DetailMetric({
   valueClassName?: string;
 }) {
   return (
-    <div className="grid gap-1 rounded-md border bg-muted/20 p-3">
+    <div className="grid gap-1 rounded-lg bg-muted/20 p-3">
       <span className="text-xs text-muted-foreground">{label}</span>
       <strong className={cn('text-sm', valueClassName)}>{value}</strong>
       {helper ? <span className="text-xs text-muted-foreground">{helper}</span> : null}
@@ -109,7 +112,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card size="sm">
+        <Card size="sm" className={detailSurfaceClass}>
           <CardHeader>
             <CardTitle>Khách hàng</CardTitle>
             <CardDescription>Thông tin tại thời điểm tạo đơn</CardDescription>
@@ -122,7 +125,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
           </CardContent>
         </Card>
 
-        <Card size="sm">
+        <Card size="sm" className={detailSurfaceClass}>
           <CardHeader>
             <CardTitle>Lịch thuê</CardTitle>
             <CardDescription>Thời gian kế hoạch và thực tế</CardDescription>
@@ -143,7 +146,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
           </CardContent>
         </Card>
 
-        <Card size="sm">
+        <Card size="sm" className={detailSurfaceClass}>
           <CardHeader>
             <CardTitle>Vận hành</CardTitle>
             <CardDescription>
@@ -174,7 +177,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
         </Alert>
       ) : null}
 
-      <Card>
+      <Card className={detailSurfaceClass}>
         <CardHeader>
           <CardTitle>Tài chính</CardTitle>
           <CardDescription>Snapshot tài chính và các khoản cần xử lý hiện tại</CardDescription>
@@ -209,7 +212,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={detailSurfaceClass}>
         <CardHeader>
           <CardTitle>Dòng thuê và allocation</CardTitle>
           <CardDescription>
@@ -258,7 +261,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
               </TableBody>
             </Table>
           ) : (
-            <Empty className="border">
+            <Empty>
               <EmptyHeader>
                 <EmptyTitle>Chưa có dòng thuê</EmptyTitle>
                 <EmptyDescription>Đơn chưa có sản phẩm được ghi nhận.</EmptyDescription>
@@ -268,7 +271,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={detailSurfaceClass}>
         <CardHeader>
           <CardTitle>Biên bản kiểm tra</CardTitle>
           <CardDescription>Thông tin kiểm tra khi bàn giao và nhận trả máy</CardDescription>
@@ -277,7 +280,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
           {order.inspections.length ? (
             <div className="grid gap-3">
               {order.inspections.map((inspection) => (
-                <div key={inspection.id} className="grid gap-2 rounded-lg border p-3">
+                <div key={inspection.id} className="grid gap-2 rounded-lg bg-muted/20 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="font-medium">
                       {inspection.type === 'HANDOVER' ? 'Kiểm tra bàn giao' : 'Kiểm tra khi trả'}
@@ -302,7 +305,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
               ))}
             </div>
           ) : (
-            <Empty className="border">
+            <Empty>
               <EmptyHeader>
                 <EmptyTitle>Chưa có biên bản kiểm tra</EmptyTitle>
                 <EmptyDescription>Biên bản sẽ xuất hiện sau khi bàn giao hoặc nhận trả máy.</EmptyDescription>
@@ -318,7 +321,7 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
 function PaymentsTab({ order }: { order: RentalOrderDetail }) {
   return (
     <div className="grid gap-4">
-      <Card>
+      <Card className={detailSurfaceClass}>
         <CardHeader>
           <CardTitle>Lịch sử thanh toán</CardTitle>
           <CardDescription>{order.payments.length} giao dịch</CardDescription>
@@ -350,7 +353,7 @@ function PaymentsTab({ order }: { order: RentalOrderDetail }) {
               </TableBody>
             </Table>
           ) : (
-            <Empty className="border">
+            <Empty>
               <EmptyHeader>
                 <EmptyTitle>Chưa có thanh toán</EmptyTitle>
                 <EmptyDescription>Giao dịch của đơn sẽ hiển thị ở đây.</EmptyDescription>
@@ -360,7 +363,7 @@ function PaymentsTab({ order }: { order: RentalOrderDetail }) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={detailSurfaceClass}>
         <CardHeader>
           <CardTitle>Lịch sử hoàn tiền</CardTitle>
           <CardDescription>{order.refunds.length} yêu cầu hoàn</CardDescription>
@@ -390,7 +393,7 @@ function PaymentsTab({ order }: { order: RentalOrderDetail }) {
               </TableBody>
             </Table>
           ) : (
-            <Empty className="border">
+            <Empty>
               <EmptyHeader>
                 <EmptyTitle>Chưa có yêu cầu hoàn tiền</EmptyTitle>
                 <EmptyDescription>Không có khoản hoàn tiền nào được ghi nhận.</EmptyDescription>
@@ -405,7 +408,7 @@ function PaymentsTab({ order }: { order: RentalOrderDetail }) {
 
 function TimelineTab({ order }: { order: RentalOrderDetail }) {
   return (
-    <Card>
+    <Card className={detailSurfaceClass}>
       <CardHeader>
         <CardTitle>Lịch sử trạng thái</CardTitle>
         <CardDescription>Theo dõi các lần chuyển trạng thái của đơn</CardDescription>
@@ -431,7 +434,7 @@ function TimelineTab({ order }: { order: RentalOrderDetail }) {
             ))}
           </Timeline>
         ) : (
-          <Empty className="border">
+          <Empty>
             <EmptyHeader>
               <EmptyTitle>Chưa có lịch sử trạng thái</EmptyTitle>
               <EmptyDescription>Các thay đổi workflow sẽ được ghi nhận ở đây.</EmptyDescription>
@@ -453,6 +456,7 @@ export function RentalOrderDetailDialog({
   const { currentRow, setOpen } = useRentalOrders();
   const detailQuery = useGetRentalOrderById(currentRow?.id ?? null, open);
   const order = detailQuery.data;
+  const orderCode = order?.code ?? currentRow?.code;
   const actions = useRentalOrderActions();
   const pendingRefund = order?.refunds.find((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
   const openAction = (action: Parameters<typeof setOpen>[0]) => setOpen(action);
@@ -471,12 +475,20 @@ export function RentalOrderDetailDialog({
     order?.status === 'RETURNED' && order.returnStatus === 'INSPECTED' && order.settlementStatus === 'SETTLED';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} >
       <DialogContent className="sm:max-w-7xl">
-        <DialogHeader className="border-b py-2">
+        <DialogHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="grid gap-1">
-              <DialogTitle>{order?.code ?? currentRow?.code ?? 'Chi tiết đơn thuê'}</DialogTitle>
+              <DialogTitle>
+                {orderCode ? (
+                  <CopyText text={String(orderCode)} className="py-1 font-bold text-primary underline">
+                    <span>#{orderCode}</span>
+                  </CopyText>
+                ) : (
+                  'Chi tiết đơn thuê'
+                )}
+              </DialogTitle>
               <DialogDescription>
                 {order
                   ? `${order.customerSnapshot.name} · tạo lúc ${formatDate(order.createdAt, 'shortDateTime')}`
@@ -520,7 +532,7 @@ export function RentalOrderDetailDialog({
             ) : detailQuery.isLoading ? (
               <DetailLoading />
             ) : (
-              <Empty className="mx-6 my-5 border">
+              <Empty className="mx-6 my-5">
                 <EmptyHeader>
                   <EmptyTitle>Không tìm thấy đơn thuê</EmptyTitle>
                   <EmptyDescription>Đơn có thể đã bị xoá hoặc không còn quyền truy cập.</EmptyDescription>
@@ -530,7 +542,7 @@ export function RentalOrderDetailDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="flex-wrap items-center justify-between gap-2 border-t sm:flex-row">
+        <DialogFooter className="flex-wrap items-center justify-between gap-2 sm:flex-row">
           <div className="flex flex-wrap gap-2">
             {order?.status === 'CREATED' ? (
               <ProtectedAction permission={PermissionCode.OrdersUpdate}>
