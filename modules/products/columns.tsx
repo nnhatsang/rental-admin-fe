@@ -132,6 +132,14 @@ export const columns: ColumnDef<IProductOut>[] = [
     enableColumnFilter: false,
   },
   {
+    accessorKey: 'assetUnitCount',
+    header: productText.TABLE.ASSET_UNIT_COUNT,
+    cell: ({ row }) => <span className="tabular-nums">{row.original.assetUnitCount}</span>,
+    meta: { label: productText.TABLE.ASSET_UNIT_COUNT },
+    enableSorting: false,
+    enableColumnFilter: false,
+  },
+  {
     accessorKey: 'dailyPrice',
     header: productText.TABLE.DAILY_PRICE,
     cell: ({ row }) => <span className="font-medium">{formatProductCurrency(row.original.dailyPrice)}</span>,

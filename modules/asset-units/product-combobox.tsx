@@ -123,6 +123,9 @@ export function ProductCombobox({
                       <div>
                         Buổi: {product.halfDayPrice != null ? formatCurrency(Number(product.halfDayPrice)) : 'Chưa có giá'}
                       </div>
+                      <div>
+                        Số máy: {product.assetUnitCount != null ? product.assetUnitCount : 'Chưa có dữ liệu'}
+                      </div>
                     </ItemDescription>
                   </ItemContent>
                 </Item>

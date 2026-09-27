@@ -73,9 +73,18 @@ export function RentalOrderItemsField({
   }, [initialProductMap]);
 
   const addProduct = (product: ProductOption) => {
-    const nextItems = value.some((item) => item.productId === product.id)
-      ? value.map((item) => (item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item))
-      : [...value, { productId: product.id, quantity: 1 }];
+    const existingItem = value.find((item) => item.productId === product.id);
+    const nextQuantity = (existingItem?.quantity ?? 0) + 1;
+
+    if (product.assetUnitCount !== undefined && nextQuantity > product.assetUnitCount) {
+      setDraftProductId('');
+      setDraftProduct(null);
+      return;
+    }
+
+    const nextItems = existingItem
+      ? value.map((item) => (item.productId === product.id ? { ...item, quantity: nextQuantity } : item))
+      : [...value, { productId: product.id, quantity: nextQuantity }];
 
     onChange(nextItems);
     setSelectedProducts((current) => ({ ...current, [product.id]: product }));
@@ -91,6 +100,8 @@ export function RentalOrderItemsField({
 
   const updateQuantity = (productId: string, nextValue: number | null) => {
     if (nextValue === null || !Number.isInteger(nextValue) || nextValue < 1) return;
+    const maxQuantity = selectedProducts[productId]?.assetUnitCount;
+    if (maxQuantity !== undefined && nextValue > maxQuantity) return;
     onChange(value.map((item) => (item.productId === productId ? { ...item, quantity: nextValue } : item)));
   };
 
@@ -153,6 +164,7 @@ export function RentalOrderItemsField({
                       SKU {productSku}
                     </Badge>
                     <span>{priceDescription}</span>
+                    {product?.assetUnitCount !== undefined ? <span>Tổng máy: {product.assetUnitCount}</span> : null}
                     <span className="text-xs text-muted-foreground/70">ID {item.productId}</span>
                   </FieldDescription>
                 </FieldContent>
@@ -163,6 +175,7 @@ export function RentalOrderItemsField({
                     id={`rental-order-quantity-${item.productId}`}
                     aria-label={`Số lượng ${productName}`}
                     min={1}
+                    max={product?.assetUnitCount}
                     step={1}
                     value={item.quantity}
                     onValueChange={(nextValue) => updateQuantity(item.productId, nextValue)}

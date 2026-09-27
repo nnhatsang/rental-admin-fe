@@ -154,8 +154,16 @@ export function RentalOrderUpdateItemsField({
   const addProduct = (product: ProductOption) => {
     const existingItem = value.find((item) => item.productId === product.id);
     const initialItem = initialItemsById.get(product.id);
+    const nextQuantity = existingItem ? existingItem.quantity + 1 : (initialItem?.quantity ?? 1);
+
+    if (product.assetUnitCount !== undefined && nextQuantity > product.assetUnitCount) {
+      setDraftProductId('');
+      setDraftProduct(null);
+      return;
+    }
+
     const nextItem = existingItem
-      ? { ...existingItem, quantity: existingItem.quantity + 1 }
+      ? { ...existingItem, quantity: nextQuantity }
       : {
           productId: product.id,
           quantity: initialItem?.quantity ?? 1,
@@ -176,6 +184,8 @@ export function RentalOrderUpdateItemsField({
 
   const updateQuantity = (productId: string, nextValue: number | null) => {
     if (nextValue === null || !Number.isInteger(nextValue) || nextValue < 1) return;
+    const maxQuantity = selectedProducts[productId]?.assetUnitCount;
+    if (maxQuantity !== undefined && nextValue > maxQuantity) return;
     onChange(value.map((item) => (item.productId === productId ? { ...item, quantity: nextValue } : item)));
   };
 
@@ -306,6 +316,7 @@ export function RentalOrderUpdateItemsField({
                               id={`rental-order-update-quantity-${row.productId}`}
                               aria-label={`Số lượng ${productName}`}
                               min={1}
+                              max={row.product?.assetUnitCount}
                               step={1}
                               value={row.currentQuantity}
                               disabled={disabled}

@@ -80,6 +80,7 @@ export interface RentalOrderLine {
   productId: string;
   productName: string;
   sku: string;
+  assetUnitCount: number;
   quantity: number;
   unitRentalFee: number;
   unitDepositAmount: number;

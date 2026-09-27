@@ -84,6 +84,7 @@ export const TITLE_PAGE = {
       PRODUCT: 'Sản phẩm',
       CATEGORY: 'Danh mục',
       BRAND: 'Thương hiệu',
+      ASSET_UNIT_COUNT: 'Số lượng máy',
       DAILY_PRICE: 'Giá ngày',
       DEPOSIT_AMOUNT: 'Tiền cọc',
       STATUS: 'Trạng thái',

@@ -44,6 +44,7 @@ export type IProductOut = {
   usageGuide: string | null;
   category: IProductRelationOut | null;
   brand: IProductRelationOut | null;
+  assetUnitCount: number;
   dailyPrice: number;
   halfDayPrice: number;
   hourlyOveragePrice: number | null;

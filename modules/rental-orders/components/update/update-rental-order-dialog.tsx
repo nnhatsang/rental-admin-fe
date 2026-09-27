@@ -278,6 +278,7 @@ export function UpdateRentalOrderDialog({
         id: line.productId,
         name: line.productName,
         sku: line.sku,
+        assetUnitCount: line.assetUnitCount,
         rentalPrice: line.unitRentalFee,
       })) ?? [],
     [order?.lines],
