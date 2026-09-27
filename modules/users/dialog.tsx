@@ -30,10 +30,9 @@ import {
   resetUserPasswordSchema,
   updateUserSchema,
 } from './schema';
-import type { IUserOut } from './type';
+import type { IUpdateUserReq, IUserOut } from './type';
 import { useUsers } from './users-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { IUpdateCustomerReq } from '../customers/type';
 
 type UserFormValues = ICreateUserInput | IUpdateUserInput;
 
@@ -93,7 +92,7 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
       Object.entries(values).filter(([key]) => {
         return dirtyFields[key as keyof UserFormValues];
       }),
-    ) as IUpdateCustomerReq;
+    ) as IUpdateUserReq;
 
     updateMutation.mutate(
       {

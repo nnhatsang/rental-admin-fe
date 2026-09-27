@@ -58,7 +58,7 @@ export interface IUpdateCustomerReq {
   email?: string;
   address?: string;
   identityNumber?: string;
-  socialContact?: string;
+  socialContact: string;
   notes?: string;
 }
 

@@ -36,6 +36,7 @@ export interface RentalOrderCustomerSnapshot {
   email: string | null;
   address: string | null;
   identityNumber: string | null;
+  socialContact: string | null;
 }
 
 export interface RentalOrderListItem {

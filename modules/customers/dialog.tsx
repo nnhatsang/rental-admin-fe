@@ -105,12 +105,15 @@ export function CustomerFormDialog({
       Object.entries(values).filter(([key]) => {
         return dirtyFields[key as keyof ICustomerFormInput];
       }),
-    ) as IUpdateCustomerReq;
+    ) as Partial<IUpdateCustomerReq>;
 
     updateMutation.mutate(
       {
         id: currentRow.id,
-        data: dirtyValues,
+        data: {
+          ...dirtyValues,
+          socialContact: values.socialContact.trim(),
+        },
       },
       { onSuccess: handleClose },
     );

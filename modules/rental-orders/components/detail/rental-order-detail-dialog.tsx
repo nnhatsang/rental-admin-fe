@@ -93,6 +93,27 @@ function DetailField({ label, children }: { label: string; children: React.React
   );
 }
 
+function SocialContactValue({ value }: { value?: string | null }) {
+  const socialContact = value?.trim();
+
+  if (!socialContact) {
+    return <span className="text-muted-foreground">Chưa có</span>;
+  }
+
+  const href = /^https?:\/\//i.test(socialContact) ? socialContact : `https://${socialContact}`;
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="break-all text-primary underline underline-offset-4"
+    >
+      {socialContact}
+    </a>
+  );
+}
+
 function RentalChargeBreakdown({ charges }: { charges: RentalOrderDetail['charges'] }) {
   return (
     <div className="grid gap-3 border-t border-accent/60 pt-4">
@@ -275,6 +296,9 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
             <DetailField label="Họ tên">{order.customerSnapshot.name}</DetailField>
             <DetailField label="Số điện thoại">{order.customerSnapshot.phone ?? '—'}</DetailField>
             <DetailField label="Email">{order.customerSnapshot.email ?? '—'}</DetailField>
+            <DetailField label="Liên hệ mạng xã hội">
+              <SocialContactValue value={order.customerSnapshot.socialContact} />
+            </DetailField>
             <DetailField label="CCCD/Giấy tờ">{order.customerSnapshot.identityNumber ?? '—'}</DetailField>
           </CardContent>
         </Card>
@@ -668,13 +692,13 @@ export function RentalOrderDetailDialog({
         <ScrollArea className="max-h-[calc(83dvh-204px)]">
           <div className="p-1">
             {detailQuery.isError ? (
-              <Alert variant="destructive" className="mx-6 mt-5">
+              <Alert variant="destructive" className="mt-5 w-full">
                 <AlertTitle>Không tải được chi tiết đơn</AlertTitle>
                 <AlertDescription>Vui lòng đóng dialog và thử mở lại.</AlertDescription>
               </Alert>
             ) : order ? (
               <>
-                <Tabs defaultValue="overview" className="gap-4 p">
+                <Tabs defaultValue="overview" className="gap-4">
                   <TabsList className="w-full sm:w-fit">
                     <TabsTrigger value="overview">Tổng quan</TabsTrigger>
                     <TabsTrigger value="payments">Thanh toán</TabsTrigger>

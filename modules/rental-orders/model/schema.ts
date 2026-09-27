@@ -1,3 +1,4 @@
+import { customerSocialContactSchema } from '@/modules/customers/schema';
 import { z } from 'zod';
 
 export const quoteFormSchema = z
@@ -32,6 +33,7 @@ export const rentalOrderCustomerSnapshotSchema = z.object({
   email: z.string().trim().email('Email không hợp lệ').or(z.literal('')),
   address: z.string(),
   identityNumber: z.string().trim(),
+  socialContact: customerSocialContactSchema,
 });
 
 export const updateQuoteFormSchema = quoteFormSchema.extend({

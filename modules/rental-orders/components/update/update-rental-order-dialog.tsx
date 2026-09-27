@@ -56,6 +56,7 @@ function toCustomerSnapshotInput(snapshot: UpdateQuoteFormValues['customerSnapsh
     email: snapshot.email.trim() || null,
     address: snapshot.address.trim() || null,
     identityNumber: snapshot.identityNumber.trim() || null,
+    socialContact: snapshot.socialContact.trim(),
   };
 }
 
@@ -237,6 +238,7 @@ export function UpdateRentalOrderDialog({
         email: '',
         address: '',
         identityNumber: '',
+        socialContact: '',
       },
     },
   });
@@ -264,7 +266,8 @@ export function UpdateRentalOrderDialog({
     dirtyFields.customerSnapshot?.phone ||
     dirtyFields.customerSnapshot?.email ||
     dirtyFields.customerSnapshot?.address ||
-    dirtyFields.customerSnapshot?.identityNumber,
+    dirtyFields.customerSnapshot?.identityNumber ||
+    dirtyFields.customerSnapshot?.socialContact,
   );
   const hasNoteChanges = note !== initialNotes.customerNote || internalNote !== initialNotes.internalNote;
   const hasChanges = hasRentalChanges || hasCustomerSnapshotChanges || hasNoteChanges;
@@ -307,6 +310,7 @@ export function UpdateRentalOrderDialog({
         email: order.customerSnapshot.email ?? '',
         address: order.customerSnapshot.address ?? '',
         identityNumber: order.customerSnapshot.identityNumber ?? '',
+        socialContact: order.customerSnapshot.socialContact ?? '',
       },
     });
     setNote(order.notes.customerNote ?? '');
@@ -486,6 +490,19 @@ export function UpdateRentalOrderDialog({
                             {...form.register('customerSnapshot.email')}
                           />
                           <FieldError errors={[form.formState.errors.customerSnapshot?.email]} />
+                        </Field>
+                        <Field data-invalid={Boolean(form.formState.errors.customerSnapshot?.socialContact)}>
+                          <FieldLabel htmlFor="update-rental-order-customer-social-contact">
+                            Liên hệ mạng xã hội
+                          </FieldLabel>
+                          <Input
+                            id="update-rental-order-customer-social-contact"
+                            placeholder="zalo.me/0900000000"
+                            disabled={!canEdit}
+                            aria-invalid={Boolean(form.formState.errors.customerSnapshot?.socialContact)}
+                            {...form.register('customerSnapshot.socialContact')}
+                          />
+                          <FieldError errors={[form.formState.errors.customerSnapshot?.socialContact]} />
                         </Field>
                         <Field data-invalid={Boolean(form.formState.errors.customerSnapshot?.identityNumber)}>
                           <FieldLabel htmlFor="update-rental-order-customer-identity">CCCD/Giấy tờ</FieldLabel>
