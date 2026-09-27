@@ -574,13 +574,17 @@ function RentalOrderDetailFooterSummary({ order }: { order?: RentalOrderDetail }
     return <div className="min-w-0 flex-1 text-xs text-muted-foreground">Đang tải trạng thái đơn thuê…</div>;
   }
 
-  const pendingRefund = order.refunds.find((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
+  const pendingRefunds = order.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
+  const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
   let message = 'Không còn khoản cần xử lý.';
 
-  if (order.status === 'CANCELLED') {
+  if (pendingRefundTotal > 0) {
+    message =
+      order.status === 'CANCELLED'
+        ? `Đơn đã hủy · đang chờ xác nhận hoàn ${formatCurrency(pendingRefundTotal)}.`
+        : `Đang chờ xác nhận hoàn ${formatCurrency(pendingRefundTotal)}.`;
+  } else if (order.status === 'CANCELLED') {
     message = order.notes.cancelReason ? `Đã hủy: ${order.notes.cancelReason}` : 'Đơn đã được hủy.';
-  } else if (pendingRefund) {
-    message = `Đang chờ xử lý hoàn ${formatCurrency(pendingRefund.amount)}.`;
   } else if (order.financials.additionalChargeDue > 0) {
     message = `Cần thu thêm ${formatCurrency(order.financials.additionalChargeDue)} sau đối soát.`;
   } else if (order.financials.refundDue > 0) {
@@ -613,7 +617,10 @@ export function RentalOrderDetailDialog({
   const order = detailQuery.data;
   const orderCode = order?.code ?? currentRow?.code;
   const actions = useRentalOrderActions();
-  const pendingRefund = order?.refunds.find((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
+  const pendingRefunds = order?.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING') ?? [];
+  const pendingRefund = pendingRefunds[0];
+  const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
+  const remainingRefundDue = order ? Math.max(0, order.financials.refundDue - pendingRefundTotal) : 0;
   const openAction = (action: Parameters<typeof setOpen>[0]) => setOpen(action);
 
   const canRecordPayment = Boolean(
@@ -753,11 +760,11 @@ export function RentalOrderDetailDialog({
                 </Button>
               </ProtectedAction>
             ) : null}
-            {order && order.financials.refundDue > 0 ? (
+            {order && remainingRefundDue > 0 ? (
               <ProtectedAction permission={PermissionCode.OrdersRefund}>
                 <Button variant="outline" onClick={() => openAction('refund')}>
                   <IconRotateClockwise data-icon="inline-start" />
-                  Hoàn tiền
+                  Hoàn thêm {formatCurrency(remainingRefundDue)}
                 </Button>
               </ProtectedAction>
             ) : null}
@@ -771,7 +778,7 @@ export function RentalOrderDetailDialog({
                   }
                 >
                   <IconRotateClockwise data-icon="inline-start" />
-                  Xác nhận hoàn {formatCurrency(pendingRefund.amount)}
+                  Xác nhận đã hoàn {formatCurrency(pendingRefund.amount)}
                 </Button>
               </ProtectedAction>
             ) : null}
