@@ -33,7 +33,7 @@ export const requestUpdateRentalOrder = (id: string, data: UpdateRentalOrderInpu
 export const requestDeleteRentalOrders = (rentalOrderIds: string[]) =>
   request<DefaultResponse<{ success: true }>>({ method: 'DELETE', url: rentalOrdersUrl, data: { rentalOrderIds } });
 
-export const requestCancelRentalOrder = (id: string, data: { reason: string; refundBookingHold?: boolean; refundAmount?: number; note?: string }) =>
+export const requestCancelRentalOrder = (id: string, data: { reason: string; allowRefund?: boolean; refundAmount?: number; note?: string }) =>
   request<DefaultResponse<RentalOrderDetail>>({ method: 'POST', url: `${rentalOrdersUrl}/${id}/cancel`, data });
 
 export const requestRecordRentalOrderPayment = (id: string, data: { amount: number; method: string; status: string; referenceCode?: string; note?: string; idempotencyKey?: string }) =>

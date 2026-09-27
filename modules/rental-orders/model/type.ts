@@ -19,6 +19,16 @@ export type PaymentTransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCE
 export type RentalRefundStatus = 'PENDING' | 'PROCESSING' | 'REFUNDED' | 'FAILED';
 export type RentalInspectionCondition = 'GOOD' | 'DAMAGED' | 'MISSING' | 'NEEDS_MAINTENANCE';
 export type RentalAccessoryStatus = 'OK' | 'MISSING' | 'DAMAGED';
+export type RentalChargeKind =
+  | 'BOOKING_HOLD'
+  | 'RENTAL_FEE'
+  | 'LATE_FEE'
+  | 'DELIVERY_FEE'
+  | 'SECURITY_DEPOSIT'
+  | 'DAMAGE_COMPENSATION'
+  | 'CANCELLATION_FEE'
+  | 'OTHER_CHARGE';
+export type RentalChargeStatus = 'OPEN' | 'PARTIALLY_SETTLED' | 'SETTLED' | 'WAIVED' | 'CANCELLED';
 
 export interface RentalOrderCustomerSnapshot {
   name: string;
@@ -152,7 +162,7 @@ export interface RentalOrderDetail {
   financials: RentalOrderFinancials;
   notes: { customerNote: string | null; internalNote: string | null; cancelReason: string | null };
   lines: RentalOrderLine[];
-  charges: Array<{ id: string; kind: string; amount: number; status: string; refundable: boolean; metadata: unknown }>;
+  charges: Array<{ id: string; kind: RentalChargeKind; amount: number; status: RentalChargeStatus; refundable: boolean; metadata: unknown }>;
   payments: RentalOrderPayment[];
   refunds: RentalOrderRefund[];
   inspections: RentalInspection[];
@@ -178,11 +188,20 @@ export interface RentalOrderQuoteLine {
   appliedTierId: string | null;
 }
 
+export interface RentalOrderAvailabilityConflict {
+  productId: string;
+  productName: string;
+  requestedQuantity: number;
+  availableQuantity: number;
+  reasonCode: 'NOT_ENOUGH_ASSETS_AVAILABLE' | string;
+  message: string;
+}
+
 export interface RentalOrderQuote {
   quoteId: string;
   expiresAt: string;
   policyVersion: string;
-  availability: { available: boolean; conflicts: Array<{ productId: string; reason: string }> };
+  availability: { available: boolean; conflicts: RentalOrderAvailabilityConflict[] };
   lines: RentalOrderQuoteLine[];
   summary: { rentalFeeTotal: number; deliveryFeeTotal: number; bookingHoldTotal: number; securityDepositTotal: number; totalCustomerObligation: number; amountDueAtBooking: number; amountDueBeforeHandover: number };
 }

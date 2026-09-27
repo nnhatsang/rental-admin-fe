@@ -174,7 +174,7 @@ export function CreateRentalOrderDialog({
                         id="rental-order-period"
                         value={dateRange}
                         className="w-full"
-                        updateMode="manual"
+                        updateMode="instant"
                         enableTime
                         allowPastDates={false}
                         open={dateRangeOpen}
@@ -327,8 +327,15 @@ export function CreateRentalOrderDialog({
                       ) : (
                         <Alert variant="destructive">
                           <AlertDescription>
-                            Không đủ máy trống cho yêu cầu này:{' '}
-                            {quote.availability.conflicts.map((conflict) => conflict.reason).join(', ')}
+                            <div className="grid gap-1">
+                              <span>Không đủ máy trống cho yêu cầu này:</span>
+                              {quote.availability.conflicts.map((conflict) => (
+                                <span key={conflict.productId}>
+                                  <strong>{conflict.productName}</strong>: {conflict.message} ({conflict.availableQuantity}/
+                                  {conflict.requestedQuantity} máy trống)
+                                </span>
+                              ))}
+                            </div>
                           </AlertDescription>
                         </Alert>
                       )}

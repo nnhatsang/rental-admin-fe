@@ -5,19 +5,28 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { useRentalOrderActions } from '../../hooks/mutations';
 import { useGetRentalOrderById } from '../../hooks/queries';
 import { paymentFormSchema, type PaymentFormValues } from '../../model';
-import type { RentalAccessoryStatus, RentalInspectionCondition } from '../../model';
+import {
+  handoverStatusConfig,
+  orderStatusConfig,
+  rentalOrderScheduleBadgeConfig,
+  returnStatusConfig,
+  settlementStatusConfig,
+} from '../../display-config';
+import { formatRentalDuration, formatRentalPeriod, getRentalOrderScheduleBadge } from '../../display-utils';
+import type { RentalAccessoryStatus, RentalInspectionCondition, RentalOrderDetail } from '../../model';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { RentalOrderBadge } from '../status-badge';
 
 export type RentalOrderAction = 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel';
 
@@ -59,6 +68,95 @@ function accessoryDrafts(snapshot: unknown): AccessoryDraft[] {
     .map((name) => ({ name, expectedQuantity: 1, actualQuantity: 1, status: 'OK' as const, note: '' }));
 }
 
+function ActionOverviewField({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={cn('grid min-w-0 gap-1', className)}>
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="min-w-0 text-sm font-medium">{children}</div>
+    </div>
+  );
+}
+
+function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
+  const totalQuantity = order.lines.reduce((total, line) => total + line.quantity, 0);
+  const scheduleBadge = getRentalOrderScheduleBadge({
+    status: order.status,
+    startDate: order.rentalPeriod.startDate,
+    endDate: order.rentalPeriod.endDate,
+    isOverdue: order.isOverdue,
+    overdueHours: order.overdueHours,
+  });
+  const scheduleConfig = scheduleBadge ? rentalOrderScheduleBadgeConfig[scheduleBadge.kind] : null;
+  const productSummary = order.lines.map((line) => `${line.productName} × ${line.quantity}`).join(' · ');
+  const fulfillmentLabel =
+    order.fulfillment.pickupMethod === 'DELIVERY'
+      ? `Giao máy${order.fulfillment.deliveryAddress ? ` · ${order.fulfillment.deliveryAddress}` : ''}`
+      : 'Nhận tại cửa hàng';
+
+  return (
+    <section
+      aria-label="Tổng quan đơn thuê"
+      className="mb-4 grid gap-3 rounded-lg  border border-accent/60 bg-muted/10 p-3"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="grid min-w-0 gap-1">
+          <div className="truncate text-sm font-semibold">{order.customerSnapshot.name}</div>
+          <div className="truncate text-xs text-muted-foreground">
+            {order.customerSnapshot.phone || order.customerSnapshot.email || 'Chưa có thông tin liên hệ'}
+          </div>
+        </div>
+        <div className="flex max-w-full flex-wrap justify-end gap-1.5">
+          <RentalOrderBadge config={orderStatusConfig[order.status]} />
+          <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
+        </div>
+      </div>
+
+      <div className="grid gap-3 border-t border-accent/60 pt-3 sm:grid-cols-2">
+        <ActionOverviewField label="Thời gian thuê">
+          <div>{formatRentalPeriod(order.rentalPeriod.startDate, order.rentalPeriod.endDate)}</div>
+          <div className="text-xs font-normal text-muted-foreground">
+            Thời lượng: {formatRentalDuration(order.rentalPeriod.startDate, order.rentalPeriod.endDate)}
+          </div>
+        </ActionOverviewField>
+        <ActionOverviewField label="Nhận máy & số lượng">
+          <div>{fulfillmentLabel}</div>
+          <div className="text-xs font-normal text-muted-foreground">
+            {order.lines.length} sản phẩm · {totalQuantity} thiết bị
+          </div>
+        </ActionOverviewField>
+      </div>
+
+      <ActionOverviewField label="Thiết bị thuê">
+        <div className="line-clamp-2 break-words font-normal">{productSummary || 'Chưa có sản phẩm'}</div>
+      </ActionOverviewField>
+
+      <div className="grid grid-cols-2 gap-3 border-t border-accent/60 pt-3 sm:grid-cols-4">
+        <ActionOverviewField label="Tổng nghĩa vụ" className="sm:col-span-1">
+          {formatCurrency(order.financials.totalCustomerObligation)}
+        </ActionOverviewField>
+        <ActionOverviewField label="Đã thu" className="sm:col-span-1">
+          <span className="text-primary">{formatCurrency(order.financials.paidTotal)}</span>
+        </ActionOverviewField>
+        <ActionOverviewField label="Còn trước giao" className="sm:col-span-1">
+          <span className={order.financials.amountDueBeforeHandover > 0 ? 'text-destructive' : undefined}>
+            {formatCurrency(order.financials.amountDueBeforeHandover)}
+          </span>
+        </ActionOverviewField>
+        <ActionOverviewField label="Tiền cọc" className="sm:col-span-1">
+          {formatCurrency(order.financials.securityDepositTotal)}
+        </ActionOverviewField>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-accent/60 pt-3 text-xs text-muted-foreground">
+        <span>Bàn giao: {handoverStatusConfig[order.handoverStatus].label}</span>
+        <span>Trả máy: {returnStatusConfig[order.returnStatus].label}</span>
+        <span>Tạo lúc: {formatDate(order.createdAt, 'shortDateTime')}</span>
+        {scheduleBadge && scheduleConfig ? <RentalOrderBadge config={scheduleConfig} label={scheduleBadge.label} /> : null}
+      </div>
+    </section>
+  );
+}
+
 export function RentalOrderActionDialog({
   open,
   action,
@@ -81,16 +179,16 @@ export function RentalOrderActionDialog({
   const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState<'CASH' | 'BANK_TRANSFER' | 'CARD' | 'E_WALLET' | 'OTHER'>('BANK_TRANSFER');
   const [reason, setReason] = useState('');
-  const [refundBookingHold, setRefundBookingHold] = useState(false);
+  const [allowRefund, setAllowRefund] = useState(false);
   const [inspectionItems, setInspectionItems] = useState<InspectionDraft[]>([]);
 
   useEffect(() => {
     if (!open || !order) return;
 
-    setAmount(order.financials.refundDue);
+    setAmount(order.financials.refundDue || order.financials.paidTotal);
     setNote('');
     setReason('');
-    setRefundBookingHold(false);
+    setAllowRefund(false);
     setInspectionItems(
       order.lines.flatMap((line) =>
         line.allocations.map((allocation) => ({
@@ -155,7 +253,7 @@ export function RentalOrderActionDialog({
       actions.cancel.mutate(
         {
           id: order.id,
-          data: { reason, refundBookingHold, refundAmount: refundBookingHold ? amount : undefined, note: note || undefined },
+          data: { reason, allowRefund, refundAmount: allowRefund ? amount : undefined, note: note || undefined },
         },
         { onSuccess: close },
       );
@@ -181,6 +279,8 @@ export function RentalOrderActionDialog({
             )}
           </DialogDescription>
         </DialogHeader>
+
+        {order ? <RentalOrderActionOverview order={order} /> : null}
 
         {order && action === 'payment' ? (
           <form onSubmit={paymentForm.handleSubmit(handlePayment)} className="grid gap-4">
@@ -406,14 +506,24 @@ export function RentalOrderActionDialog({
               <FieldLabel>Lý do hủy</FieldLabel>
               <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Bắt buộc" />
             </Field>
-            <Field orientation="horizontal" className="items-center">
-              <Checkbox id="rental-order-refund-booking-hold" checked={refundBookingHold} onCheckedChange={(checked) => setRefundBookingHold(checked === true)} />
-              <FieldLabel htmlFor="rental-order-refund-booking-hold">Hoàn booking hold đã thu</FieldLabel>
+            <Field orientation="horizontal" className="items-start">
+              <Checkbox
+                id="rental-order-allow-refund"
+                checked={allowRefund}
+                onCheckedChange={(checked) => setAllowRefund(checked === true)}
+              />
+              <FieldContent>
+                <FieldLabel htmlFor="rental-order-allow-refund">Cho phép hoàn tiền</FieldLabel>
+                <FieldDescription>
+                  Bật nếu khoản đã thu được phép hoàn theo lý do hủy. Số tiền thực tế sẽ được backend kiểm tra theo chính sách.
+                </FieldDescription>
+              </FieldContent>
             </Field>
-            {refundBookingHold ? (
+            {allowRefund ? (
               <Field>
-                <FieldLabel htmlFor="rental-order-cancel-refund-amount">Số tiền hoàn</FieldLabel>
+                <FieldLabel htmlFor="rental-order-cancel-refund-amount">Số tiền hoàn đề xuất</FieldLabel>
                 <CurrencyInput id="rental-order-cancel-refund-amount" min="0" value={amount} onValueChange={setAmount} />
+                <FieldDescription>Đã thu: {formatCurrency(order.financials.paidTotal)}.</FieldDescription>
               </Field>
             ) : null}
             <Field>

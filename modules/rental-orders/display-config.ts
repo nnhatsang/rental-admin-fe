@@ -18,6 +18,8 @@ import {
 import { toOptions, type DisplayConfig } from '@/types/display-config';
 import type {
   HandoverStatus,
+  RentalChargeKind,
+  RentalChargeStatus,
   PaymentTransactionStatus,
   RentalInspectionCondition,
   RentalOrderAllocation,
@@ -249,6 +251,50 @@ export const rentalOrderItemChangeStateConfig = {
     className: danger,
   },
 } satisfies Record<RentalOrderItemChangeState, DisplayConfig>;
+
+export const rentalOrderChargeKindConfig = {
+  BOOKING_HOLD: { label: 'Giữ lịch' },
+  RENTAL_FEE: { label: 'Tiền thuê' },
+  LATE_FEE: { label: 'Phí trễ hạn' },
+  DELIVERY_FEE: { label: 'Phí giao máy' },
+  SECURITY_DEPOSIT: { label: 'Tiền cọc' },
+  DAMAGE_COMPENSATION: { label: 'Bồi thường hư hỏng' },
+  CANCELLATION_FEE: { label: 'Phí hủy' },
+  OTHER_CHARGE: { label: 'Phí khác' },
+} satisfies Record<RentalChargeKind, Pick<DisplayConfig, 'label'>>;
+
+export const rentalOrderChargeStatusConfig = {
+  OPEN: {
+    label: 'Chưa thanh toán',
+    description: 'Khoản phí đang mở và chưa được thanh toán đủ.',
+    icon: IconClock,
+    className: chartAmber,
+  },
+  PARTIALLY_SETTLED: {
+    label: 'Thanh toán một phần',
+    description: 'Khoản phí đã được thanh toán một phần.',
+    icon: IconAlertTriangle,
+    className: chartAmber,
+  },
+  SETTLED: {
+    label: 'Đã thanh toán',
+    description: 'Khoản phí đã được thanh toán đủ.',
+    icon: IconCircleCheck,
+    className: chartGreen,
+  },
+  WAIVED: {
+    label: 'Đã miễn',
+    description: 'Khoản phí đã được miễn hoặc không còn phải thu.',
+    icon: IconBan,
+    className: neutral,
+  },
+  CANCELLED: {
+    label: 'Đã hủy',
+    description: 'Khoản phí không còn hiệu lực.',
+    icon: IconBan,
+    className: neutral,
+  },
+} satisfies Record<RentalChargeStatus, RentalStatusDisplayConfig>;
 
 export const rentalOrderPaymentStatusConfig = {
   PENDING: {

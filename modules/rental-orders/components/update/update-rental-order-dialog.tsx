@@ -117,8 +117,18 @@ function QuoteSummary({ quote }: { quote: RentalOrderQuote }) {
           <Alert variant="destructive">
             <AlertTitle>Không thể cập nhật theo lịch này</AlertTitle>
             <AlertDescription>
-              {quote.availability.conflicts.map((conflict) => conflict.reason).join(', ') ||
-                'Sản phẩm không còn đủ máy trống.'}
+              <div className="grid gap-1">
+                {quote.availability.conflicts.length ? (
+                  quote.availability.conflicts.map((conflict) => (
+                    <span key={conflict.productId}>
+                      <strong>{conflict.productName}</strong>: {conflict.message} ({conflict.availableQuantity}/
+                      {conflict.requestedQuantity} máy trống)
+                    </span>
+                  ))
+                ) : (
+                  <span>Sản phẩm không còn đủ máy trống.</span>
+                )}
+              </div>
             </AlertDescription>
           </Alert>
         ) : null}
