@@ -66,7 +66,8 @@ export function DataTableToolbar<TData extends RowData>({
   const facetedFilterColumns = table.getAllLeafColumns().filter((column) => column.getCanFilter());
 
   const showGlobalFilter = enableGlobalFilter && positionGlobalFilter !== 'none';
-  const isFiltered = table.getState().columnFilters.some((filter) => hasFilterValue(filter.value));
+  const hasExternalFilters = table.cnTable.hasExternalFilters;
+  const isFiltered = table.getState().columnFilters.some((filter) => hasFilterValue(filter.value)) || hasExternalFilters;
 
   return (
     <>
@@ -89,6 +90,7 @@ export function DataTableToolbar<TData extends RowData>({
               variant="ghost"
               onClick={() => {
                 table.resetColumnFilters();
+                table.cnTable.onClearExternalFilters?.();
               }}
               className="h-8 px-2 lg:px-3"
             >

@@ -114,6 +114,7 @@ Các field thường dùng:
 
 - `variant`: loại filter UI. Hỗ trợ `text`, `select`, `multi-select`, `checkbox`, `range`, `range-slider`, `date`, `date-range`.
 - `options`: danh sách option cho `select` hoặc `multi-select`.
+- `filterOnly`: column chỉ dùng cho filter trên toolbar, tự động ẩn khỏi bảng dữ liệu và menu hiển thị cột.
 - `filterMode`: mode filter mặc định của cột.
 - `enableColumnFilterModes`: bật/tắt menu đổi filter mode riêng cho cột.
 - `columnFilterModeOptions`: giới hạn các mode được chọn.

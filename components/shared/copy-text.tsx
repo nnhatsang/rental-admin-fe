@@ -1,9 +1,9 @@
-
 import { toast } from 'sonner';
 import { useCopyToClipboard } from 'usehooks-ts';
 
 import { cn } from '@/lib/utils';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { useState } from 'react';
 
 type CopyTextProps = {
   text: string;
@@ -15,16 +15,20 @@ type CopyTextProps = {
 
 export function CopyText({ text, children, className, iconClassName, successMessage = 'Đã sao chép' }: CopyTextProps) {
   const [_copiedText, copy] = useCopyToClipboard();
+  const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    copy(text)
-      .then(() => {
-        toast.success(successMessage);
-      })
-      .catch((error) => {
-        console.error('Failed to copy!', error);
-        toast.error('Không thể sao chép');
-      });
+  const handleCopy = async () => {
+    try {
+      await copy(text);
+
+      setCopied(true);
+      toast.success(successMessage);
+
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy!', error);
+      toast.error('Không thể sao chép');
+    }
   };
 
   return (
@@ -34,8 +38,11 @@ export function CopyText({ text, children, className, iconClassName, successMess
       className={cn('inline-flex items-center gap-2 transition-opacity hover:opacity-80', className)}
     >
       {children || <span>{text}</span>}
-      <IconCopy stroke={2} size={16} className={iconClassName}/>
-
+      {copied ? (
+        <IconCheck size={16} strokeWidth={2} className={cn('text-green-500', iconClassName)} />
+      ) : (
+        <IconCopy size={16} strokeWidth={2} className={iconClassName} />
+      )}
     </button>
   );
 }

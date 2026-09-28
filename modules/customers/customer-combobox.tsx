@@ -28,6 +28,7 @@ export type CustomerComboboxProps = {
   selectedCustomer?: CustomerOption | null;
   portalContainer?: HTMLElement | null;
   fetchEnabled?: boolean;
+  classNameContent?: string;
 };
 
 const customerLabel = (customer: Pick<ICustomerOut, 'name' | 'phone'>) =>
@@ -44,6 +45,7 @@ export function CustomerCombobox({
   selectedCustomer,
   portalContainer,
   fetchEnabled = true,
+  classNameContent,
 }: CustomerComboboxProps) {
   const ignoreNextInputChangeRef = useRef(false);
   const [search, setSearch] = useState('');
@@ -103,7 +105,7 @@ export function CustomerCombobox({
       items={customerIds}
       value={selectedValue}
       onValueChange={(nextValue) => {
-        const nextCustomer = nextValue ? customerById.get(nextValue) ?? null : null;
+        const nextCustomer = nextValue ? (customerById.get(nextValue) ?? null) : null;
         setLocalSelectedCustomer(nextCustomer);
         clearSearchAfterSelect();
         onCustomerChange?.(nextCustomer);
@@ -134,10 +136,16 @@ export function CustomerCombobox({
             return (
               <ComboboxItem key={customer.id} value={customer.id}>
                 <Item size="xs" className="p-0">
-                  <ItemContent>
-                    <ItemTitle className="truncate text-sm font-medium">
-                      {customer.email ? `${customer.name} · ${customer.email}` : customer.name}
-                    </ItemTitle>
+                  <ItemContent className={classNameContent}>
+                    {customer.email ? (
+                      <>
+                        <ItemTitle className="truncate text-sm font-medium">{`${customer.name}  `}</ItemTitle>
+                        <ItemTitle className="truncate text-sm font-medium">{`${customer.email} `}</ItemTitle>
+                      </>
+                    ) : (
+                      <ItemTitle className="truncate text-sm font-medium">{`${customer.name} `}</ItemTitle>
+                    )}
+
                     <ItemDescription className="text-muted-foreground mt-1 text-xs">
                       {customer.phone ?? 'Không có số điện thoại'}
                     </ItemDescription>

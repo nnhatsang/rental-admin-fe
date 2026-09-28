@@ -1,5 +1,8 @@
 import type { DefaultParamsRequest } from '@/types/api';
 
+export type RentalOrderSource = 'ADMIN' | 'WEBSITE';
+export type RentalPickupMethod = 'PICKUP_AT_STORE' | 'DELIVERY';
+
 export const RentalOrderStatus = {
   Created: 'CREATED',
   Confirmed: 'CONFIRMED',
@@ -42,7 +45,8 @@ export interface RentalOrderCustomerSnapshot {
 export interface RentalOrderListItem {
   id: string;
   code: string;
-  source: 'ADMIN' | 'WEBSITE';
+  source: RentalOrderSource;
+  pickupMethod: RentalPickupMethod;
   status: RentalOrderStatus;
   handoverStatus: HandoverStatus;
   returnStatus: ReturnStatus;
@@ -149,7 +153,8 @@ export interface RentalInspection {
 export interface RentalOrderDetail {
   id: string;
   code: string;
-  source: 'ADMIN' | 'WEBSITE';
+  source: RentalOrderSource;
+  pickupMethod: RentalPickupMethod;
   status: RentalOrderStatus;
   handoverStatus: HandoverStatus;
   returnStatus: ReturnStatus;
@@ -160,7 +165,7 @@ export interface RentalOrderDetail {
   customerSnapshot: RentalOrderCustomerSnapshot;
   settingsSnapshot: Record<string, unknown>;
   rentalPeriod: { startDate: string; endDate: string; actualPickupDate: string | null; actualReturnDate: string | null };
-  fulfillment: { pickupMethod: 'PICKUP_AT_STORE' | 'DELIVERY'; deliveryAddress: string | null };
+  fulfillment: { pickupMethod: RentalPickupMethod; deliveryAddress: string | null };
   financials: RentalOrderFinancials;
   notes: { customerNote: string | null; internalNote: string | null; cancelReason: string | null };
   lines: RentalOrderLine[];
@@ -211,8 +216,9 @@ export interface RentalOrderQuote {
 export interface IGetRentalOrdersParams extends DefaultParamsRequest {
   status?: RentalOrderStatus;
   settlementStatus?: RentalSettlementStatus;
-  source?: 'ADMIN' | 'WEBSITE';
-  pickupMethod?: 'PICKUP_AT_STORE' | 'DELIVERY';
+  source?: RentalOrderSource;
+  customerId?: string;
+  pickupMethod?: RentalPickupMethod;
   fromDate?: string;
   toDate?: string;
 }
@@ -221,7 +227,7 @@ export interface CreateRentalQuoteInput {
   customerId?: string;
   startDate: string;
   endDate: string;
-  pickupMethod: 'PICKUP_AT_STORE' | 'DELIVERY';
+  pickupMethod: RentalPickupMethod;
   deliveryAddress?: string;
   excludeOrderId?: string;
   items: Array<{ productId: string; quantity: number; note?: string }>;
@@ -238,7 +244,7 @@ export interface UpdateRentalOrderInput {
   customerSnapshot?: RentalOrderCustomerSnapshot;
   startDate?: string;
   endDate?: string;
-  pickupMethod?: 'PICKUP_AT_STORE' | 'DELIVERY';
+  pickupMethod?: RentalPickupMethod;
   deliveryAddress?: string | null;
   items?: Array<{ productId: string; quantity: number; note?: string }>;
   note?: string | null;

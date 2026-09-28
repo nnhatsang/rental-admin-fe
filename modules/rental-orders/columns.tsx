@@ -2,7 +2,6 @@
 
 import { ProtectedAction } from '@/components/shared/protected-action';
 import { CopyText } from '@/components/shared/copy-text';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -29,11 +28,14 @@ import {
 import type { ColumnDef, Row } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
 import { RentalOrderBadge } from './components/status-badge';
-import { sourceLabel } from './constants';
 import {
   handoverStatusConfig,
+  orderSourceConfig,
+  orderSourceOptions,
   orderStatusConfig,
   orderStatusOptions,
+  pickupMethodConfig,
+  pickupMethodOptions,
   rentalOrderScheduleBadgeConfig,
   returnStatusConfig,
   settlementStatusConfig,
@@ -61,9 +63,10 @@ function CodeCell({ order }: { order: RentalOrderListItem }) {
         <span>#{order.code}</span>
       </CopyText>
       <div className="text-xs text-muted-foreground">{formatDate(order.createdAt, 'shortDateTime')}</div>
-      <Badge variant="secondary" className="mt-1">
-        {sourceLabel[order.source]}
-      </Badge>
+      <div className="grid gap-1">
+        <RentalOrderBadge config={orderSourceConfig[order.source]} className="mt-1 w-fit" />
+        <RentalOrderBadge config={pickupMethodConfig[order.pickupMethod]} />
+      </div>
     </div>
   );
 }
@@ -277,6 +280,20 @@ export const columns: ColumnDef<RentalOrderListItem>[] = [
     enableColumnFilter: false,
   },
   {
+    accessorKey: 'source',
+    header: 'Nguồn đơn',
+    meta: {
+      filterOnly: true,
+      label: 'Nguồn đơn',
+      variant: 'select',
+      filterMode: 'equals',
+      options: orderSourceOptions,
+    },
+    enableSorting: false,
+    enableHiding: false,
+    enableColumnFilter: true,
+  },
+  {
     id: 'customer',
     header: 'Khách hàng',
     cell: ({ row }) => (
@@ -294,6 +311,20 @@ export const columns: ColumnDef<RentalOrderListItem>[] = [
     cell: ({ row }) => <RentalPeriodCell order={row.original} />,
     enableSorting: false,
     enableColumnFilter: false,
+  },
+  {
+    accessorKey: 'pickupMethod',
+    header: 'Hình thức nhận',
+    meta: {
+      filterOnly: true,
+      label: 'Hình thức nhận',
+      variant: 'select',
+      filterMode: 'equals',
+      options: pickupMethodOptions,
+    },
+    enableSorting: false,
+    enableHiding: false,
+    enableColumnFilter: true,
   },
   {
     accessorKey: 'status',

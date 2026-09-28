@@ -70,6 +70,7 @@ export interface DataTableFilterOption {
   label: string;
   value: string;
   icon?: React.ComponentType<{ className?: string }>;
+  filterClassName?: string;
 }
 
 /** Các toán tử trong advanced filter. Mỗi cột chỉ dùng được toán tử phù hợp với `meta.variant` của cột đó. */
@@ -134,6 +135,8 @@ declare module '@tanstack/react-table' {
     variant?: FilterVariant;
     /** Danh sách option cho filter `select` / `multi-select`. Nếu bỏ trống, option sẽ được suy ra từ các giá trị unique đã facet. */
     options?: DataTableFilterOption[];
+    /** Column chỉ dùng để render filter trên toolbar, không hiển thị trong bảng dữ liệu. */
+    filterOnly?: boolean;
     /** Filter mode mặc định của cột này, ghi đè mặc định theo variant. */
     filterMode?: FilterMode;
     /** Bật/tắt menu chọn filter mode riêng cho cột này; mặc định dùng theo table. */
@@ -234,6 +237,10 @@ export interface DataTableConfig<TData extends RowData> {
   enableFacetedValues: boolean;
   enableColumnActions: boolean;
   enableColumnFilters: boolean;
+  /** Trạng thái filter nằm ngoài columnFilters của TanStack, ví dụ URL filter custom. */
+  hasExternalFilters: boolean;
+  /** Xóa các filter ngoài cùng với nút reset filter mặc định của bảng. */
+  onClearExternalFilters?: () => void;
   enableColumnFilterModes: boolean;
   enableFilterMatchHighlighting: boolean;
   /** Các column id có cell renderer tự custom, sẽ bỏ qua auto-highlight. */
@@ -413,6 +420,10 @@ export interface UseDataTableOptions<TData extends RowData> extends Omit<TableOp
   enableColumnFilterModes?: boolean;
   /** Highlight phần text khớp tìm kiếm trong cell. Mặc định true. */
   enableFilterMatchHighlighting?: boolean;
+  /** Bật trạng thái filter ngoài bảng để nút reset mặc định hiển thị đúng. */
+  hasExternalFilters?: boolean;
+  /** Callback xóa filter ngoài bảng khi người dùng nhấn reset filter. */
+  onClearExternalFilters?: () => void;
   /** Hiển thị ô global search có thể mở rộng trong toolbar. Mặc định true. */
   enableGlobalFilter?: boolean;
   /** Hiển thị menu chọn mode cho global search (fuzzy/contains/...). Mặc định true. */

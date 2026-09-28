@@ -247,15 +247,20 @@ function SelectFacetedFilter<TData extends RowData, TValue>({
                     {selectedValues.size} đã chọn
                   </Badge>
                 ) : (
-                  selectedOptions.map((option) => (
-                    <Badge
-                      variant="secondary"
-                      key={option.value}
-                      className="h-5 max-w-28 rounded-sm px-1.5 font-normal"
-                    >
-                      <span className="truncate">{option.label}</span>
-                    </Badge>
-                  ))
+                  selectedOptions.map((option) => {
+                    const OptionIcon = option.icon;
+
+                    return (
+                      <Badge
+                        variant="secondary"
+                        key={option.value}
+                        className={cn('h-5 max-w-32 rounded-sm px-1.5 font-normal', option.filterClassName)}
+                      >
+                        {OptionIcon ? <OptionIcon className={cn('size-3.5 shrink-0', option.filterClassName)} /> : null}
+                        <span className="truncate">{option.label}</span>
+                      </Badge>
+                    );
+                  })
                 )}
               </div>
             </>
@@ -302,7 +307,7 @@ function SelectFacetedFilter<TData extends RowData, TValue>({
                     >
                       <CheckIcon className="size-3" />
                     </div>
-                    {OptionIcon && <OptionIcon className="size-4 text-muted-foreground" />}
+                    {OptionIcon && <OptionIcon className={cn('size-4', facetedOption.filterClassName ?? 'text-muted-foreground')} />}
                     <span className="flex-1 truncate">{option.label}</span>
                     {counts.has(option.value) && (
                       <span className="min-w-6 rounded-sm bg-muted px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums text-muted-foreground">

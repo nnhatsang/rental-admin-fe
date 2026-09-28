@@ -3,6 +3,7 @@ import {
   IconArrowDown,
   IconArrowUp,
   IconBan,
+  IconBuildingStore,
   IconCamera,
   IconCheck,
   IconCircleCheck,
@@ -13,6 +14,9 @@ import {
   IconPlus,
   IconRefresh,
   IconTool,
+  IconTruckDelivery,
+  IconWorld,
+  IconShieldCheck,
   IconX,
 } from '@tabler/icons-react';
 import { toOptions, type DisplayConfig } from '@/types/display-config';
@@ -23,7 +27,9 @@ import type {
   PaymentTransactionStatus,
   RentalInspectionCondition,
   RentalOrderAllocation,
+  RentalOrderSource,
   RentalOrderStatus,
+  RentalPickupMethod,
   RentalRefundStatus,
   RentalSettlementStatus,
   ReturnStatus,
@@ -125,6 +131,36 @@ export const orderStatusConfig = {
     className: rentalOrderStatusVisualConfig.DISPUTED.className,
   },
 } satisfies Record<RentalOrderStatus, RentalStatusDisplayConfig>;
+
+export const orderSourceConfig = {
+  ADMIN: {
+    label: 'Admin',
+    icon: IconShieldCheck,
+    className: chartBlue,
+    filterClassName: 'text-blue-600 dark:text-blue-400',
+  },
+  WEBSITE: {
+    label: 'Website',
+    icon: IconWorld,
+    className: chartTeal,
+    filterClassName: 'text-teal-600 dark:text-teal-400',
+  },
+} satisfies Record<RentalOrderSource, DisplayConfig>;
+
+export const pickupMethodConfig = {
+  PICKUP_AT_STORE: {
+    label: 'Nhận tại cửa hàng',
+    icon: IconBuildingStore,
+    className: chartGreen,
+    filterClassName: 'text-emerald-600 dark:text-emerald-400',
+  },
+  DELIVERY: {
+    label: 'Giao máy',
+    icon: IconTruckDelivery,
+    className: chartBlue,
+    filterClassName: 'text-blue-600 dark:text-blue-400',
+  },
+} satisfies Record<RentalPickupMethod, DisplayConfig>;
 
 export const settlementStatusConfig = {
   NOT_STARTED: {
@@ -416,5 +452,36 @@ export const rentalInspectionConditionConfig = {
   },
 } satisfies Record<RentalInspectionCondition, RentalStatusDisplayConfig>;
 
-export const orderStatusOptions = toOptions(orderStatusConfig);
-export const settlementStatusOptions = toOptions(settlementStatusConfig);
+const rentalOrderStatusFilterClassName: Record<RentalOrderStatus, string> = {
+  CREATED: 'text-slate-600 dark:text-slate-400',
+  CONFIRMED: 'text-blue-600 dark:text-blue-400',
+  RENTING: 'text-emerald-600 dark:text-emerald-400',
+  RETURNED: 'text-violet-600 dark:text-violet-400',
+  DONE: 'text-teal-600 dark:text-teal-400',
+  CANCELLED: 'text-slate-500 dark:text-slate-400',
+  DISPUTED: 'text-red-600 dark:text-red-400',
+};
+
+const rentalSettlementFilterClassName: Record<RentalSettlementStatus, string> = {
+  NOT_STARTED: 'text-muted-foreground',
+  PAYMENT_DUE: 'text-destructive',
+  REFUND_DUE: 'text-amber-600 dark:text-amber-400',
+  SETTLED: 'text-emerald-600 dark:text-emerald-400',
+  DISPUTED: 'text-red-600 dark:text-red-400',
+};
+
+const toColoredOptions = <T extends string>(
+  config: Record<T, RentalStatusDisplayConfig>,
+  filterClassName: Record<T, string>,
+) =>
+  (Object.entries(config) as [T, RentalStatusDisplayConfig][]).map(([value, item]) => ({
+    value,
+    label: item.label,
+    icon: item.icon,
+    filterClassName: filterClassName[value],
+  }));
+
+export const orderStatusOptions = toColoredOptions(orderStatusConfig, rentalOrderStatusFilterClassName);
+export const settlementStatusOptions = toColoredOptions(settlementStatusConfig, rentalSettlementFilterClassName);
+export const orderSourceOptions = toOptions(orderSourceConfig);
+export const pickupMethodOptions = toOptions(pickupMethodConfig);

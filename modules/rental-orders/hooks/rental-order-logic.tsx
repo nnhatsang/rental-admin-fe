@@ -2,6 +2,8 @@
 
 import { DateTimeRangePicker, type DateTimeRange } from '@/components/shared/date-time-range-picker';
 import { ProtectedAction } from '@/components/shared/protected-action';
+import { CustomerCombobox, type CustomerOption } from '@/modules/customers/customer-combobox';
+import { useGetCustomerById } from '@/modules/customers/hooks/use-get-customer-by-id';
 import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
@@ -37,8 +39,15 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
   const tableState = useTableQueryState<IGetRentalOrdersParams>({ defaultPageSize: 10, columns });
 
+  const customerIdInput = searchParams.get('customerId') ?? '';
   const fromDateInput = searchParams.get('fromDate') ?? '';
   const toDateInput = searchParams.get('toDate') ?? '';
+  const selectedCustomerQuery = useGetCustomerById(customerIdInput || undefined);
+  const selectedCustomer = useMemo<CustomerOption | null>(() => {
+    const customer = selectedCustomerQuery.data;
+    return customer ? { id: customer.id, name: customer.name, phone: customer.phone } : null;
+  }, [selectedCustomerQuery.data]);
+
   const dateRangeFilter = useMemo<DateTimeRange>(
     () => ({
       from: parseDateFilter(fromDateInput),
@@ -50,14 +59,28 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
   const rentalOrderQueryParams = useMemo<IGetRentalOrdersParams>(
     () => ({
       ...tableState.queryParams,
+      customerId: customerIdInput || undefined,
       fromDate: fromDateInput ? `${fromDateInput}T00:00:00.000` : undefined,
       toDate: toDateInput ? `${toDateInput}T23:59:59.999` : undefined,
     }),
-    [fromDateInput, tableState.queryParams, toDateInput],
+    [customerIdInput, fromDateInput, tableState.queryParams, toDateInput],
   );
 
   const { data, isLoading, isFetching, refetch } = useGetRentalOrders(rentalOrderQueryParams);
 
+  const setCustomerFilter = useCallback(
+    (customerId: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('page');
+
+      if (customerId) params.set('customerId', customerId);
+      else params.delete('customerId');
+
+      const nextQuery = params.toString();
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
   const setDateRangeFilter = useCallback(
     (range: DateTimeRange) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -78,6 +101,36 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     [pathname, router, searchParams],
   );
 
+  const clearAllFilters = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const key of [
+      'page',
+      'search',
+      'status',
+      'settlementStatus',
+      'source',
+      'pickupMethod',
+      'customerId',
+      'fromDate',
+      'toDate',
+    ]) {
+      params.delete(key);
+    }
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const hasActiveFilters = Boolean(
+    customerIdInput ||
+    fromDateInput ||
+    toDateInput ||
+    searchParams.get('search') ||
+    searchParams.get('status') ||
+    searchParams.get('settlementStatus') ||
+    searchParams.get('source') ||
+    searchParams.get('pickupMethod'),
+  );
   const table = useDataTable<RentalOrderListItem>({
     data: data?.items ?? [],
     columns,
@@ -94,6 +147,8 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
+    hasExternalFilters: hasActiveFilters,
+    onClearExternalFilters: clearAllFilters,
     enableRowSelection: true,
     enableGlobalFilter: true,
     enableExport: true,
@@ -109,6 +164,15 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     onGlobalFilterChange: tableState.onGlobalFilterChange,
     renderToolbarActions: () => (
       <div className="flex flex-wrap items-center gap-2">
+
+        <CustomerCombobox
+          value={customerIdInput || undefined}
+          selectedCustomer={selectedCustomer}
+          onCustomerChange={(customer) => setCustomerFilter(customer?.id ?? '')}
+          placeholder="Lọc theo khách hàng..."
+          className="w-full sm:w-[300px]"
+        />
+
         <DateTimeRangePicker
           value={dateRangeFilter}
           onUpdate={({ range }) => setDateRangeFilter(range)}
@@ -130,11 +194,7 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
             Tạo đơn thuê
           </Button>
         </ProtectedAction>
-        <Button
-          variant="outline"
-          disabled={isFetching}
-          onClick={() => void refetch()}
-        >
+        <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>
           <IconRefresh aria-hidden="true" data-icon="inline-start" />
           Làm mới
         </Button>

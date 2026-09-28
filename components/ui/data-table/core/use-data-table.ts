@@ -87,6 +87,8 @@ export function useDataTable<TData extends RowData>(options: UseDataTableOptions
     enableKeyboardNavigation = true,
     enableColumnFilterModes = true,
     enableFilterMatchHighlighting = true,
+    hasExternalFilters = false,
+    onClearExternalFilters,
     enableGlobalFilter = true,
     enableGlobalFilterModes = false,
     enableGlobalFilterRankedResults = false,
@@ -328,8 +330,25 @@ export function useDataTable<TData extends RowData>(options: UseDataTableOptions
     [resolvedColumns, headerControlsOptions, baseColumnSize],
   );
 
+  const filterOnlyColumnVisibility = React.useMemo<Record<string, boolean>>(() => {
+    const visibility: Record<string, boolean> = {};
+
+    for (const def of resolvedColumns) {
+      const key = columnKey(def as { id?: string; accessorKey?: unknown });
+      if (key && def.meta?.filterOnly) visibility[key] = false;
+    }
+
+    return visibility;
+  }, [resolvedColumns]);
   const table = useReactTable<TData>({
     ...tableOptions,
+    initialState: {
+      ...tableOptions.initialState,
+      columnVisibility: {
+        ...tableOptions.initialState?.columnVisibility,
+        ...filterOnlyColumnVisibility,
+      },
+    },
     columns: sizedColumns,
     // Default page-reset off: TanStack's auto-reset runs a state update during
     // render (warns in React 19 dev). We reset on filter changes via an effect
@@ -528,6 +547,8 @@ export function useDataTable<TData extends RowData>(options: UseDataTableOptions
     enableColumnFilters,
     enableColumnFilterModes,
     enableFilterMatchHighlighting,
+    hasExternalFilters,
+    onClearExternalFilters,
     columnsWithCustomCell,
     enableColumnOrdering,
     enableColumnPinning,
