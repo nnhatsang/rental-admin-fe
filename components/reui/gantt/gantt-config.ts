@@ -7,7 +7,7 @@ export const RENTAL_GANTT_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 
 export const RENTAL_GANTT_LOCALE = vi;
 
-export const RENTAL_GANTT_DEFAULT_SCALE: GanttScale = 'month';
+export const RENTAL_GANTT_DEFAULT_SCALE: GanttScale = 'week';
 
 export const RENTAL_GANTT_I18N: GanttI18nOverrides = {
   labels: {

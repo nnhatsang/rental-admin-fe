@@ -60,34 +60,36 @@ function AvailabilityGanttEvent({ occurrence }: GanttRenderEventProps<Availabili
               : null;
 
   return (
-    <>
-      <span className="relative size-1.5 shrink-0 rounded-full bg-(--gantt-event-color)" aria-hidden="true" />
-      <span className="min-w-0 truncate font-semibold">{data?.orderCode ?? event.title}</span>
-      {hasNote ? (
-        <span
-          className="size-1.5 shrink-0 rounded-full bg-amber-500"
-          title="Đơn có ghi chú cần xem"
-          aria-label="Đơn có ghi chú cần xem"
-        />
+    <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 leading-tight">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="relative size-1.5 shrink-0 rounded-full bg-(--gantt-event-color)" aria-hidden="true" />
+        <span className="min-w-0 truncate font-semibold">{data?.orderCode ?? event.title}</span>
+        {hasNote ? (
+          <span
+            className="size-1.5 shrink-0 rounded-full bg-amber-500"
+            title="Đơn có ghi chú cần xem"
+            aria-label="Đơn có ghi chú cần xem"
+          />
+        ) : null}
+      </div>
+      {data ? (
+        <div className="hidden min-w-0 items-center gap-x-1.5 text-[11px] text-muted-foreground @[13rem]:flex">
+          <span className="min-w-0 truncate">{data.customerName}</span>
+          {pickupLabel ? <span className="hidden shrink-0 @[19rem]:inline">· {pickupLabel}</span> : null}
+          {attention ? (
+            <span
+              className={cn(
+                'hidden max-w-32 truncate rounded-sm border border-current/20 bg-background/70 px-1 text-[10px] font-medium @[25rem]:inline',
+                attention.className,
+              )}
+              title={attention.label}
+            >
+              {attention.label}
+            </span>
+          ) : null}
+        </div>
       ) : null}
-      {data?.customerName ? (
-        <span className="hidden min-w-0 truncate text-muted-foreground @[13rem]:inline">{data.customerName}</span>
-      ) : null}
-      {pickupLabel ? (
-        <span className="hidden shrink-0 text-muted-foreground @[19rem]:inline">· {pickupLabel}</span>
-      ) : null}
-      {attention ? (
-        <span
-          className={cn(
-            'hidden max-w-32 truncate rounded-sm border border-current/20 bg-background/70 px-1 text-[10px] font-medium @[25rem]:inline',
-            attention.className,
-          )}
-          title={attention.label}
-        >
-          {attention.label}
-        </span>
-      ) : null}
-    </>
+    </div>
   );
 }
 function AvailabilityGanttEventTooltip({ occurrence, timeLabel }: AvailabilityGanttTooltipProps) {
@@ -476,6 +478,7 @@ export function AvailabilityGantt() {
                 timeZone={RENTAL_GANTT_TIME_ZONE}
                 i18n={RENTAL_GANTT_I18N}
                 className="h-[min(72vh,760px)] min-h-[460px] border-0"
+                metrics={{ laneHeight: 2.25 }}
                 loading={query.isFetching}
                 {...RENTAL_GANTT_READONLY_CONFIG}
               >

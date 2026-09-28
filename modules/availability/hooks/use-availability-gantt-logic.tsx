@@ -159,6 +159,7 @@ export const useAvailabilityGanttLogic = () => {
         id: product.productId,
         title: `${product.name} · ${product.assetUnits.length} máy`,
         scheduleMode: 'multiple',
+        // rowHeight: 2.75,
         children: product.assetUnits.map((asset) => {
           const statusLabel = availabilityGanttAssetStatusLabel[asset.status] ?? asset.status;
           const conditionLabel = availabilityGanttAssetConditionLabel[asset.condition] ?? asset.condition;
@@ -169,6 +170,7 @@ export const useAvailabilityGanttLogic = () => {
             id: asset.assetUnitId,
             title: `${asset.serialNumber} · ${stateLabel} · ${scheduleLabel}`,
             scheduleMode: 'multiple',
+            rowHeight: 4.5,
           };
         }),
       })),

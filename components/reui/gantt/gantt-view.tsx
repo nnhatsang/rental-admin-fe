@@ -762,7 +762,8 @@ function GanttView({ className, asChild = false, interval: intervalProp, ...prop
       // is also what keeps a lone bar on the tree label's centerline when a
       // short row is held open by minRowHeight.
       const blockRem = laneCount * laneHeightRem + (laneCount - 1) * laneGapRem;
-      const heightRem = Math.max(minRowRem, blockRem + 2 * rowPaddingRem);
+      const rowMinRem = row.resource.rowHeight ?? minRowRem;
+      const heightRem = Math.max(rowMinRem, blockRem + 2 * rowPaddingRem);
       const laneOffsetRem = (heightRem - blockRem) / 2;
 
       map.set(row.resource.id, {
@@ -1683,8 +1684,8 @@ function GanttView({ className, asChild = false, interval: intervalProp, ...prop
           <GanttTreeRow
             key={row.resource.id}
             row={row}
-            heightRem={rowBars.get(row.resource.id)?.heightRem ?? minRowRem}
-            bandRem={rowBars.get(row.resource.id)?.bandRem ?? minRowRem}
+            heightRem={rowBars.get(row.resource.id)?.heightRem ?? (row.resource.rowHeight ?? minRowRem)}
+            bandRem={rowBars.get(row.resource.id)?.bandRem ?? (row.resource.rowHeight ?? minRowRem)}
             columns={columns}
             nameWidth={treeConfig.nameColumnWidth}
             dimmed={reorder?.resourceId === row.resource.id}
@@ -1915,7 +1916,7 @@ function GanttView({ className, asChild = false, interval: intervalProp, ...prop
             isPanning={isPanning}
             laneHeightRem={laneHeightRem}
             laneGapRem={laneGapRem}
-            minRowRem={minRowRem}
+            minRowRem={row.resource.rowHeight ?? minRowRem}
           />
         ))}
         {rows.length === 0 && viewConfig.renderNoResources && (
@@ -2808,6 +2809,9 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
           const to = fractionOf(rangeStartMs + (segment.endMin ?? 0) * 60000);
           if (to <= from) return null;
           const lane = segment.column ?? 0;
+          const fillsRow = laneCount === 1;
+          const segmentTopRem = fillsRow ? 0 : laneOffsetRem + lane * (laneHeightRem + laneGapRem);
+          const segmentHeightRem = fillsRow ? heightRem : laneHeightRem;
           // Title placement: outside beside the bar when configured (or too
           // short in "auto"), flipped before the bar near the range end, and
           // back inside when the bar spans the whole view.
@@ -2834,17 +2838,16 @@ const GanttTimelineRow = memo(function GanttTimelineRow({
               // placeholder but its label yields to the ghost's outside label.
               // pointer-events-auto: the parent mask layer is pointer-
               // transparent so empty-track presses reach the row.
-              // px-px keeps back-to-back bars off each other; the vertical
-              // breathing room is the lane gap itself, not padding here, so
-              // the bar is exactly laneHeight tall
+              // px-px keeps back-to-back bars off each other; a single-lane
+              // bar fills its row, while stacked bars use the lane height.
               className="group/gantt-seg pointer-events-auto absolute px-px data-[drag-kind=move]:opacity-0"
               // insetInlineStart, not left: in RTL the axis mirrors and bars
               // must mirror with it (fractions measure from the range start)
               style={{
                 insetInlineStart: `${from * 100}%`,
                 width: `${Math.max((to - from) * 100, 0.5)}%`,
-                top: `${laneOffsetRem + lane * (laneHeightRem + laneGapRem)}rem`,
-                height: `${laneHeightRem}rem`,
+                top: `${segmentTopRem}rem`,
+                height: `${segmentHeightRem}rem`,
                 // one track means every lane is 0, so paint order (not the
                 // lane) is what keeps overlapping bars individually reachable
                 zIndex: segment.occurrence.event.zIndex ?? 10 + (singleTrack ? segmentIndex : lane),

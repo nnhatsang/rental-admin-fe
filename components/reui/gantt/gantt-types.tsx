@@ -48,6 +48,8 @@ interface GanttResource {
   color?: string
   /** Per-node cardinality override; falls back to the view-level default. */
   scheduleMode?: GanttScheduleMode
+  /** Minimum height of this row in rem; falls back to the view-level metric. */
+  rowHeight?: number
   children?: GanttResource[]
 }
 

@@ -292,11 +292,11 @@ function GanttBar<TData = unknown>({
         settings.onEventDoubleClick?.(occurrence, e)
       }}
       className={cn(
-        "group/gantt-bar-group text-foreground @container relative flex w-full min-w-0 cursor-pointer touch-none items-center gap-1.5 overflow-hidden rounded-sm px-1.5 py-0.5 text-start leading-normal select-none",
+        "group/gantt-bar-group text-foreground @container relative flex w-full min-w-0 cursor-pointer touch-none items-center gap-1.5 overflow-hidden  px-1.5 py-0.5 text-start leading-normal select-none",
         "focus-visible:ring-ring/50 outline-none focus-visible:ring-2",
         // the unfilled remainder has to be legible on its own - at /12 a bar
         // with a progress fill read as a floating segment with no basement
-        "bg-(--gantt-event-color)/20 hover:bg-(--gantt-event-color)/30",
+        "bg-(--gantt-event-color)/20 hover:bg-(--gantt-event-color)/30 backdrop-blur-md",
         // move: hide the original (the smooth cursor clone represents it)
         "data-[drag-kind=move]:opacity-0",
         // resize: keep the original event exactly, just fade it to a soft
