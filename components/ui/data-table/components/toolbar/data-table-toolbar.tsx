@@ -16,7 +16,7 @@ import { DataTableFacetedFilter } from './data-table-faceted-filter';
 import { DataTableGlobalFilter } from './data-table-global-filter';
 import { DataTableViewOptions } from './data-table-view-options';
 import { Button } from '@/components/ui/button';
-import { IconX } from '@tabler/icons-react';
+import { IconFilterOff } from '@tabler/icons-react';
 
 function hasFilterValue(value: unknown) {
   if (Array.isArray(value)) return value.some(hasFilterValue);
@@ -87,15 +87,18 @@ export function DataTableToolbar<TData extends RowData>({
             ))}
           {isFiltered && (
             <Button
-              variant="ghost"
+              variant="outline"
+              size="default"
+              aria-label={localization.clearFilter}
+              title={localization.clearFilter}
               onClick={() => {
                 table.resetColumnFilters();
                 table.cnTable.onClearExternalFilters?.();
               }}
-              className="h-8 px-2 lg:px-3"
+              className="border-primary/35 bg-primary/5 px-2.5 text-primary shadow-xs hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-visible:border-primary/50 focus-visible:ring-primary/20 dark:border-primary/40 dark:bg-primary/10 dark:hover:bg-primary/20"
             >
+              <IconFilterOff aria-hidden="true" data-icon="inline-start" />
               {localization.clearFilter}
-              <IconX className="ms-2 h-4 w-4" />
             </Button>
           )}
           {positionToolbarActions === 'left' && renderToolbarActions && !readOnly && renderToolbarActions({ table })}

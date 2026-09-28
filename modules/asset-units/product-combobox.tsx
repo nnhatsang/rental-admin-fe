@@ -27,6 +27,7 @@ export type ProductComboboxProps = {
   syncToUrl?: boolean;
   portalContainer?: HTMLElement | null;
   fetchEnabled?: boolean;
+  classNameContent?: string;
 };
 
 export type { ProductOption } from './hooks/use-get-products-logic';
@@ -45,6 +46,7 @@ export function ProductCombobox({
   syncToUrl = false,
   portalContainer,
   fetchEnabled,
+  classNameContent,
 }: ProductComboboxProps) {
   const text = TITLE_PAGE.ASSET_UNITS;
   const shouldFetchProducts = fetchEnabled ?? (!disabled || syncToUrl);
@@ -76,7 +78,7 @@ export function ProductCombobox({
       items={productIds}
       value={selectedValue}
       onValueChange={(nextValue) => {
-        const nextProduct = nextValue ? productById.get(nextValue) ?? null : null;
+        const nextProduct = nextValue ? (productById.get(nextValue) ?? null) : null;
         rememberSelectedProduct(nextValue);
         clearSearchAfterSelect();
         onProductChange?.(nextProduct);
@@ -115,17 +117,18 @@ export function ProductCombobox({
                   <ItemContent>
                     <ItemTitle className="truncate text-sm font-medium">{product.name}</ItemTitle>
 
-                    <ItemDescription className="text-muted-foreground mt-1 space-y-0.5 text-xs">
+                    <ItemDescription
+                      className={(cn('text-muted-foreground mt-1 space-y-0.5 text-xs'), classNameContent)}
+                    >
                       <div>SKU: {product.sku}</div>
                       <div>
                         Ngày: {product.dailyPrice != null ? formatCurrency(Number(product.dailyPrice)) : 'Chưa có giá'}
                       </div>
                       <div>
-                        Buổi: {product.halfDayPrice != null ? formatCurrency(Number(product.halfDayPrice)) : 'Chưa có giá'}
+                        Buổi:{' '}
+                        {product.halfDayPrice != null ? formatCurrency(Number(product.halfDayPrice)) : 'Chưa có giá'}
                       </div>
-                      <div>
-                        Số máy: {product.assetUnitCount != null ? product.assetUnitCount : 'Chưa có dữ liệu'}
-                      </div>
+                      <div>Số máy: {product.assetUnitCount != null ? product.assetUnitCount : 'Chưa có dữ liệu'}</div>
                     </ItemDescription>
                   </ItemContent>
                 </Item>
