@@ -22,7 +22,7 @@ export function AdminHeader() {
         '[html[data-navbar-style=sticky]_&]:sticky [html[data-navbar-style=sticky]_&]:top-0 [html[data-navbar-style=sticky]_&]:z-49 [html[data-navbar-style=sticky]_&]:overflow-hidden [html[data-navbar-style=sticky]_&]:rounded-t-[inherit] [html[data-navbar-style=sticky]_&]:bg-background/50 [html[data-navbar-style=sticky]_&]:backdrop-blur-md',
       )}
     >
-      <div className="bg-card relative z-51 mx-auto mt-3 flex w-full items-center justify-between rounded-xl border px-6 py-2">
+      <div className="bg-card relative z-48 mx-auto mt-3 flex w-full items-center justify-between rounded-xl border px-6 py-2">
         <div className="flex items-center gap-1.5 lg:gap-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
