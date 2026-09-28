@@ -1375,6 +1375,13 @@ interface GanttViewConfig<TData = unknown> {
   classNames?: GanttClassNames
   renderEvent?: (props: GanttRenderEventProps<TData>) => ReactNode
   /**
+   * Replaces the compact default event tooltip. The bar remains responsible
+   * for positioning and interaction; consumers only own the tooltip content.
+   */
+  renderEventTooltip?: (
+    props: GanttRenderEventProps<TData> & { timeLabel: string }
+  ) => ReactNode
+  /**
    * Right-click menu for a bar: return shadcn ContextMenu items (the primitive
    * wraps every bar in a ContextMenu and renders this as its content). Read
    * the occurrence for the subject and drive actions through the gantt api
@@ -1497,6 +1504,7 @@ const VIEW_CONFIG_KEYS: Array<keyof GanttViewConfig> = [
   "rowAlign",
   "classNames",
   "renderEvent",
+  "renderEventTooltip",
   "renderEventMenu",
   "renderResourceLabel",
   "renderResourceMenu",

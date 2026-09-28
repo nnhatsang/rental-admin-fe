@@ -6,11 +6,21 @@ import {
   RENTAL_GANTT_TIME_ZONE,
 } from '@/components/reui/gantt/gantt-config';
 import { getGanttDateRange, getRangeKey, type WeekStartsOn } from '@/components/reui/gantt/gantt-lib';
-import type { GanttDateRange, GanttEvent, GanttRangeInfo, GanttResource, GanttScale } from '@/components/reui/gantt/gantt-types';
+import type {
+  GanttDateRange,
+  GanttEvent,
+  GanttRangeInfo,
+  GanttResource,
+  GanttScale,
+} from '@/components/reui/gantt/gantt-types';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { availabilityGanttOrderStatusConfig } from '../display-config';
+import {
+  availabilityGanttAssetConditionLabel,
+  availabilityGanttAssetStatusLabel,
+  availabilityGanttOrderStatusConfig,
+} from '../display-config';
 import type { IAvailabilityGanttBlock, IGetAvailabilityGanttParams } from '../gantt-type';
 import { useGetAvailabilityGantt } from './use-get-availability-gantt';
 
@@ -81,7 +91,10 @@ export const useAvailabilityGanttLogic = () => {
     [pathname, router, searchParams],
   );
 
-  const handleSearchChange = useCallback((value: string | undefined) => replaceParams({ search: value }), [replaceParams]);
+  const handleSearchChange = useCallback(
+    (value: string | undefined) => replaceParams({ search: value }),
+    [replaceParams],
+  );
 
   const syncTimelineParams = useCallback(
     (next: GanttRangeInfo) => {
@@ -144,13 +157,20 @@ export const useAvailabilityGanttLogic = () => {
     () =>
       products.map((product) => ({
         id: product.productId,
-        title: `${product.name} · ${product.sku}`,
+        title: `${product.name} · ${product.assetUnits.length} máy`,
         scheduleMode: 'multiple',
-        children: product.assetUnits.map((asset) => ({
-          id: asset.assetUnitId,
-          title: `${asset.serialNumber}${asset.isActive ? '' : ' · Ngừng sử dụng'}`,
-          scheduleMode: 'multiple',
-        })),
+        children: product.assetUnits.map((asset) => {
+          const statusLabel = availabilityGanttAssetStatusLabel[asset.status] ?? asset.status;
+          const conditionLabel = availabilityGanttAssetConditionLabel[asset.condition] ?? asset.condition;
+          const stateLabel = asset.isActive ? `${statusLabel} · ${conditionLabel}` : 'Ngừng sử dụng';
+          const scheduleLabel = asset.blocks.length ? `${asset.blocks.length} lịch` : 'Chưa có lịch';
+
+          return {
+            id: asset.assetUnitId,
+            title: `${asset.serialNumber} · ${stateLabel} · ${scheduleLabel}`,
+            scheduleMode: 'multiple',
+          };
+        }),
       })),
     [products],
   );

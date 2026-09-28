@@ -1,5 +1,10 @@
 import type { AssetCondition, AssetStatus } from '@/modules/asset-units/type';
-import type { RentalOrderStatus } from '@/modules/rental-orders/model';
+import type {
+  HandoverStatus,
+  RentalOrderStatus,
+  RentalSettlementStatus,
+  ReturnStatus,
+} from '@/modules/rental-orders/model';
 
 export interface IGetAvailabilityGanttParams {
   startDate: string;
@@ -16,6 +21,23 @@ export interface IAvailabilityGanttBlock {
   orderStatus: RentalOrderStatus;
   allocationStatus: string;
   customerName: string;
+  customerPhone: string | null;
+  customerSocialContact: string | null;
+  pickupMethod: 'PICKUP_AT_STORE' | 'DELIVERY';
+  deliveryAddress: string | null;
+  handoverStatus: HandoverStatus;
+  returnStatus: ReturnStatus;
+  settlementStatus: RentalSettlementStatus;
+  customerNote: string | null;
+  internalNote: string | null;
+  cancelReason: string | null;
+  paidTotal: number;
+  amountDueBeforeHandover: number;
+  refundDue: number;
+  totalCustomerObligation: number;
+  amountDueAtBooking: number;
+  additionalChargeDue: number;
+  actualRefundTotal: number;
   startDate: string;
   endDate: string;
   blockedEndDate: string;

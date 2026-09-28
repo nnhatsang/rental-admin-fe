@@ -122,11 +122,15 @@ function GanttBar<TData = unknown>({
 
   const isSelected = useGanttSelector<TData, boolean>(
     (state) => state.selection.eventKeys.includes(occurrence.key),
-    { calendar: instance }
+    {
+      calendar: instance,
+    }
   )
   const isDragging = useGanttSelector<TData, boolean>(
     (state) => state.drag?.occurrence.key === occurrence.key,
-    { calendar: instance }
+    {
+      calendar: instance,
+    }
   )
   // Which gesture owns this bar: a move hides the original (the smooth clone
   // stands in for it); a resize keeps it as a faint placeholder behind the
@@ -171,6 +175,12 @@ function GanttBar<TData = unknown>({
     </>
   )
 
+  const timeLabel = settings.i18n.functions.formatEventTime(
+    toZoned(occurrence.start, settings.timeZone),
+    toZoned(occurrence.end, settings.timeZone),
+    occurrence.allDay,
+    settings.locale
+  )
   const renderProps = { occurrence, segment, isDragging, isSelected }
   const content =
     children ??
@@ -181,12 +191,10 @@ function GanttBar<TData = unknown>({
   // canvas (progress stays readable via data-progress/data-completed).
   const consumerOwnsContent = children !== undefined || !!viewConfig.renderEvent
 
-  const timeLabel = settings.i18n.functions.formatEventTime(
-    toZoned(occurrence.start, settings.timeZone),
-    toZoned(occurrence.end, settings.timeZone),
-    occurrence.allDay,
-    settings.locale
-  )
+  const tooltipContent = viewConfig.renderEventTooltip?.({
+    ...renderProps,
+    timeLabel,
+  })
   // name the row too: the split-pane layout carries no grid semantics.
   // The prop path is O(1); the lookup fallback is memoized so external
   // GanttBar usage never flattens the tree per render.
@@ -336,16 +344,21 @@ function GanttBar<TData = unknown>({
   // and press already closes the tooltip in Radix.
   const trigger = menu ? (
     <ContextMenuTrigger asChild>
-      <TooltipTrigger asChild onFocus={(e) => e.preventDefault()}>
+      <TooltipTrigger
+        asChild
+        onFocus={(e) => e.preventDefault()}
+      >
         {barButton}
       </TooltipTrigger>
     </ContextMenuTrigger>
   ) : (
-    <TooltipTrigger asChild onFocus={(e) => e.preventDefault()}>
+    <TooltipTrigger
+      asChild
+      onFocus={(e) => e.preventDefault()}
+    >
       {barButton}
     </TooltipTrigger>
   )
-
   const barTree = (
     <TooltipProvider delayDuration={500} skipDelayDuration={300}>
       <Tooltip
@@ -353,12 +366,23 @@ function GanttBar<TData = unknown>({
         onOpenChange={(next: boolean) => setTipOpen(next)}
       >
         {trigger}
-        {tipOpen && !anyInteracting && (
-          <TooltipContent side="top" className="pointer-events-none">
-            <div className="font-medium">{event.title}</div>
-            <div className="opacity-80">{timeLabel}</div>
-          </TooltipContent>
-        )}
+        <TooltipContent
+          side="top"
+          align="center"
+          sideOffset={8}
+          collisionPadding={12}
+          className={cn(
+            "pointer-events-none",
+            viewConfig.renderEventTooltip && "max-w-none items-stretch p-0",
+          )}
+        >
+          {tooltipContent ?? (
+            <>
+              <div className="font-medium">{event.title}</div>
+              <div className="opacity-80">{timeLabel}</div>
+            </>
+          )}
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   )
