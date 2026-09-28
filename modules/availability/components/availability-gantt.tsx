@@ -17,6 +17,7 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { assetActiveConfig, assetConditionConfig, assetStatusConfig } from '@/modules/asset-units/display-config';
 import { ProductCombobox } from '@/modules/asset-units/product-combobox';
 import {
   RentalOrderActionDialog,
@@ -27,11 +28,12 @@ import { UpdateRentalOrderDialog } from '@/modules/rental-orders/components/upda
 import { useRentalOrders } from '@/modules/rental-orders/rental-orders-provider';
 import { IconAlertTriangle, IconCalendarCheck, IconCircleCheck, IconPackages, IconRefresh } from '@tabler/icons-react';
 import { useCallback, type CSSProperties, type ReactNode } from 'react';
-import type { GanttOccurrence } from '@/components/reui/gantt/gantt-types';
+import type { GanttOccurrence, GanttResource } from '@/components/reui/gantt/gantt-types';
 import { availabilityGanttOrderStatusConfig } from '../display-config';
 import { formatAvailabilityRange, getAvailabilityErrorMessage } from '../display-utils';
 import { handoverStatusConfig, returnStatusConfig, settlementStatusConfig } from '@/modules/rental-orders/display-config';
 import type { AvailabilityGanttEventData } from '../hooks/use-availability-gantt-logic';
+import type { IAvailabilityGanttAsset } from '../gantt-type';
 import { useAvailabilityGanttLogic } from '../hooks/use-availability-gantt-logic';
 import { Clock } from 'lucide-react';
 
@@ -41,6 +43,49 @@ type AvailabilityGanttTooltipProps = GanttRenderEventProps<AvailabilityGanttEven
   timeLabel: string;
 };
 
+type AvailabilityGanttAssetResourceData = Pick<
+  IAvailabilityGanttAsset,
+  'assetUnitId' | 'serialNumber' | 'status' | 'condition' | 'isActive'
+> & {
+  kind: 'asset';
+  scheduleCount: number;
+};
+
+function AvailabilityGanttResourceLabel({
+  resource,
+  isGroup,
+}: {
+  resource: GanttResource;
+  isGroup: boolean;
+}) {
+  if (isGroup) {
+    return <span className="min-w-0 truncate">{resource.title}</span>;
+  }
+
+  const data = resource.data as AvailabilityGanttAssetResourceData | undefined;
+  if (!data || data.kind !== 'asset') {
+    return <span className="min-w-0 truncate">{resource.title}</span>;
+  }
+
+  const statusConfig = data.isActive ? assetStatusConfig[data.status] : assetActiveConfig.false;
+  const conditionConfig = assetConditionConfig[data.condition];
+  const scheduleLabel = data.scheduleCount > 0 ? `${data.scheduleCount} lịch` : 'Trống';
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      <span className="min-w-0 truncate font-medium">{data.serialNumber}</span>
+      <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px]', statusConfig.className)}>
+        {statusConfig.label}
+      </Badge>
+      {conditionConfig ? (
+        <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px]', conditionConfig.className)}>
+          {conditionConfig.label}
+        </Badge>
+      ) : null}
+      <span className="hidden shrink-0 text-[10px] text-muted-foreground @[25rem]:inline">{scheduleLabel}</span>
+    </div>
+  );
+}
 function AvailabilityGanttEvent({ occurrence }: GanttRenderEventProps<AvailabilityGanttEventData>) {
   const event = occurrence.event;
   const data = event.data;
@@ -474,6 +519,7 @@ export function AvailabilityGantt() {
                 onEventClick={handleEventClick}
                 renderEvent={AvailabilityGanttEvent}
                 renderEventTooltip={AvailabilityGanttEventTooltip}
+                renderResourceLabel={AvailabilityGanttResourceLabel}
                 locale={RENTAL_GANTT_LOCALE}
                 timeZone={RENTAL_GANTT_TIME_ZONE}
                 i18n={RENTAL_GANTT_I18N}

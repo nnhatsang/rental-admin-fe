@@ -2,14 +2,8 @@ import type { DefaultParamsRequest } from '@/types/api';
 
 export enum AssetStatus {
   AVAILABLE = 'AVAILABLE',
-  RESERVED = 'RESERVED',
-  RENTED = 'RENTED',
-  INSPECTING = 'INSPECTING',
   MAINTENANCE = 'MAINTENANCE',
-  CLEANING = 'CLEANING',
-  TRANSFERRING = 'TRANSFERRING',
   LOST = 'LOST',
-  RETIRED = 'RETIRED',
 }
 
 export enum AssetCondition {
@@ -17,7 +11,6 @@ export enum AssetCondition {
   GOOD = 'GOOD',
   FAIR = 'FAIR',
   DAMAGED = 'DAMAGED',
-  LOST = 'LOST',
 }
 
 export enum AssetUnitSortBy {

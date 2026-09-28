@@ -41,16 +41,3 @@ export const availabilityGanttOrderStatusConfig: Record<
     className: rentalOrderStatusVisualConfig.DISPUTED.className,
   },
 };
-
-export const availabilityGanttAssetConditionLabel: Record<string, string> = {
-  NEW: 'Mới',
-  GOOD: 'Tốt',
-  FAIR: 'Đã qua sử dụng',
-  DAMAGED: 'Hỏng',
-  LOST: 'Mất',
-};
-export const availabilityGanttAssetStatusLabel: Record<string, string> = {
-  AVAILABLE: 'Sẵn sàng',
-  MAINTENANCE: 'Bảo trì',
-  LOST: 'Mất',
-};

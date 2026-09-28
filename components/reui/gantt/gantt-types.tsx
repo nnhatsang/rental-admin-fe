@@ -50,6 +50,8 @@ interface GanttResource {
   scheduleMode?: GanttScheduleMode
   /** Minimum height of this row in rem; falls back to the view-level metric. */
   rowHeight?: number
+  /** Optional consumer-owned metadata for rich resource labels. */
+  data?: unknown
   children?: GanttResource[]
 }
 

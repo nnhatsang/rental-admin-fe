@@ -16,11 +16,7 @@ import type {
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  availabilityGanttAssetConditionLabel,
-  availabilityGanttAssetStatusLabel,
-  availabilityGanttOrderStatusConfig,
-} from '../display-config';
+import { availabilityGanttOrderStatusConfig } from '../display-config';
 import type { IAvailabilityGanttBlock, IGetAvailabilityGanttParams } from '../gantt-type';
 import { useGetAvailabilityGantt } from './use-get-availability-gantt';
 
@@ -161,16 +157,20 @@ export const useAvailabilityGanttLogic = () => {
         scheduleMode: 'multiple',
         // rowHeight: 2.75,
         children: product.assetUnits.map((asset) => {
-          const statusLabel = availabilityGanttAssetStatusLabel[asset.status] ?? asset.status;
-          const conditionLabel = availabilityGanttAssetConditionLabel[asset.condition] ?? asset.condition;
-          const stateLabel = asset.isActive ? `${statusLabel} · ${conditionLabel}` : 'Ngừng sử dụng';
-          const scheduleLabel = asset.blocks.length ? `${asset.blocks.length} lịch` : 'Chưa có lịch';
-
           return {
             id: asset.assetUnitId,
-            title: `${asset.serialNumber} · ${stateLabel} · ${scheduleLabel}`,
+            title: asset.serialNumber,
             scheduleMode: 'multiple',
             rowHeight: 4.5,
+            data: {
+              kind: 'asset',
+              assetUnitId: asset.assetUnitId,
+              serialNumber: asset.serialNumber,
+              status: asset.status,
+              condition: asset.condition,
+              isActive: asset.isActive,
+              scheduleCount: asset.blocks.length,
+            },
           };
         }),
       })),
