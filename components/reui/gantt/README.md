@@ -334,7 +334,7 @@ Dùng để fetch data theo visible range thật của Gantt:
 
 ## Availability Timeline Example
 
-Mapping API `availability/timeline` sang Gantt:
+Mapping API `availability/gantt` sang Gantt:
 
 ```tsx
 const resources = data.items.map((row) => ({

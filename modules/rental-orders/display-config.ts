@@ -34,6 +34,11 @@ type RentalStatusDisplayConfig = DisplayConfig & {
   description: string;
 };
 
+type RentalOrderStatusVisualConfig = {
+  color: string;
+  className: string;
+};
+
 const chartBlue = 'border-chart-4/40 bg-chart-4/10 text-chart-4 hover:bg-chart-4/20';
 const chartGreen = 'border-chart-1/40 bg-chart-1/10 text-chart-1 hover:bg-chart-1/20';
 const chartTeal = 'border-chart-2/40 bg-chart-2/10 text-chart-2 hover:bg-chart-2/20';
@@ -42,48 +47,82 @@ const chartAmber = 'border-chart-5/40 bg-chart-5/10 text-chart-5 hover:bg-chart-
 const neutral = 'border-muted-foreground/25 bg-muted text-muted-foreground hover:bg-muted/80';
 const danger = 'border-destructive/35 bg-destructive/10 text-destructive hover:bg-destructive/20';
 
+/**
+ * Shared visual source for rental-order status badges and the availability Gantt.
+ */
+export const rentalOrderStatusVisualConfig = {
+  CREATED: {
+    color: 'var(--color-slate-500)',
+    className: 'border-slate-500/40 bg-slate-500/10 text-slate-600 hover:bg-slate-500/20',
+  },
+  CONFIRMED: {
+    color: 'var(--color-blue-500)',
+    className: 'border-blue-500/40 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20',
+  },
+  RENTING: {
+    color: 'var(--color-emerald-500)',
+    className: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20',
+  },
+  RETURNED: {
+    color: 'var(--color-violet-500)',
+    className: 'border-violet-500/40 bg-violet-500/10 text-violet-600 hover:bg-violet-500/20',
+  },
+  DONE: {
+    color: 'var(--color-teal-500)',
+    className: 'border-teal-500/40 bg-teal-500/10 text-teal-600 hover:bg-teal-500/20',
+  },
+  CANCELLED: {
+    color: 'var(--color-slate-400)',
+    className: 'border-slate-400/40 bg-slate-400/10 text-slate-500 hover:bg-slate-400/20',
+  },
+  DISPUTED: {
+    color: 'var(--color-red-500)',
+    className: 'border-red-500/40 bg-red-500/10 text-red-600 hover:bg-red-500/20',
+  },
+} satisfies Record<RentalOrderStatus, RentalOrderStatusVisualConfig>;
+
 export const orderStatusConfig = {
   CREATED: {
     label: 'Mới tạo',
     description: 'Đơn vừa được tạo và đang chờ xác nhận hoặc thanh toán.',
     icon: IconClock,
-    className: chartBlue,
+    className: rentalOrderStatusVisualConfig.CREATED.className,
   },
   CONFIRMED: {
     label: 'Đã xác nhận',
     description: 'Đơn đã được xác nhận và sẵn sàng cho bước bàn giao.',
     icon: IconCircleCheck,
-    className: chartGreen,
+    className: rentalOrderStatusVisualConfig.CONFIRMED.className,
   },
   RENTING: {
     label: 'Đang thuê',
     description: 'Thiết bị đang ở phía khách hàng trong thời gian thuê.',
     icon: IconCamera,
-    className: chartTeal,
+    className: rentalOrderStatusVisualConfig.RENTING.className,
   },
   RETURNED: {
     label: 'Đã trả máy',
     description: 'Khách đã trả máy và đơn đang chờ kiểm tra, quyết toán.',
     icon: IconPackageImport,
-    className: chartLime,
+    className: rentalOrderStatusVisualConfig.RETURNED.className,
   },
   DONE: {
     label: 'Hoàn tất',
     description: 'Đơn đã hoàn tất toàn bộ quy trình và nghĩa vụ tài chính.',
     icon: IconCheck,
-    className: chartGreen,
+    className: rentalOrderStatusVisualConfig.DONE.className,
   },
   CANCELLED: {
     label: 'Đã hủy',
     description: 'Đơn đã bị hủy và không còn hiệu lực giữ thiết bị.',
     icon: IconBan,
-    className: neutral,
+    className: rentalOrderStatusVisualConfig.CANCELLED.className,
   },
   DISPUTED: {
     label: 'Tranh chấp',
     description: 'Đơn cần được xử lý thủ công do phát sinh tranh chấp.',
     icon: IconAlertTriangle,
-    className: danger,
+    className: rentalOrderStatusVisualConfig.DISPUTED.className,
   },
 } satisfies Record<RentalOrderStatus, RentalStatusDisplayConfig>;
 
@@ -194,31 +233,31 @@ export const rentalOrderAllocationStatusConfig = {
     label: 'Đang yêu cầu',
     description: 'Đang chờ hệ thống hoặc nhân viên phân bổ thiết bị.',
     icon: IconClock,
-    className: chartBlue,
+    className: rentalOrderStatusVisualConfig.CREATED.className,
   },
   RESERVED: {
     label: 'Đã giữ máy',
     description: 'Thiết bị đã được giữ cho khoảng thời gian của đơn.',
     icon: IconCircleCheck,
-    className: chartGreen,
+    className: rentalOrderStatusVisualConfig.CONFIRMED.className,
   },
   HANDED_OVER: {
     label: 'Đã bàn giao',
     description: 'Thiết bị đã được giao cho khách hàng.',
     icon: IconPackage,
-    className: chartTeal,
+    className: rentalOrderStatusVisualConfig.RENTING.className,
   },
   RETURNED: {
     label: 'Đã trả',
     description: 'Thiết bị đã được trả về.',
     icon: IconPackageImport,
-    className: chartLime,
+    className: rentalOrderStatusVisualConfig.RETURNED.className,
   },
   RELEASED: {
     label: 'Đã giải phóng',
     description: 'Lượt giữ thiết bị đã được giải phóng.',
     icon: IconX,
-    className: neutral,
+    className: rentalOrderStatusVisualConfig.CANCELLED.className,
   },
 } satisfies Record<RentalOrderAllocation['status'], RentalStatusDisplayConfig>;
 

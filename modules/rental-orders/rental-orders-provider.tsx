@@ -5,19 +5,20 @@ import { createContext, type Dispatch, type ReactNode, type SetStateAction, useC
 import type { RentalOrderListItem } from './model';
 
 export type RentalOrderDialogType = 'create' | 'update' | 'detail' | 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel' | 'delete-multi';
+export type RentalOrderRowReference = Pick<RentalOrderListItem, 'id' | 'code'>;
 
 type RentalOrdersContextValue = {
   open: RentalOrderDialogType | null;
   setOpen: (value: RentalOrderDialogType | null) => void;
-  currentRow: RentalOrderListItem | null;
-  setCurrentRow: Dispatch<SetStateAction<RentalOrderListItem | null>>;
+  currentRow: RentalOrderRowReference | null;
+  setCurrentRow: Dispatch<SetStateAction<RentalOrderRowReference | null>>;
 };
 
 const RentalOrdersContext = createContext<RentalOrdersContextValue | null>(null);
 
 export function RentalOrdersProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useDialogState<RentalOrderDialogType>(null);
-  const [currentRow, setCurrentRow] = useState<RentalOrderListItem | null>(null);
+  const [currentRow, setCurrentRow] = useState<RentalOrderRowReference | null>(null);
   const value = useMemo(() => ({ open, setOpen, currentRow, setCurrentRow }), [open, setOpen, currentRow]);
   return <RentalOrdersContext value={value}>{children}</RentalOrdersContext>;
 }

@@ -38,14 +38,8 @@ export const sidebarItems: NavGroup[] = [
     label: 'Lịch khả dụng',
     items: [
       {
-        title: 'Sản phẩm',
-        url: '/availability/products',
-        icon: IconPackages,
-        requiredPermissions: [Permission.OrdersRead],
-      },
-      {
-        title: 'Timeline',
-        url: '/availability/timeline',
+        title: 'Lịch thiết bị',
+        url: '/availability',
         icon: IconTimeline,
         requiredPermissions: [Permission.OrdersRead],
       },

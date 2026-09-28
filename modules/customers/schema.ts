@@ -4,6 +4,8 @@ import { CustomerStatus } from './type';
 const phoneRegex = /^(?:\+84|0)(3[2-9]|5[689]|7[06789]|8[1-9]|9\d|2\d{1,2})\d{7}$/;
 
 
+export const customerSocialContactSchema = z.string().trim().min(1, { message: 'Vui lòng nhập liên hệ mạng xã hội' });
+
 export const customerStatusSchema = z.enum(Object.values(CustomerStatus) as [CustomerStatus, ...CustomerStatus[]]);
 
 export const customerFormSchema = z.object({
@@ -16,7 +18,7 @@ export const customerFormSchema = z.object({
   email: z.string().trim().min(1, { message: 'Vui lòng nhập email' }).email({ message: 'Email không hợp lệ' }),
   address: z.string().trim().min(1, { message: 'Vui lòng nhập địa chỉ' }),
   identityNumber: z.string().trim().min(1, { message: 'Vui lòng nhập CCCD/CMND' }),
-  socialContact:   z.string().trim().min(1, { message: 'Vui lòng nhập liên hệ mạng xã hội' }),
+  socialContact: customerSocialContactSchema,
   notes: z.string().trim().optional(),
 });
 

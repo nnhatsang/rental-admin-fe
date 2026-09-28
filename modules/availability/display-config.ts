@@ -1,33 +1,18 @@
-import { toOptions, type DisplayConfig } from '@/types/display-config';
-import type { AvailabilityFilter } from './type';
+import { rentalOrderStatusVisualConfig } from '@/modules/rental-orders/display-config';
+import type { RentalOrderStatus } from '@/modules/rental-orders/model';
 
-export type ProductAvailabilityState = 'AVAILABLE' | 'LOW_STOCK' | 'UNAVAILABLE';
+export const availabilityGanttOrderStatusConfig: Record<RentalOrderStatus, { label: string; color: string }> = {
+  CREATED: { label: 'Mới tạo', color: rentalOrderStatusVisualConfig.CREATED.color },
+  CONFIRMED: { label: 'Đã xác nhận', color: rentalOrderStatusVisualConfig.CONFIRMED.color },
+  RENTING: { label: 'Đang thuê', color: rentalOrderStatusVisualConfig.RENTING.color },
+  RETURNED: { label: 'Đã trả máy', color: rentalOrderStatusVisualConfig.RETURNED.color },
+  DONE: { label: 'Hoàn tất', color: rentalOrderStatusVisualConfig.DONE.color },
+  CANCELLED: { label: 'Đã hủy', color: rentalOrderStatusVisualConfig.CANCELLED.color },
+  DISPUTED: { label: 'Có tranh chấp', color: rentalOrderStatusVisualConfig.DISPUTED.color },
+};
 
-export const productAvailabilityConfig = {
-  AVAILABLE: {
-    label: 'Còn hàng',
-    className: 'border-transparent bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15',
-  },
-  LOW_STOCK: {
-    label: 'Sắp hết',
-    className: 'border-transparent bg-amber-500/10 text-amber-600 hover:bg-amber-500/15',
-  },
-  UNAVAILABLE: {
-    label: 'Hết hàng',
-    className: 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/15',
-  },
-} satisfies Record<ProductAvailabilityState, DisplayConfig>;
-
-export const availabilityFilterConfig = {
-  ALL: {
-    label: 'Tất cả',
-  },
-  AVAILABLE: {
-    label: productAvailabilityConfig.AVAILABLE.label,
-  },
-  UNAVAILABLE: {
-    label: productAvailabilityConfig.UNAVAILABLE.label,
-  },
-} satisfies Record<AvailabilityFilter, DisplayConfig>;
-
-export const availabilityFilterOptions = toOptions(availabilityFilterConfig);
+export const availabilityGanttAssetStatusLabel: Record<string, string> = {
+  AVAILABLE: 'Sẵn sàng',
+  MAINTENANCE: 'Bảo trì',
+  RETIRED: 'Ngừng sử dụng',
+};
