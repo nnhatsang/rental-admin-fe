@@ -448,14 +448,14 @@ Render:
 
 ## Rental Admin Preset
 
-Dự án rental admin dùng preset tại `gantt-config.ts` để tránh mỗi màn truyền lại locale, timezone, i18n và readonly config.
+Dự án rental admin dùng preset tại `gantt-config.ts` để tránh mỗi màn truyền lại locale, timezone, i18n và cấu hình tương tác.
 
 ```tsx
 import {
   RENTAL_GANTT_DEFAULT_SCALE,
   RENTAL_GANTT_I18N,
   RENTAL_GANTT_LOCALE,
-  RENTAL_GANTT_READONLY_CONFIG,
+  RENTAL_GANTT_CONFIG,
   RENTAL_GANTT_TIME_ZONE,
 } from '@/components/reui/gantt/gantt-config';
 
@@ -466,14 +466,14 @@ import {
   locale={RENTAL_GANTT_LOCALE}
   timeZone={RENTAL_GANTT_TIME_ZONE}
   i18n={RENTAL_GANTT_I18N}
-  {...RENTAL_GANTT_READONLY_CONFIG}
+  {...RENTAL_GANTT_CONFIG}
 >
   <GanttNav />
   <GanttView />
 </Gantt>
 ```
 
-Preset này phù hợp các màn xem lịch thuê/read-only:
+Preset này phù hợp màn lịch thiết bị; thao tác kéo/đổi kích thước vẫn tắt, còn bấm vùng trống có thể mở luồng thêm đơn thuê:
 
 - timezone cố định `Asia/Ho_Chi_Minh`
 - locale tiếng Việt `vi`

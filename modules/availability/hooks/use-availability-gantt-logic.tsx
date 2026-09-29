@@ -16,8 +16,21 @@ import type {
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { AssetCondition, AssetStatus } from '@/modules/asset-units/type';
 import { availabilityGanttOrderStatusConfig } from '../display-config';
-import type { IAvailabilityGanttBlock, IGetAvailabilityGanttParams } from '../gantt-type';
+import type {
+  AvailabilityGanttAllocationStatus,
+  AvailabilityGanttFilters,
+  IAvailabilityGanttBlock,
+  IGetAvailabilityGanttParams,
+} from '../gantt-type';
+import type {
+  HandoverStatus,
+  RentalOrderStatus,
+  RentalPickupMethod,
+  RentalSettlementStatus,
+  ReturnStatus,
+} from '@/modules/rental-orders/model';
 import { useGetAvailabilityGantt } from './use-get-availability-gantt';
 
 const GANTT_SCALES: GanttScale[] = ['day', 'week', 'month', 'quarter', 'year'];
@@ -43,6 +56,19 @@ const parseScaleParam = (value: string | null): GanttScale | undefined => {
   return GANTT_SCALES.includes(value as GanttScale) ? (value as GanttScale) : undefined;
 };
 
+const parseListParam = <T extends string>(value: string | null): T[] =>
+  value
+    ? value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean) as T[]
+    : [];
+
+const toListParam = (value: string[]) => (value.length ? value.join(',') : undefined);
+
+const parseBooleanParam = (value: string | null): boolean | undefined =>
+  value === 'true' ? true : value === 'false' ? false : undefined;
+
 const getVisibleRange = (scale: GanttScale, date: Date): GanttDateRange =>
   getGanttDateRange(scale, date, {
     timeZone: RENTAL_GANTT_TIME_ZONE,
@@ -55,6 +81,21 @@ export const useAvailabilityGanttLogic = () => {
   const searchParams = useSearchParams();
   const search = searchParams.get('search') ?? '';
   const productId = searchParams.get('productId') ?? undefined;
+  const filters = useMemo<AvailabilityGanttFilters>(
+    () => ({
+      orderStatuses: parseListParam<RentalOrderStatus>(searchParams.get('orderStatuses')),
+      allocationStatuses: parseListParam<AvailabilityGanttAllocationStatus>(searchParams.get('allocationStatuses')),
+      handoverStatuses: parseListParam<HandoverStatus>(searchParams.get('handoverStatuses')),
+      returnStatuses: parseListParam<ReturnStatus>(searchParams.get('returnStatuses')),
+      settlementStatuses: parseListParam<RentalSettlementStatus>(searchParams.get('settlementStatuses')),
+      pickupMethods: parseListParam<RentalPickupMethod>(searchParams.get('pickupMethods')),
+      assetStatuses: parseListParam<AssetStatus>(searchParams.get('assetStatuses')),
+      assetConditions: parseListParam<AssetCondition>(searchParams.get('assetConditions')),
+      assetActive: parseBooleanParam(searchParams.get('assetActive')),
+      includeCancelled: searchParams.get('includeCancelled') === 'true',
+    }),
+    [searchParams],
+  );
   const [ganttScale, setGanttScale] = useState<GanttScale>(
     () => parseScaleParam(searchParams.get('scale')) ?? RENTAL_GANTT_DEFAULT_SCALE,
   );
@@ -91,6 +132,43 @@ export const useAvailabilityGanttLogic = () => {
     (value: string | undefined) => replaceParams({ search: value }),
     [replaceParams],
   );
+
+  const handleFiltersChange = useCallback(
+    (updates: Partial<AvailabilityGanttFilters>) => {
+      const next = { ...filters, ...updates };
+      replaceParams({
+        orderStatuses: toListParam(next.orderStatuses),
+        allocationStatuses: toListParam(next.allocationStatuses),
+        handoverStatuses: toListParam(next.handoverStatuses),
+        returnStatuses: toListParam(next.returnStatuses),
+        settlementStatuses: toListParam(next.settlementStatuses),
+        pickupMethods: toListParam(next.pickupMethods),
+        assetStatuses: toListParam(next.assetStatuses),
+        assetConditions: toListParam(next.assetConditions),
+      assetActive: next.assetActive === undefined ? undefined : String(next.assetActive),
+        includeCancelled: next.includeCancelled ? 'true' : undefined,
+      });
+    },
+    [filters, replaceParams],
+  );
+
+  const clearFilters = useCallback(() => {
+    replaceParams({
+      search: undefined,
+      productId: undefined,
+      productIds: undefined,
+      orderStatuses: undefined,
+      allocationStatuses: undefined,
+      handoverStatuses: undefined,
+      returnStatuses: undefined,
+      settlementStatuses: undefined,
+      pickupMethods: undefined,
+      assetStatuses: undefined,
+      assetConditions: undefined,
+      assetActive: undefined,
+      includeCancelled: undefined,
+    });
+  }, [replaceParams]);
 
   const syncTimelineParams = useCallback(
     (next: GanttRangeInfo) => {
@@ -129,8 +207,18 @@ export const useAvailabilityGanttLogic = () => {
       limit: DEFAULT_GANTT_LIMIT,
       search: search || undefined,
       productId,
+      orderStatuses: toListParam(filters.orderStatuses),
+      allocationStatuses: toListParam(filters.allocationStatuses),
+      handoverStatuses: toListParam(filters.handoverStatuses),
+      returnStatuses: toListParam(filters.returnStatuses),
+      settlementStatuses: toListParam(filters.settlementStatuses),
+      pickupMethods: toListParam(filters.pickupMethods),
+      assetStatuses: toListParam(filters.assetStatuses),
+      assetConditions: toListParam(filters.assetConditions),
+      assetActive: filters.assetActive === undefined ? undefined : String(filters.assetActive),
+      includeCancelled: filters.includeCancelled ? 'true' : undefined,
     }),
-    [endDate, productId, search, startDate],
+    [endDate, filters, productId, search, startDate],
   );
   const query = useGetAvailabilityGantt(params, startDate < endDate);
 
@@ -209,11 +297,15 @@ export const useAvailabilityGanttLogic = () => {
     ganttDate,
     ganttScale,
     handleDateChange,
+    handleFiltersChange,
     handleRangeChange,
     handleScaleChange,
     handleSearchChange,
+    clearFilters,
+    filters,
     isFetchingNextPage,
     products,
+    productId,
     query,
     resources,
     search,

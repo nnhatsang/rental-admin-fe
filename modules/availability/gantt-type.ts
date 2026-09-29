@@ -1,6 +1,7 @@
 import type { AssetCondition, AssetStatus } from '@/modules/asset-units/type';
 import type {
   HandoverStatus,
+  RentalPickupMethod,
   RentalOrderStatus,
   RentalSettlementStatus,
   ReturnStatus,
@@ -13,6 +14,32 @@ export interface IGetAvailabilityGanttParams {
   limit?: number;
   search?: string;
   productId?: string;
+  productIds?: string;
+  orderStatuses?: string;
+  allocationStatuses?: string;
+  handoverStatuses?: string;
+  returnStatuses?: string;
+  settlementStatuses?: string;
+  pickupMethods?: string;
+  assetStatuses?: string;
+  assetConditions?: string;
+  assetActive?: string;
+  includeCancelled?: string;
+}
+
+export type AvailabilityGanttAllocationStatus = 'REQUESTED' | 'RESERVED' | 'HANDED_OVER' | 'RETURNED' | 'RELEASED';
+
+export interface AvailabilityGanttFilters {
+  orderStatuses: RentalOrderStatus[];
+  allocationStatuses: AvailabilityGanttAllocationStatus[];
+  handoverStatuses: HandoverStatus[];
+  returnStatuses: ReturnStatus[];
+  settlementStatuses: RentalSettlementStatus[];
+  pickupMethods: RentalPickupMethod[];
+  assetStatuses: AssetStatus[];
+  assetConditions: AssetCondition[];
+  assetActive: boolean | undefined;
+  includeCancelled: boolean;
 }
 
 export interface IAvailabilityGanttBlock {

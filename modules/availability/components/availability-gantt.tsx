@@ -3,11 +3,11 @@
 import {
   RENTAL_GANTT_I18N,
   RENTAL_GANTT_LOCALE,
-  RENTAL_GANTT_READONLY_CONFIG,
+  RENTAL_GANTT_CONFIG,
   RENTAL_GANTT_TIME_ZONE,
 } from '@/components/reui/gantt/gantt-config';
 import { Gantt, type GanttRenderEventProps } from '@/components/reui/gantt/gantt';
-import { GanttNav } from '@/components/reui/gantt/gantt-nav';
+import { GanttNav, GanttToolbar } from '@/components/reui/gantt/gantt-nav';
 import { GanttView } from '@/components/reui/gantt/gantt-view';
 import { DebouncedSearchInput } from '@/components/shared/debounced-search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,7 +18,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { assetActiveConfig, assetConditionConfig, assetStatusConfig } from '@/modules/asset-units/display-config';
-import { ProductCombobox } from '@/modules/asset-units/product-combobox';
+import { ProductCombobox, type ProductOption } from '@/modules/asset-units/product-combobox';
+import { CreateRentalOrderDialog, type CreateRentalOrderPrefill } from '@/modules/rental-orders/components/create';
 import {
   RentalOrderActionDialog,
   type RentalOrderAction,
@@ -26,15 +27,16 @@ import {
 import { RentalOrderDetailDialog } from '@/modules/rental-orders/components/detail/rental-order-detail-dialog';
 import { UpdateRentalOrderDialog } from '@/modules/rental-orders/components/update/update-rental-order-dialog';
 import { useRentalOrders } from '@/modules/rental-orders/rental-orders-provider';
-import { IconAlertTriangle, IconCalendarCheck, IconCircleCheck, IconPackages, IconRefresh } from '@tabler/icons-react';
-import { useCallback, type CSSProperties, type ReactNode } from 'react';
-import type { GanttOccurrence, GanttResource } from '@/components/reui/gantt/gantt-types';
+import { IconAlertTriangle, IconCalendarCheck, IconCircleCheck, IconPackages, IconPlus, IconRefresh } from '@tabler/icons-react';
+import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import type { GanttOccurrence, GanttResource, GanttSlotDraft } from '@/components/reui/gantt/gantt-types';
 import { availabilityGanttOrderStatusConfig } from '../display-config';
 import { getRentalOrderFinancialSummary, getRentalOrderNextAction } from '@/modules/rental-orders/display-semantics';
 import { getAvailabilityErrorMessage } from '../display-utils';
 import { settlementStatusConfig } from '@/modules/rental-orders/display-config';
 import type { AvailabilityGanttEventData } from '../hooks/use-availability-gantt-logic';
 import type { IAvailabilityGanttAsset } from '../gantt-type';
+import { AvailabilityGanttFilterBar } from './availability-gantt-filter-bar';
 import { useAvailabilityGanttLogic } from '../hooks/use-availability-gantt-logic';
 
 type SummaryMetricTone = 'neutral' | 'scheduled' | 'available' | 'unavailable';
@@ -86,19 +88,31 @@ function AvailabilityGanttEvent({ occurrence }: GanttRenderEventProps<Availabili
   const hasNote = Boolean(data?.internalNote || data?.customerNote || data?.cancelReason);
   const pickupLabel = data ? (data.pickupMethod === 'DELIVERY' ? 'Giao máy' : 'Tại cửa hàng') : null;
   const financialSummary = data ? getRentalOrderFinancialSummary(data) : null;
+  const orderStatus = data ? availabilityGanttOrderStatusConfig[data.orderStatus] : null;
   const attention =
     financialSummary?.isActionRequired && financialSummary.amount > 0
       ? {
           label: financialSummary.label,
+          amount: financialSummary.amount,
           className: settlementStatusConfig[financialSummary.badgeStatus].className,
         }
       : null;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 leading-tight">
+    <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-0.5 leading-tight">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="relative size-1.5 shrink-0 rounded-full bg-(--gantt-event-color)" aria-hidden="true" />
         <span className="min-w-0 truncate font-semibold">{data?.orderCode ?? event.title}</span>
+        {orderStatus ? (
+          <span
+            className={cn(
+              'hidden shrink-0 rounded-full border px-1.5 py-px text-[10px] font-medium @[18rem]:inline',
+              orderStatus.className,
+            )}
+          >
+            {orderStatus.label}
+          </span>
+        ) : null}
         {hasNote ? (
           <span
             className="size-1.5 shrink-0 rounded-full bg-amber-500"
@@ -114,12 +128,12 @@ function AvailabilityGanttEvent({ occurrence }: GanttRenderEventProps<Availabili
           {attention ? (
             <span
               className={cn(
-                'hidden max-w-32 truncate rounded-sm border border-current/20 bg-background/70 px-1 text-[10px] font-medium @[25rem]:inline',
+                'hidden max-w-44 truncate rounded-sm border border-current/20 bg-background/70 px-1 text-[10px] font-medium @[21rem]:inline',
                 attention.className,
               )}
-              title={attention.label}
+              title={`${attention.label}: ${formatCurrency(attention.amount, { noDecimals: true })}`}
             >
-              {attention.label}
+              {attention.label} · {formatCurrency(attention.amount, { noDecimals: true })}
             </span>
           ) : null}
         </div>
@@ -274,16 +288,75 @@ export function AvailabilityGantt() {
     ganttDate,
     ganttScale,
     handleDateChange,
+    handleFiltersChange,
     handleRangeChange,
     handleScaleChange,
     handleSearchChange,
+    clearFilters,
+    filters,
     isFetchingNextPage,
     products,
+    productId,
     query,
     resources,
     search,
     summary,
   } = useAvailabilityGanttLogic();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createPrefill, setCreatePrefill] = useState<CreateRentalOrderPrefill | null>(null);
+
+  const productByResourceId = useMemo(() => {
+    const result = new Map<string, { product: (typeof products)[number]; option: ProductOption }>();
+
+    products.forEach((product) => {
+      const option: ProductOption = {
+        id: product.productId,
+        name: product.name,
+        sku: product.sku,
+        assetUnitCount: product.assetUnits.length,
+      };
+      result.set(product.productId, { product, option });
+      product.assetUnits.forEach((asset) => result.set(asset.assetUnitId, { product, option }));
+    });
+
+    return result;
+  }, [products]);
+
+  const openCreateRentalOrder = useCallback((prefill: CreateRentalOrderPrefill | null = null) => {
+    setCreatePrefill(prefill);
+    setCreateOpen(true);
+  }, []);
+
+  const handleCreateOpenChange = useCallback((nextOpen: boolean) => {
+    setCreateOpen(nextOpen);
+    if (!nextOpen) setCreatePrefill(null);
+  }, []);
+
+  const canSelectSlot = useCallback(
+    (slot: GanttSlotDraft) => Boolean(slot.resourceId && productByResourceId.has(slot.resourceId)),
+    [productByResourceId],
+  );
+
+  const handleSelectSlot = useCallback(
+    (slot: GanttSlotDraft) => {
+      if (!slot.resourceId) return;
+      const resource = productByResourceId.get(slot.resourceId);
+      if (!resource) return;
+
+      const end =
+        slot.end.getTime() > slot.start.getTime()
+          ? slot.end
+          : new Date(slot.start.getTime() + 60 * 60 * 1000);
+
+      openCreateRentalOrder({
+        startDate: slot.start.toISOString(),
+        endDate: end.toISOString(),
+        items: [{ productId: resource.product.productId, quantity: 1 }],
+        initialProducts: [resource.option],
+      });
+    },
+    [openCreateRentalOrder, productByResourceId],
+  );
 
   const handleEventClick = useCallback(
     (occurrence: GanttOccurrence<AvailabilityGanttEventData>) => {
@@ -306,15 +379,15 @@ export function AvailabilityGantt() {
   return (
     <div className="grid gap-4">
       <Card className="overflow-hidden">
-        <CardHeader className="gap-3 border-b border-accent/60 has-data-[slot=card-action]:grid-cols-1 lg:has-data-[slot=card-action]:grid-cols-[1fr_auto]">
+        <CardHeader className="gap-3 border-b border-accent/60 has-data-[slot=card-action]:grid-cols-1 xl:has-data-[slot=card-action]:grid-cols-[1fr_auto]">
           <div className="grid auto-rows-min gap-1.5">
             <CardTitle className="flex items-center gap-2 text-xl leading-none">Lịch thiết bị</CardTitle>
             <CardDescription className="max-w-2xl leading-snug">
-              Theo dõi thiết bị đang được thuê và trạng thái đơn trong khung thời gian. Di chuyển chuột vào đơn xem tổng
-              quan đơn thuê, bấm để mở chi tiết đơn.
+              Theo dõi thiết bị đang được thuê và trạng thái đơn trong khung thời gian. Bấm hoặc kéo vùng trống trên
+              dòng sản phẩm/máy để thêm đơn thuê; bấm vào thanh lịch để xem chi tiết đơn.
             </CardDescription>
           </div>
-          <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:w-auto lg:flex-nowrap lg:justify-end lg:justify-self-end">
+          <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:w-auto xl:flex-nowrap xl:justify-end xl:justify-self-end">
             <ProductCombobox syncToUrl placeholder="Lọc theo sản phẩm..." className="w-full sm:w-[230px]" />
             <DebouncedSearchInput
               value={search}
@@ -322,7 +395,11 @@ export function AvailabilityGantt() {
               placeholder="Mã đơn, khách hàng..."
               className="w-full h-8 sm:w-[300px]"
             />
-            <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
+            <Button type="button" onClick={() => openCreateRentalOrder()}>
+              <IconPlus aria-hidden="true" data-icon="inline-start" />
+              Thêm đơn thuê
+            </Button>
+            <Button type="button" variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
               <IconRefresh aria-hidden="true" data-icon="inline-start" />
               Làm mới
             </Button>
@@ -382,7 +459,7 @@ export function AvailabilityGantt() {
             {Object.entries(availabilityGanttOrderStatusConfig).map(([status, config]) => (
               <span key={status} className="inline-flex items-center gap-1.5">
                 <span
-                  className="size-4 rounded-sm border border-(--gantt-legend-color)/40 bg-(--gantt-legend-color)/20"
+                  className="size-5 border border-(--gantt-legend-color)/40 bg-(--gantt-legend-color)/20"
                   style={{ '--gantt-legend-color': config.color } as CSSProperties}
                   aria-hidden="true"
                 />
@@ -417,6 +494,17 @@ export function AvailabilityGantt() {
                 onScaleChange={handleScaleChange}
                 onRangeChange={handleRangeChange}
                 onEventClick={handleEventClick}
+                onSelectSlot={handleSelectSlot}
+                canSelectSlot={canSelectSlot}
+                renderScheduleHint={() => (
+                  <span
+                    title="Bấm hoặc kéo để thêm đơn thuê"
+                    className="bg-primary text-primary-foreground pointer-events-none inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium whitespace-nowrap shadow-sm"
+                  >
+                    <IconPlus className="size-3" aria-hidden="true" />
+                    Thêm đơn thuê
+                  </span>
+                )}
                 renderEvent={AvailabilityGanttEvent}
                 renderEventTooltip={AvailabilityGanttEventTooltip}
                 renderResourceLabel={AvailabilityGanttResourceLabel}
@@ -426,9 +514,17 @@ export function AvailabilityGantt() {
                 className="h-[min(72vh,760px)] min-h-[460px] border-0"
                 metrics={{ laneHeight: 2.25 }}
                 loading={query.isFetching}
-                {...RENTAL_GANTT_READONLY_CONFIG}
+                {...RENTAL_GANTT_CONFIG}
               >
                 <GanttNav />
+                <GanttToolbar className="min-w-0 flex-wrap justify-end border-b px-3 py-2">
+                  <AvailabilityGanttFilterBar
+                    filters={filters}
+                    onChange={handleFiltersChange}
+                    onClear={clearFilters}
+                    externalFilterCount={(search ? 1 : 0) + (productId ? 1 : 0)}
+                  />
+                </GanttToolbar>
                 <GanttView />
               </Gantt>
             </div>
@@ -449,6 +545,7 @@ export function AvailabilityGantt() {
         onOpenChange={(next) => setOpen(next && action ? action : null)}
       />
       <RentalOrderDetailDialog open={open === 'detail'} onOpenChange={(next) => setOpen(next ? 'detail' : null)} />
+      <CreateRentalOrderDialog open={createOpen} prefill={createPrefill} onOpenChange={handleCreateOpenChange} />
     </div>
   );
 }

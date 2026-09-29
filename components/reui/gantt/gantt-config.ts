@@ -24,17 +24,17 @@ export const RENTAL_GANTT_I18N: GanttI18nOverrides = {
     today: 'Hôm nay',
     previous: 'Trước',
     next: 'Sau',
-    addEvent: 'Thêm lịch',
+    addEvent: 'Thêm đơn thuê',
     addTask: 'Thêm dòng',
     allDay: 'Cả ngày',
     loading: 'Đang tải lịch',
-    event: 'lịch',
-    events: (count) => `${count} lịch`,
+    event: 'đơn thuê',
+    events: (count) => `${count} đơn thuê`,
     week: (weekNumber) => `Tuần ${weekNumber}`,
     resources: 'Thiết bị',
     goToDate: 'Chọn ngày',
-    scheduleHint: 'Bấm để thêm lịch',
-    scheduleHintDrag: 'Bấm hoặc kéo để thêm lịch',
+    scheduleHint: 'Bấm để thêm đơn thuê',
+    scheduleHintDrag: 'Bấm hoặc kéo để thêm đơn thuê',
     reorder: 'Sắp xếp',
     selectView: 'Kiểu xem',
     zoomIn: 'Phóng to',
@@ -70,18 +70,19 @@ export const RENTAL_GANTT_I18N: GanttI18nOverrides = {
   },
 };
 
-export const RENTAL_GANTT_READONLY_INTERACTIONS: GanttInteractions = {
+export const RENTAL_GANTT_INTERACTIONS: GanttInteractions = {
   drag: false,
   resize: false,
-  selectSlot: false,
+  selectSlot: true,
 };
 
-export const RENTAL_GANTT_READONLY_CONFIG = {
-  interactions: RENTAL_GANTT_READONLY_INTERACTIONS,
+export const RENTAL_GANTT_CONFIG = {
+  interactions: RENTAL_GANTT_INTERACTIONS,
   rowCheckboxes: false,
   summaryBars: false,
-  dragCreate: false,
-  displayScheduleHint: false,
+  dragCreate: true,
+  displayScheduleHint: true,
+  parentScheduling: true,
   timelineLines: 'both' as const,
   barLabel: 'inside' as const,
   offDays: true,

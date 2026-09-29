@@ -21,6 +21,7 @@ import { formatCurrency, parseDate, toIso } from '@/lib/utils';
 import { CustomerCombobox } from '@/modules/customers/customer-combobox';
 import { CustomerFormDialog } from '@/modules/customers/dialog';
 import type { ICustomerOut } from '@/modules/customers/type';
+import type { ProductOption } from '@/modules/asset-units/product-combobox';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconUserPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -31,6 +32,13 @@ import { formatRentalDuration } from '../../display-utils';
 import type { RentalOrderQuote } from '../../model';
 import { quoteFormSchema, type QuoteFormValues } from '../../model';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+export type CreateRentalOrderPrefill = {
+  startDate?: string;
+  endDate?: string;
+  items?: Array<{ productId: string; quantity: number; note?: string }>;
+  initialProducts?: ProductOption[];
+};
 
 function formatRentalDate(value?: Date) {
   return value
@@ -45,9 +53,11 @@ function formatRentalTime(value?: Date) {
 export function CreateRentalOrderDialog({
   open,
   onOpenChange,
+  prefill,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  prefill?: CreateRentalOrderPrefill | null;
 }) {
   const [quote, setQuote] = useState<RentalOrderQuote | null>(null);
   const [note, setNote] = useState('');
@@ -93,7 +103,19 @@ export function CreateRentalOrderDialog({
       setCustomerDialogOpen(false);
       setCreatedCustomer(null);
     }
-  }, [form, open]);
+    if (open && prefill) {
+      form.reset({
+        customerId: '',
+        startDate: prefill.startDate ?? '',
+        endDate: prefill.endDate ?? '',
+        pickupMethod: 'PICKUP_AT_STORE',
+        deliveryAddress: '',
+        items: prefill.items ?? [],
+      });
+      setQuote(null);
+      setNote('');
+    }
+  }, [form, open, prefill]);
 
   const handleDateRangeUpdate = ({ range }: { range: DateTimeRange }) => {
     form.setValue('startDate', range.from ? range.from.toISOString() : '', { shouldDirty: true, shouldValidate: true });
@@ -229,6 +251,7 @@ export function CreateRentalOrderDialog({
                     value={items}
                     onChange={handleItemsChange}
                     error={form.formState.errors.items}
+                    initialProducts={prefill?.initialProducts}
                     portalContainer={portalContainer}
                   />
 
