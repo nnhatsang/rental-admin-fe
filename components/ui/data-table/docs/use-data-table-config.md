@@ -56,25 +56,16 @@ Với màn CRUD bình thường, không nên bật sẵn grouping, editing trong
 
 Các option này là của `@tanstack/react-table`, `useDataTable` chỉ truyền tiếp hoặc gắn default hợp lý.
 
-| Option | Default trong hook | Dùng khi nào | Ghi chú |
+| Option | Default | Dùng khi nào | Ghi chú |
 | --- | --- | --- | --- |
-| `data` | Bắt buộc | Dữ liệu table | Thường là `response.data.items ?? []`. |
-| `columns` | Bắt buộc | Định nghĩa cột | Có thể dùng `columnDef.meta` cho filter/edit/label. |
-| `state` | Theo TanStack | Controlled table state | Dùng với `useTableQueryState` cho server-side. |
-| `pageCount` | Theo TanStack | Server-side pagination | Cần khi `manualPagination: true`. |
-| `getRowId` | Theo TanStack | Row có id ổn định | Nên luôn truyền với dữ liệu có `id`. |
-| `manualPagination` | `false` của TanStack | Backend phân trang | Nếu bật, hook không tự tạo pagination row model. |
-| `manualSorting` | `false` của TanStack | Backend sort | Nếu bật, sort state chỉ dùng để gọi API. |
-| `manualFiltering` | `false` của TanStack | Backend filter/search | Nếu bật, client không tự filter rows. |
-| `onPaginationChange` | Theo TanStack | Controlled pagination | Dùng từ `useTableQueryState`. |
-| `onSortingChange` | Theo TanStack | Controlled sorting | Dùng từ `useTableQueryState`. |
-| `onColumnFiltersChange` | Theo TanStack | Controlled column filters | Dùng từ `useTableQueryState`. |
-| `onGlobalFilterChange` | Theo TanStack | Controlled global search | Dùng từ `useTableQueryState`. |
-| `meta` | Theo TanStack | Truyền handlers xuống column cell | Ví dụ action edit/delete trong column. |
-| `defaultColumn` | `{ filterFn: dynamicFilterFn }` + custom | Default cho mọi cột | Hook tự gắn filterFn động. |
-| `autoResetPageIndex` | `false` | Tự reset page khi data/filter đổi | Hook tự reset page bằng effect để tránh warning React 19. |
-| `columnResizeMode` | `"onChange"` | Resize cột | Chỉ có ý nghĩa khi `enableColumnResizing`. |
-| `keepPinnedRows` | `true` | Row pinning | Chỉ có ý nghĩa khi `enableRowPinning`. |
+| `enableRowSelection` | `false` trừ khi truyền TanStack option | Chọn row/bulk action | Hook đọc từ `tableOptions.enableRowSelection`. |
+| `selectAllMode` | `"page"` | Header checkbox chọn phạm vi nào | `"page"` hoặc `"all"`. |
+| `enableSelectAll` | `true` | Hiện checkbox select all | Tắt nếu chỉ cho chọn từng row. |
+| `positionToolbarAlertBanner` | `"top"` | Vị trí banner báo selected rows | `"top"`, `"bottom"`, `"none"`. |
+| `renderRowActions` | `undefined` | Inject action column inline | Trả ReactNode trong cell action. |
+| `renderRowActionMenuItems` | `undefined` | Inject action column dạng menu | Trả menu items, table tự render kebab column. |
+| `positionActionsColumn` | `"last"` | Vị trí action column | `"first"` hoặc `"last"`. |
+| `renderCellActionMenuItems` | `undefined` | Menu action theo cell | Ít dùng. |
 
 ## Config localization/icons
 
@@ -223,10 +214,10 @@ table.cnTable.autoSizeAllColumns()
 | `positionToolbarAlertBanner` | `"top"` | Vị trí banner báo selected rows | `"top"`, `"bottom"`, `"none"`. |
 | `renderRowActions` | `undefined` | Inject action column inline | Trả ReactNode trong cell action. |
 | `renderRowActionMenuItems` | `undefined` | Inject action column dạng menu | Trả menu items, table tự render kebab column. |
+| `enableRowContextMenu` | `false` | Bật menu chuột phải cho từng row | Chỉ có tác dụng khi có `renderRowContextMenuItems`. |
+| `renderRowContextMenuItems` | `undefined` | Render action menu bằng ContextMenu | Trả về `ContextMenuItem`; không thêm DOM wrapper vào `<tbody>`. |
 | `positionActionsColumn` | `"last"` | Vị trí action column | `"first"` hoặc `"last"`. |
 | `renderCellActionMenuItems` | `undefined` | Menu action theo cell | Ít dùng. |
-
-Nếu màn đã tự có column actions trong `columns`, không cần `renderRowActions`.
 
 Selection là UI state của module, không thuộc `useTableQueryState`. Khi cần chọn nhiều dòng, tự quản lý local:
 

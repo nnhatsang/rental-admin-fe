@@ -437,6 +437,31 @@ const table = useDataTable({
 
 Nếu cần UI actions inline thay vì menu, dùng `renderRowActions`.
 
+### Context menu theo row
+
+Context menu theo row là tùy chọn, mặc định đang tắt. Bật nó khi module cần thao tác nhanh bằng chuột phải hoặc phím Context Menu:
+
+```tsx
+import { ContextMenuItem } from '@/components/ui/context-menu'
+
+const table = useDataTable({
+  data,
+  columns,
+  enableRowContextMenu: true,
+  renderRowContextMenuItems: ({ row }) => (
+    <>
+      <ContextMenuItem onSelect={() => openDetail(row.original)}>
+        Xem chi tiết
+      </ContextMenuItem>
+      <ContextMenuItem variant="destructive" onSelect={() => openDelete(row.original)}>
+        Xóa
+      </ContextMenuItem>
+    </>
+  ),
+})
+```
+
+`renderRowActionMenuItems` và `renderRowContextMenuItems` dùng primitive menu tương ứng. Với module có logic action phức tạp, nên tách một action builder dùng chung rồi render lại thành `DropdownMenuItem` và `ContextMenuItem`, thay vì nhân đôi điều kiện theo status và permission.
 ## Editing
 
 Bật edit cell:
