@@ -211,6 +211,7 @@ export function RentalOrderUpdateItemsField({
           ariaInvalid={Boolean(error)}
           placeholder="Tìm theo tên hoặc SKU để thêm"
           fetchEnabled
+          disableInactive
           portalContainer={portalContainer}
         />
         <FieldDescription>

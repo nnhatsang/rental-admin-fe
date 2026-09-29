@@ -8,10 +8,13 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@/components/ui/combobox';
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { Badge } from '@/components/ui/badge';
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { IProductOut } from '@/modules/products/type';
+import { productActiveConfig } from '@/modules/products/display-config';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
+import { IconPackage } from '@tabler/icons-react';
 import { useCallback } from 'react';
 import { useGetProductsLogic, type ProductOption } from './hooks/use-get-products-logic';
 
@@ -28,6 +31,8 @@ export type ProductComboboxProps = {
   portalContainer?: HTMLElement | null;
   fetchEnabled?: boolean;
   classNameContent?: string;
+  /** Keep inactive products visible for context, but prevent selecting them. */
+  disableInactive?: boolean;
 };
 
 export type { ProductOption } from './hooks/use-get-products-logic';
@@ -47,6 +52,7 @@ export function ProductCombobox({
   portalContainer,
   fetchEnabled,
   classNameContent,
+  disableInactive = false,
 }: ProductComboboxProps) {
   const text = TITLE_PAGE.ASSET_UNITS;
   const shouldFetchProducts = fetchEnabled ?? (!disabled || syncToUrl);
@@ -110,26 +116,48 @@ export function ProductCombobox({
             const product = productById.get(productId);
 
             if (!product) return null;
+            const activeConfig =
+              product.isActive !== undefined
+                ? productActiveConfig[String(product.isActive) as 'true' | 'false']
+                : null;
 
             return (
-              <ComboboxItem key={product.id} value={product.id}>
-                <Item size="xs" className="p-0">
-                  <ItemContent>
-                    <ItemTitle className="truncate text-sm font-medium">{product.name}</ItemTitle>
-
-                    <ItemDescription
-                      className={(cn('text-muted-foreground mt-1 space-y-0.5 text-xs'), classNameContent)}
-                    >
-                      <div>SKU: {product.sku}</div>
-                      <div>
-                        Ngày: {product.dailyPrice != null ? formatCurrency(Number(product.dailyPrice)) : 'Chưa có giá'}
-                      </div>
-                      <div>
+              <ComboboxItem key={product.id} value={product.id} disabled={disableInactive && product.isActive === false}>
+                <Item size="xs" className="min-w-0 p-0">
+                  <ItemMedia variant="icon" className="mt-0.5 size-8 rounded-md bg-muted text-muted-foreground">
+                    <IconPackage aria-hidden="true" />
+                  </ItemMedia>
+                  <ItemContent className={cn('min-w-0 gap-1', classNameContent)}>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <ItemTitle className="min-w-0 flex-1 truncate text-sm font-medium">{product.name}</ItemTitle>
+                      {activeConfig ? (
+                        <Badge
+                          variant="outline"
+                          className={cn('shrink-0 text-[10px]', activeConfig.className)}
+                        >
+                          {activeConfig.label}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                      <span className="font-mono">SKU {product.sku}</span>
+                      <span>
+                        · {product.assetUnitCount != null ? `${product.assetUnitCount} máy` : 'Chưa có số máy'}
+                      </span>
+                    </ItemDescription>
+                    <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                      <span>
+                        Ngày:{' '}
+                        {product.dailyPrice != null ? formatCurrency(Number(product.dailyPrice)) : 'Chưa có giá'}
+                      </span>
+                      <span>
                         Buổi:{' '}
                         {product.halfDayPrice != null ? formatCurrency(Number(product.halfDayPrice)) : 'Chưa có giá'}
-                      </div>
-                      <div>Số máy: {product.assetUnitCount != null ? product.assetUnitCount : 'Chưa có dữ liệu'}</div>
+                      </span>
                     </ItemDescription>
+                    {disableInactive && product.isActive === false ? (
+                      <p className="text-[11px] text-destructive">Sản phẩm đang ngưng hoạt động</p>
+                    ) : null}
                   </ItemContent>
                 </Item>
               </ComboboxItem>

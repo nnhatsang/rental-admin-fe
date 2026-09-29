@@ -166,6 +166,7 @@ export function CreateRentalOrderDialog({
                         <CustomerCombobox
                           value={form.watch('customerId')}
                           selectedCustomer={createdCustomer}
+                          includeUnavailable
                           onChange={(value) => {
                             form.setValue('customerId', value, { shouldDirty: true, shouldValidate: true });
                             setQuote(null);

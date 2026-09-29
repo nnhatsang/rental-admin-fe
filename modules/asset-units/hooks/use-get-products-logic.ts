@@ -7,7 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 export type ProductOption = Pick<IProductOut, 'id' | 'name' | 'sku'> &
-  Partial<Pick<IProductOut, 'assetUnitCount' | 'dailyPrice' | 'halfDayPrice'>> & {
+  Partial<Pick<IProductOut, 'assetUnitCount' | 'dailyPrice' | 'halfDayPrice' | 'isActive'>> & {
     rentalPrice?: number;
   };
 

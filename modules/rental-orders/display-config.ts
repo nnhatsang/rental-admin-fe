@@ -239,14 +239,14 @@ export const returnStatusConfig = {
 
 export const rentalOrderScheduleBadgeConfig = {
   STARTING_SOON: {
-    label: 'Sắp nhận máy',
+    label: 'Sắp gaio máy',
     description: 'Thời điểm bắt đầu thuê đang đến gần.',
     icon: IconClock,
     className: chartAmber,
   },
   START_OVERDUE: {
     label: 'Quá giờ nhận',
-    description: 'Đã quá thời điểm dự kiến nhận máy.',
+    description: 'Đã quá thời điểm dự kiến giao máy.',
     icon: IconAlertTriangle,
     className: danger,
   },

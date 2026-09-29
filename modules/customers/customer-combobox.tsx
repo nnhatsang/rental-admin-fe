@@ -8,14 +8,18 @@ import {
   ComboboxItem,
   ComboboxList,
 } from '@/components/ui/combobox';
+import { Badge } from '@/components/ui/badge';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item';
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@/components/ui/item';
 import { cn } from '@/lib/utils';
 import { useGetCustomers } from './hooks/use-get-customers';
 import { CustomerSortBy, CustomerStatus, type ICustomerOut } from './type';
+import { customerStatusConfig } from './display-config';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
-export type CustomerOption = Pick<ICustomerOut, 'id' | 'name' | 'phone'>;
+export type CustomerOption = Pick<ICustomerOut, 'id' | 'name' | 'phone'> &
+  Partial<Pick<ICustomerOut, 'email' | 'socialContact' | 'status'>>;
 
 export type CustomerComboboxProps = {
   value?: string;
@@ -29,6 +33,8 @@ export type CustomerComboboxProps = {
   portalContainer?: HTMLElement | null;
   fetchEnabled?: boolean;
   classNameContent?: string;
+  /** Show inactive/blocked customers as disabled options with their status. */
+  includeUnavailable?: boolean;
 };
 
 const customerLabel = (customer: Pick<ICustomerOut, 'name' | 'phone'>) =>
@@ -46,6 +52,7 @@ export function CustomerCombobox({
   portalContainer,
   fetchEnabled = true,
   classNameContent,
+  includeUnavailable = false,
 }: CustomerComboboxProps) {
   const ignoreNextInputChangeRef = useRef(false);
   const [search, setSearch] = useState('');
@@ -57,7 +64,10 @@ export function CustomerCombobox({
       page: 1,
       perPage: 20,
       search: debouncedSearch || undefined,
-      status: CustomerStatus.Active,
+      // Keep the initial list focused on usable customers. Once an admin
+      // searches, include unavailable matches so the status badge explains
+      // why a blocked/inactive customer cannot be selected.
+      status: includeUnavailable && debouncedSearch ? undefined : CustomerStatus.Active,
       sort: 'asc',
       sortBy: CustomerSortBy.NAME,
     },
@@ -106,6 +116,7 @@ export function CustomerCombobox({
       value={selectedValue}
       onValueChange={(nextValue) => {
         const nextCustomer = nextValue ? (customerById.get(nextValue) ?? null) : null;
+        if (nextCustomer && nextCustomer.status && nextCustomer.status !== CustomerStatus.Active) return;
         setLocalSelectedCustomer(nextCustomer);
         clearSearchAfterSelect();
         onCustomerChange?.(nextCustomer);
@@ -132,23 +143,34 @@ export function CustomerCombobox({
           {(customerId: string) => {
             const customer = customerById.get(customerId);
             if (!customer) return null;
+            const statusConfig = customer.status ? customerStatusConfig[customer.status] : null;
+            const StatusIcon = statusConfig?.icon;
 
             return (
-              <ComboboxItem key={customer.id} value={customer.id}>
-                <Item size="xs" className="p-0">
-                  <ItemContent className={classNameContent}>
-                    {customer.email ? (
-                      <>
-                        <ItemTitle className="truncate text-sm font-medium">{`${customer.name}  `}</ItemTitle>
-                        <ItemTitle className="truncate text-sm font-medium">{`${customer.email} `}</ItemTitle>
-                      </>
-                    ) : (
-                      <ItemTitle className="truncate text-sm font-medium">{`${customer.name} `}</ItemTitle>
-                    )}
-
-                    <ItemDescription className="text-muted-foreground mt-1 text-xs">
-                      {customer.phone ?? 'Không có số điện thoại'}
+              <ComboboxItem
+                key={customer.id}
+                value={customer.id}
+                disabled={Boolean(customer.status && customer.status !== CustomerStatus.Active)}
+              >
+                <Item size="xs" className="min-w-0 p-0">
+                  <UserAvatar name={customer.name} src={customer.avatar} className="font-medium" />
+                  <ItemContent className={cn('min-w-0 gap-1', classNameContent)}>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <ItemTitle className="min-w-0 flex-1 truncate text-sm font-medium">{customer.name}</ItemTitle>
+                      {statusConfig ? (
+                        <Badge variant="outline" className={cn('shrink-0 gap-1 text-[10px]', statusConfig.className)}>
+                          {StatusIcon ? <StatusIcon data-icon="inline-start" aria-hidden="true" /> : null}
+                          {statusConfig.label}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <ItemDescription className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                      <span>{customer.phone ?? 'Không có số điện thoại'}</span>
+                      {customer.email ? <span className="max-w-52 truncate">· {customer.email}</span> : null}
                     </ItemDescription>
+                    {includeUnavailable && customer.status !== CustomerStatus.Active ? (
+                      <p className="text-[11px] text-destructive">Không thể chọn khách hàng này cho đơn thuê</p>
+                    ) : null}
                   </ItemContent>
                 </Item>
               </ComboboxItem>

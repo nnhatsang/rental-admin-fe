@@ -125,6 +125,7 @@ export function RentalOrderItemsField({
           ariaInvalid={Boolean(error)}
           placeholder="Tìm theo tên hoặc SKU"
           fetchEnabled
+          disableInactive
           portalContainer={portalContainer}
         />
         <FieldDescription>

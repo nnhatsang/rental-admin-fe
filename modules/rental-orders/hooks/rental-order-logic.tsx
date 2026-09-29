@@ -173,7 +173,7 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
           selectedCustomer={selectedCustomer}
           onCustomerChange={(customer) => setCustomerFilter(customer?.id ?? '')}
           placeholder="Lọc theo khách hàng..."
-          className="w-full sm:w-[300px]"
+          className="w-full sm:w-[340px]"
         />
 
         <DateTimeRangePicker
