@@ -375,6 +375,14 @@ export function AvailabilityGantt() {
   const action: RentalOrderAction | null = isRentalOrderAction ? (open as RentalOrderAction) : null;
 
   const isEmpty = !query.isLoading && !query.isError && products.length === 0;
+  const availabilityFilterBar = (
+    <AvailabilityGanttFilterBar
+      filters={filters}
+      onChange={handleFiltersChange}
+      onClear={clearFilters}
+      externalFilterCount={(search ? 1 : 0) + (productId ? 1 : 0)}
+    />
+  );
 
   return (
     <div className="grid gap-4">
@@ -388,7 +396,7 @@ export function AvailabilityGantt() {
             </CardDescription>
           </div>
           <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:w-auto xl:flex-nowrap xl:justify-end xl:justify-self-end">
-            <ProductCombobox syncToUrl placeholder="Lọc theo sản phẩm..." className="w-full sm:w-[230px]" />
+            <ProductCombobox syncToUrl placeholder="Lọc theo sản phẩm..." className="w-full sm:w-[330px]" />
             <DebouncedSearchInput
               value={search}
               onDebouncedChange={handleSearchChange}
@@ -477,12 +485,19 @@ export function AvailabilityGantt() {
           ) : null}
 
           {isEmpty ? (
-            <Empty className="min-h-56 border border-dashed border-accent/60">
-              <EmptyHeader>
-                <EmptyTitle>Không có thiết bị phù hợp</EmptyTitle>
-                <EmptyDescription>Thử đổi khoảng thời gian, sản phẩm hoặc từ khóa tìm kiếm.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <div className="grid gap-3">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 border-y border-accent/60 bg-muted/10 px-3 py-2">
+                {availabilityFilterBar}
+              </div>
+              <Empty className="min-h-56 border border-dashed border-accent/60">
+                <EmptyHeader>
+                  <EmptyTitle>Không có thiết bị phù hợp</EmptyTitle>
+                  <EmptyDescription>
+                    Thử bỏ bớt bộ lọc, đổi khoảng thời gian, sản phẩm hoặc từ khóa tìm kiếm.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
           ) : (
             <div className="overflow-hidden border-none bg-background">
               <Gantt
@@ -518,12 +533,7 @@ export function AvailabilityGantt() {
               >
                 <GanttNav />
                 <GanttToolbar className="min-w-0 flex-wrap justify-end border-b px-3 py-2">
-                  <AvailabilityGanttFilterBar
-                    filters={filters}
-                    onChange={handleFiltersChange}
-                    onClear={clearFilters}
-                    externalFilterCount={(search ? 1 : 0) + (productId ? 1 : 0)}
-                  />
+                  {availabilityFilterBar}
                 </GanttToolbar>
                 <GanttView />
               </Gantt>

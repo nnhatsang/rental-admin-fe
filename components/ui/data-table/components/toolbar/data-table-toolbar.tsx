@@ -87,7 +87,7 @@ export function DataTableToolbar<TData extends RowData>({
             ))}
           {isFiltered && (
             <Button
-              variant="outline"
+              variant="destructive"
               size="default"
               aria-label={localization.clearFilter}
               title={localization.clearFilter}
@@ -95,7 +95,7 @@ export function DataTableToolbar<TData extends RowData>({
                 table.resetColumnFilters();
                 table.cnTable.onClearExternalFilters?.();
               }}
-              className="border-primary/35 bg-primary/5 px-2.5 text-primary shadow-xs hover:border-primary/50 hover:bg-primary/10 hover:text-primary focus-visible:border-primary/50 focus-visible:ring-primary/20 dark:border-primary/40 dark:bg-primary/10 dark:hover:bg-primary/20"
+              className=""
             >
               <IconFilterOff aria-hidden="true" data-icon="inline-start" />
               {localization.clearFilter}
