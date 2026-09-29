@@ -111,7 +111,7 @@ function QuoteSummary({ quote }: { quote: RentalOrderQuote }) {
           <QuoteMetric label="Giữ lịch" value={quote.summary.bookingHoldTotal} />
           <QuoteMetric label="Tiền cọc" value={quote.summary.securityDepositTotal} />
           <QuoteMetric label="Tổng nghĩa vụ" value={quote.summary.totalCustomerObligation} />
-          <QuoteMetric label="Còn trước giao" value={quote.summary.amountDueBeforeHandover} />
+          <QuoteMetric label="Còn phải thu trước bàn giao" value={quote.summary.amountDueBeforeHandover} />
         </div>
 
         {!isAvailable ? (
@@ -197,7 +197,7 @@ function UpdateOrderOverview({
         <OverviewMetric label="Tiền thuê hiện tại" value={formatCurrency(order.financials.rentalFeeTotal)} />
         <OverviewMetric label="Giữ lịch" value={formatCurrency(order.financials.bookingHoldTotal)} />
         <OverviewMetric label="Tiền cọc" value={formatCurrency(order.financials.securityDepositTotal)} />
-        <OverviewMetric label="Còn trước giao" value={formatCurrency(order.financials.amountDueBeforeHandover)} />
+        <OverviewMetric label="Còn phải thu trước bàn giao" value={formatCurrency(order.financials.amountDueBeforeHandover)} />
       </div>
     </section>
   );

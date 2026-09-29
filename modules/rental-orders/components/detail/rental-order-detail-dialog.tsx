@@ -29,6 +29,7 @@ import {
   TimelineTitle,
 } from '@/components/reui/timeline';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { getRentalOrderFinancialSummary, getRentalOrderNextAction, getRentalOrderOperationalBadges, type RentalOrderOperationalBadge } from '../../display-semantics';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import {
   IconEdit,
@@ -93,6 +94,18 @@ function DetailField({ label, children }: { label: string; children: React.React
   );
 }
 
+function DetailOperationalBadge({ badge }: { badge: RentalOrderOperationalBadge }) {
+  if (badge.kind === 'handover') {
+    return <RentalOrderBadge config={handoverStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  if (badge.kind === 'return') {
+    return <RentalOrderBadge config={returnStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  return <RentalOrderBadge config={settlementStatusConfig[badge.status]} label={badge.label} />;
+}
+
 function SocialContactValue({ value }: { value?: string | null }) {
   const socialContact = value?.trim();
 
@@ -154,7 +167,7 @@ function RentalChargeBreakdown({ charges }: { charges: RentalOrderDetail['charge
 
 function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
   const financials = order.financials;
-  const settlementConfig = settlementStatusConfig[order.settlementStatus];
+  const financialSummary = getRentalOrderFinancialSummary(order);
   const otherChargeTotal = order.charges
     .filter((charge) => charge.kind === 'OTHER_CHARGE' && charge.status !== 'WAIVED' && charge.status !== 'CANCELLED')
     .reduce((total, charge) => total + charge.amount, 0);
@@ -166,7 +179,7 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
           <CardTitle>Tài chính</CardTitle>
           <CardDescription>Chi tiết nghĩa vụ, phát sinh và dòng tiền của đơn thuê.</CardDescription>
         </div>
-        <RentalOrderBadge config={settlementConfig} />
+        <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
       </CardHeader>
       <CardContent className="grid gap-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -177,14 +190,15 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
           />
           <DetailMetric label="Đã thu" value={formatCurrency(financials.paidTotal)} valueClassName="text-primary" />
           <DetailMetric
-            label="Còn trước bàn giao"
-            value={formatCurrency(financials.amountDueBeforeHandover)}
-            valueClassName={financials.amountDueBeforeHandover > 0 ? 'text-destructive' : undefined}
+            label="Tài chính cần xử lý"
+            value={financialSummary.amount > 0 ? formatCurrency(financialSummary.amount) : 'Không cần xử lý'}
+            valueClassName={financialSummary.isActionRequired ? 'text-destructive' : undefined}
+            helper={`${financialSummary.label} · ${financialSummary.description}`}
           />
           <DetailMetric
-            label="Trạng thái quyết toán"
-            value={settlementConfig.label}
-            helper={settlementConfig.description}
+            label="Đã thu / Tổng nghĩa vụ"
+            value={`${formatCurrency(financials.paidTotal)} / ${formatCurrency(financials.totalCustomerObligation)}`}
+            helper="Chỉ giao máy khi đủ khoản phải thu theo chính sách."
           />
         </div>
 
@@ -210,7 +224,7 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
 
         <div className="grid gap-3 border-t border-accent/60 pt-4">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Đối soát thu và hoàn</div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <DetailMetric label="Còn cần thu khi đặt lịch" value={formatCurrency(financials.amountDueAtBooking)} />
             <DetailMetric
               label="Cần thu thêm"
@@ -222,12 +236,19 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
               label="Còn phải hoàn"
               value={formatCurrency(financials.refundDue)}
               valueClassName={financials.refundDue > 0 ? 'text-chart-5' : undefined}
-              helper="Theo đối soát hiện tại"
+              helper="Khoản còn phải chuyển cho khách"
+            />
+            <DetailMetric
+              label="Đang chờ hoàn"
+              value={formatCurrency(financialSummary.pendingRefundTotal)}
+              valueClassName={financialSummary.pendingRefundTotal > 0 ? 'text-chart-5' : undefined}
+              helper="Đã tạo yêu cầu, chưa xác nhận đã chuyển"
             />
             <DetailMetric
               label="Đã hoàn thực tế"
               value={formatCurrency(financials.actualRefundTotal)}
               valueClassName={financials.actualRefundTotal > 0 ? 'text-primary' : undefined}
+              helper="Đã xác nhận hoàn cho khách"
             />
           </div>
         </div>
@@ -332,14 +353,15 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <DetailField label="Trạng thái">
+            <DetailField label="Trạng thái đơn">
               <RentalOrderBadge config={orderStatusConfig[order.status]} />
             </DetailField>
-            <DetailField label="Bàn giao">
-              <RentalOrderBadge config={handoverStatusConfig[order.handoverStatus]} />
-            </DetailField>
-            <DetailField label="Trả máy">
-              <RentalOrderBadge config={returnStatusConfig[order.returnStatus]} />
+            <DetailField label="Bước vận hành">
+              <div className="flex flex-wrap gap-1.5">
+                {getRentalOrderOperationalBadges(order).map((badge) => (
+                  <DetailOperationalBadge key={badge.kind} badge={badge} />
+                ))}
+              </div>
             </DetailField>
             <DetailField label="Hình thức">
               {order.fulfillment.pickupMethod === 'DELIVERY' ? 'Giao máy' : 'Nhận tại cửa hàng'}
@@ -565,7 +587,7 @@ function TimelineTab({ order }: { order: RentalOrderDetail }) {
           <Timeline defaultValue={order.statusHistories.length} orientation="vertical" className="px-2 py-1">
             {order.statusHistories.map((history, index) => (
               <TimelineItem key={history.id} step={index + 1}>
-                <TimelineIndicator>{index + 1}</TimelineIndicator>
+                <TimelineIndicator></TimelineIndicator>
                 <TimelineSeparator />
                 <TimelineHeader>
                   <TimelineDate dateTime={history.createdAt}>
@@ -600,30 +622,17 @@ function RentalOrderDetailFooterSummary({ order }: { order?: RentalOrderDetail }
 
   const pendingRefunds = order.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
   const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
-  let message = 'Không còn khoản cần xử lý.';
-
-  if (pendingRefundTotal > 0) {
-    message =
-      order.status === 'CANCELLED'
-        ? `Đơn đã hủy · đang chờ xác nhận hoàn ${formatCurrency(pendingRefundTotal)}.`
-        : `Đang chờ xác nhận hoàn ${formatCurrency(pendingRefundTotal)}.`;
-  } else if (order.status === 'CANCELLED') {
-    message = order.notes.cancelReason ? `Đã hủy: ${order.notes.cancelReason}` : 'Đơn đã được hủy.';
-  } else if (order.financials.additionalChargeDue > 0) {
-    message = `Cần thu thêm ${formatCurrency(order.financials.additionalChargeDue)} sau đối soát.`;
-  } else if (order.financials.refundDue > 0) {
-    message = `Còn phải hoàn ${formatCurrency(order.financials.refundDue)} cho khách.`;
-  } else if (order.financials.amountDueBeforeHandover > 0) {
-    message = `Còn phải thu ${formatCurrency(order.financials.amountDueBeforeHandover)} trước bàn giao.`;
-  } else if (order.status === 'RETURNED' && order.returnStatus === 'RETURNED') {
-    message = 'Đã nhận trả máy, đang chờ kiểm tra tình trạng.';
-  } else if (order.status === 'RENTING') {
-    message = 'Thiết bị đang ở phía khách hàng trong thời gian thuê.';
-  }
+  const nextAction = getRentalOrderNextAction(order);
+  const message =
+    order.status === 'CANCELLED' && order.notes.cancelReason
+      ? `Lý do hủy: ${order.notes.cancelReason}`
+      : nextAction.financial.amount > 0
+        ? `${nextAction.financial.label}: ${formatCurrency(nextAction.financial.amount)}`
+        : nextAction.description;
 
   return (
     <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">{settlementStatusConfig[order.settlementStatus].label}</span>
+      <span className="font-medium text-foreground">Bước tiếp theo: {nextAction.label}</span>
       <span className="mt-0.5 block truncate">{message}</span>
     </div>
   );
@@ -639,16 +648,19 @@ export function RentalOrderDetailDialog({
   const { currentRow, setOpen } = useRentalOrders();
   const detailQuery = useGetRentalOrderById(currentRow?.id ?? null, open);
   const order = detailQuery.data;
+  const financialSummary = order ? getRentalOrderFinancialSummary(order) : null;
   const orderCode = order?.code ?? currentRow?.code;
   const actions = useRentalOrderActions();
   const pendingRefunds = order?.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING') ?? [];
   const pendingRefund = pendingRefunds[0];
   const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
+  const pendingPayments = order?.payments.filter((payment) => payment.direction === 'INBOUND' && payment.status === 'PENDING') ?? [];
   const remainingRefundDue = order ? Math.max(0, order.financials.refundDue - pendingRefundTotal) : 0;
   const openAction = (action: Parameters<typeof setOpen>[0]) => setOpen(action);
 
   const canRecordPayment = Boolean(
     order &&
+    pendingPayments.length === 0 &&
     order.status !== 'DONE' &&
     order.status !== 'CANCELLED' &&
     (order.settlementStatus === 'PAYMENT_DUE' ||
@@ -684,7 +696,9 @@ export function RentalOrderDetailDialog({
             {order ? (
               <div className="flex flex-wrap gap-2 mr-4">
                 <RentalOrderBadge config={orderStatusConfig[order.status]} />
-                <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
+                {financialSummary ? (
+                  <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -740,6 +754,32 @@ export function RentalOrderDetailDialog({
                 </Button>
               </ProtectedAction>
             ) : null}
+            {order
+              ? pendingPayments.map((payment) => (
+              <ProtectedAction key={payment.id} permission={PermissionCode.OrdersRecordPayment}>
+                <div className="flex flex-wrap gap-1">
+                  <Button
+                    disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
+                    onClick={() => actions.confirmPayment.mutate({ id: order.id, paymentId: payment.id })}
+                  >
+                    <IconWallet data-icon="inline-start" />
+                    Xác nhận thu {formatCurrency(payment.amount)}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
+                    onClick={() => {
+                      if (!window.confirm('Từ chối giao dịch đang chờ xác nhận này?')) return;
+                      actions.rejectPayment.mutate({ id: order.id, paymentId: payment.id });
+                    }}
+                  >
+                    <IconX data-icon="inline-start" />
+                    Từ chối
+                  </Button>
+                </div>
+              </ProtectedAction>
+              ))
+              : null}
             {canRecordPayment ? (
               <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
                 <Button variant="outline" onClick={() => openAction('payment')}>

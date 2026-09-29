@@ -302,6 +302,9 @@ export interface DataTableConfig<TData extends RowData> {
     table: DataTableInstance<TData>;
   }) => React.ReactNode;
   renderRowActionMenuItems?: (props: { row: Row<TData>; table: DataTableInstance<TData> }) => React.ReactNode;
+  enableRowContextMenu: boolean;
+  /** Render các item cho context menu của row. Dùng cùng action logic với bảng nhưng render bằng ContextMenuItem. */
+  renderRowContextMenuItems?: (props: { row: Row<TData>; table: DataTableInstance<TData> }) => React.ReactNode;
   renderColumnActionsMenuItems?: (props: {
     column: Column<TData, unknown>;
     table: DataTableInstance<TData>;
@@ -519,6 +522,10 @@ export interface UseDataTableOptions<TData extends RowData> extends Omit<TableOp
   }) => React.ReactNode;
   /** Render menu ba chấm trong cột row-actions. Trả về các menu item; cột actions sẽ được tự thêm. */
   renderRowActionMenuItems?: (props: { row: Row<TData>; table: DataTableInstance<TData> }) => React.ReactNode;
+  /** Bật context menu cho từng row. Mặc định tắt để không thay đổi hành vi các table hiện có. */
+  enableRowContextMenu?: boolean;
+  /** Render các item cho context menu của row. */
+  renderRowContextMenuItems?: (props: { row: Row<TData>; table: DataTableInstance<TData> }) => React.ReactNode;
   /** Thêm item custom vào cuối mỗi menu column-actions; trước nhóm này sẽ có separator. */
   renderColumnActionsMenuItems?: (props: {
     column: Column<TData, unknown>;

@@ -15,6 +15,7 @@ import type { VirtualRowItem, WithColumnSpacers } from '../../hooks/use-table-vi
 import { DataTableBodyRow } from './dnd';
 import { DataTableCreateRow } from '../editing/data-table-create-row';
 import { renderBodyCell } from './render-body-cell';
+import { DataTableRowContextMenu } from './data-table-row-context-menu';
 import { SkeletonRows } from './skeleton-rows';
 import { resolveRowHeight } from '../../helpers/resolve-row-height';
 
@@ -49,6 +50,8 @@ export function DataTableBody<TData extends RowData>({
     enableRowVirtualization,
     enableRowOrdering,
     renderDetailPanel,
+    enableRowContextMenu,
+    renderRowContextMenuItems,
     onRowClick,
     onRowDoubleClick,
     onCellClick,
@@ -159,6 +162,11 @@ export function DataTableBody<TData extends RowData>({
     </TableRow>
   );
 
+  const getRowContextMenuContent = (contextRow: Row<TData>) =>
+    enableRowContextMenu && renderRowContextMenuItems
+      ? renderRowContextMenuItems({ row: contextRow, table })
+      : null;
+
   let runningRowIndex = 0;
   const renderRow = (row: Row<TData>) => {
     const rowIndex = runningRowIndex++;
@@ -172,6 +180,7 @@ export function DataTableBody<TData extends RowData>({
           draggable={enableRowOrdering && !enableRowVirtualization && !row.getIsPinned() && !isGrouped}
           onClick={onRowClick ? (event) => onRowClick({ row, table, event }) : undefined}
           onDoubleClick={onRowDoubleClick ? (event) => onRowDoubleClick({ row, table, event }) : undefined}
+          contextMenuContent={getRowContextMenuContent(row)}
         >
           {renderCells(row, rowIndex)}
         </DataTableBodyRow>
@@ -223,8 +232,9 @@ export function DataTableBody<TData extends RowData>({
                     );
                   }
                   return (
-                    <TableRow
-                      key={item.row.id}
+                    <DataTableRowContextMenu key={item.row.id} content={getRowContextMenuContent(item.row)}>
+                      <TableRow
+                        key={item.row.id}
                       data-index={vRow.index}
                       ref={rowVirtualizer.measureElement}
                       data-state={item.row.getIsSelected() ? 'selected' : undefined}
@@ -236,6 +246,7 @@ export function DataTableBody<TData extends RowData>({
                     >
                       {renderCells(item.row, vRow.index)}
                     </TableRow>
+                    </DataTableRowContextMenu>
                   );
                 })}
                 {padBottom > 0 && (

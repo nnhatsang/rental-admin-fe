@@ -29,6 +29,7 @@ import {
   returnStatusConfig,
   settlementStatusConfig,
 } from '../../display-config';
+import { getRentalOrderFinancialSummary, getRentalOrderNextAction, getRentalOrderOperationalBadges, type RentalOrderOperationalBadge } from '../../display-semantics';
 import { formatRentalDuration, formatRentalPeriod, getRentalOrderScheduleBadge } from '../../display-utils';
 import type { RentalAccessoryStatus, RentalInspectionCondition, RentalOrderDetail } from '../../model';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -141,8 +142,23 @@ function ActionOverviewField({
   );
 }
 
+function ActionOperationalBadge({ badge }: { badge: RentalOrderOperationalBadge }) {
+  if (badge.kind === 'handover') {
+    return <RentalOrderBadge config={handoverStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  if (badge.kind === 'return') {
+    return <RentalOrderBadge config={returnStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  return <RentalOrderBadge config={settlementStatusConfig[badge.status]} label={badge.label} />;
+}
+
 function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
   const totalQuantity = order.lines.reduce((total, line) => total + line.quantity, 0);
+  const financialSummary = getRentalOrderFinancialSummary(order);
+  const nextAction = getRentalOrderNextAction(order);
+  const operationalBadges = getRentalOrderOperationalBadges(order);
   const scheduleBadge = getRentalOrderScheduleBadge({
     status: order.status,
     startDate: order.rentalPeriod.startDate,
@@ -171,7 +187,7 @@ function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
         </div>
         <div className="flex max-w-full flex-wrap justify-end gap-1.5">
           <RentalOrderBadge config={orderStatusConfig[order.status]} />
-          <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
+          <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
         </div>
       </div>
 
@@ -201,10 +217,11 @@ function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
         <ActionOverviewField label="Đã thu" className="sm:col-span-1">
           <span className="text-primary">{formatCurrency(order.financials.paidTotal)}</span>
         </ActionOverviewField>
-        <ActionOverviewField label="Còn trước giao" className="sm:col-span-1">
-          <span className={order.financials.amountDueBeforeHandover > 0 ? 'text-destructive' : undefined}>
-            {formatCurrency(order.financials.amountDueBeforeHandover)}
+        <ActionOverviewField label="Tài chính cần xử lý" className="sm:col-span-1">
+          <span className={financialSummary.amount > 0 ? 'text-destructive' : undefined}>
+            {financialSummary.amount > 0 ? formatCurrency(financialSummary.amount) : 'Không cần xử lý'}
           </span>
+          <span className="block text-xs font-normal text-muted-foreground">{financialSummary.label}</span>
         </ActionOverviewField>
         <ActionOverviewField label="Tiền cọc" className="sm:col-span-1">
           {formatCurrency(order.financials.securityDepositTotal)}
@@ -212,8 +229,10 @@ function RentalOrderActionOverview({ order }: { order: RentalOrderDetail }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-accent/60 pt-3 text-xs text-muted-foreground">
-        <span>Bàn giao: {handoverStatusConfig[order.handoverStatus].label}</span>
-        <span>Trả máy: {returnStatusConfig[order.returnStatus].label}</span>
+        {operationalBadges.map((badge) => (
+          <ActionOperationalBadge key={badge.kind} badge={badge} />
+        ))}
+        <span>Bước tiếp theo: {nextAction.label}</span>
         <span>Tạo lúc: {formatDate(order.createdAt, 'shortDateTime')}</span>
         {scheduleBadge && scheduleConfig ? (
           <RentalOrderBadge config={scheduleConfig} label={scheduleBadge.label} />

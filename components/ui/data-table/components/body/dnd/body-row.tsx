@@ -8,6 +8,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
+import { DataTableRowContextMenu } from "../data-table-row-context-menu"
 import { RowDragContext } from "../../../injected-columns/injected-columns"
 import { SELECTED_ROW_CLASS } from "../../../core/constants"
 
@@ -23,6 +24,7 @@ export function DataTableBodyRow<TData extends RowData>({
   className,
   onClick,
   onDoubleClick,
+  contextMenuContent,
 }: {
   row: Row<TData>
   draggable: boolean
@@ -30,6 +32,7 @@ export function DataTableBodyRow<TData extends RowData>({
   className?: string
   onClick?: React.MouseEventHandler<HTMLTableRowElement>
   onDoubleClick?: React.MouseEventHandler<HTMLTableRowElement>
+  contextMenuContent?: React.ReactNode
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: row.id, disabled: !draggable, data: { type: "row" } })
@@ -52,21 +55,23 @@ export function DataTableBodyRow<TData extends RowData>({
 
   return (
     <RowDragContext.Provider value={dragProps}>
-      <TableRow
-        ref={setNodeRef}
-        style={style}
-        data-state={row.getIsSelected() ? 'selected' : undefined}
-        onClick={onClick}
-        onDoubleClick={onDoubleClick}
-        className={cn(
-          SELECTED_ROW_CLASS,
-          isDragging && 'bg-muted',
-          (onClick || onDoubleClick) && 'cursor-pointer',
-          className,
-        )}
-      >
-        {children}
-      </TableRow>
+      <DataTableRowContextMenu content={contextMenuContent}>
+        <TableRow
+          ref={setNodeRef}
+          style={style}
+          data-state={row.getIsSelected() ? 'selected' : undefined}
+          onClick={onClick}
+          onDoubleClick={onDoubleClick}
+          className={cn(
+            SELECTED_ROW_CLASS,
+            isDragging && 'bg-muted',
+            (onClick || onDoubleClick) && 'cursor-pointer',
+            className,
+          )}
+        >
+          {children}
+        </TableRow>
+      </DataTableRowContextMenu>
     </RowDragContext.Provider>
-  );
+  )
 }

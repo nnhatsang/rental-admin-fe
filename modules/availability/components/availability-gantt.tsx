@@ -30,12 +30,12 @@ import { IconAlertTriangle, IconCalendarCheck, IconCircleCheck, IconPackages, Ic
 import { useCallback, type CSSProperties, type ReactNode } from 'react';
 import type { GanttOccurrence, GanttResource } from '@/components/reui/gantt/gantt-types';
 import { availabilityGanttOrderStatusConfig } from '../display-config';
-import { formatAvailabilityRange, getAvailabilityErrorMessage } from '../display-utils';
-import { handoverStatusConfig, returnStatusConfig, settlementStatusConfig } from '@/modules/rental-orders/display-config';
+import { getRentalOrderFinancialSummary, getRentalOrderNextAction } from '@/modules/rental-orders/display-semantics';
+import { getAvailabilityErrorMessage } from '../display-utils';
+import { settlementStatusConfig } from '@/modules/rental-orders/display-config';
 import type { AvailabilityGanttEventData } from '../hooks/use-availability-gantt-logic';
 import type { IAvailabilityGanttAsset } from '../gantt-type';
 import { useAvailabilityGanttLogic } from '../hooks/use-availability-gantt-logic';
-import { Clock } from 'lucide-react';
 
 type SummaryMetricTone = 'neutral' | 'scheduled' | 'available' | 'unavailable';
 
@@ -51,13 +51,7 @@ type AvailabilityGanttAssetResourceData = Pick<
   scheduleCount: number;
 };
 
-function AvailabilityGanttResourceLabel({
-  resource,
-  isGroup,
-}: {
-  resource: GanttResource;
-  isGroup: boolean;
-}) {
+function AvailabilityGanttResourceLabel({ resource, isGroup }: { resource: GanttResource; isGroup: boolean }) {
   if (isGroup) {
     return <span className="min-w-0 truncate">{resource.title}</span>;
   }
@@ -91,18 +85,14 @@ function AvailabilityGanttEvent({ occurrence }: GanttRenderEventProps<Availabili
   const data = event.data;
   const hasNote = Boolean(data?.internalNote || data?.customerNote || data?.cancelReason);
   const pickupLabel = data ? (data.pickupMethod === 'DELIVERY' ? 'Giao máy' : 'Tại cửa hàng') : null;
+  const financialSummary = data ? getRentalOrderFinancialSummary(data) : null;
   const attention =
-    data && data.refundDue > 0
-      ? { label: 'Cần hoàn tiền', className: settlementStatusConfig.REFUND_DUE.className }
-      : data && data.additionalChargeDue > 0
-        ? { label: 'Cần thu thêm', className: settlementStatusConfig.PAYMENT_DUE.className }
-        : data && data.amountDueAtBooking > 0
-          ? { label: 'Còn đặt lịch', className: handoverStatusConfig.PENDING_PAYMENT.className }
-          : data && data.amountDueBeforeHandover > 0 && data.handoverStatus !== 'HANDED_OVER'
-            ? { label: 'Còn trước bàn giao', className: handoverStatusConfig.PENDING_PAYMENT.className }
-            : data && data.actualRefundTotal > 0
-              ? { label: 'Đã hoàn tiền', className: settlementStatusConfig.SETTLED.className }
-              : null;
+    financialSummary?.isActionRequired && financialSummary.amount > 0
+      ? {
+          label: financialSummary.label,
+          className: settlementStatusConfig[financialSummary.badgeStatus].className,
+        }
+      : null;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 leading-tight">
@@ -149,96 +139,20 @@ function AvailabilityGanttEventTooltip({ occurrence, timeLabel }: AvailabilityGa
   }
 
   const orderStatus = availabilityGanttOrderStatusConfig[data.orderStatus];
-  const hasHandoverStarted =
-    data.handoverStatus === 'HANDED_OVER' ||
-    data.orderStatus === 'RENTING' ||
-    data.orderStatus === 'RETURNED' ||
-    data.orderStatus === 'DONE';
-  const isInspected = data.returnStatus === 'INSPECTED';
-  const isCancelled = data.orderStatus === 'CANCELLED';
+  const financialSummary = getRentalOrderFinancialSummary(data);
+  const nextAction = getRentalOrderNextAction(data);
   const contact = data.customerPhone
-    ? `ĐT: ${data.customerPhone}`
+    ? 'ĐT: ' + data.customerPhone
     : data.customerSocialContact
-      ? `MXH: ${data.customerSocialContact}`
+      ? 'MXH: ' + data.customerSocialContact
       : null;
   const pickupLabel =
     data.pickupMethod === 'DELIVERY'
       ? data.deliveryAddress
-        ? `Giao máy · ${data.deliveryAddress}`
+        ? 'Giao máy · ' + data.deliveryAddress
         : 'Giao máy · Chưa có địa chỉ'
       : 'Nhận tại cửa hàng';
   const note = data.cancelReason || data.internalNote || data.customerNote;
-
-  let nextAction: { label: string; className: string; amount?: number; amountLabel?: string } | null = null;
-  if (isCancelled) {
-    if (data.refundDue > 0) {
-      nextAction = {
-        label: 'Cần hoàn tiền',
-        className: settlementStatusConfig.REFUND_DUE.className,
-        amount: data.refundDue,
-        amountLabel: 'Số tiền cần hoàn',
-      };
-    } else if (data.actualRefundTotal > 0) {
-      nextAction = {
-        label: 'Đã hoàn tiền',
-        className: settlementStatusConfig.SETTLED.className,
-        amount: data.actualRefundTotal,
-        amountLabel: 'Đã hoàn cho khách',
-      };
-    }
-  } else if (isInspected) {
-    if (data.additionalChargeDue > 0) {
-      nextAction = {
-        label: 'Cần thu thêm',
-        className: settlementStatusConfig.PAYMENT_DUE.className,
-        amount: data.additionalChargeDue,
-        amountLabel: 'Còn phải thu thêm',
-      };
-    } else if (data.refundDue > 0) {
-      nextAction = {
-        label: 'Cần hoàn tiền',
-        className: settlementStatusConfig.REFUND_DUE.className,
-        amount: data.refundDue,
-        amountLabel: 'Số tiền cần hoàn',
-      };
-    } else {
-      nextAction = {
-        label: 'Đã quyết toán',
-        className: settlementStatusConfig.SETTLED.className,
-      };
-    }
-  } else if (!hasHandoverStarted) {
-    if (data.amountDueAtBooking > 0) {
-      nextAction = {
-        label: 'Chờ thanh toán đặt lịch',
-        className: handoverStatusConfig.PENDING_PAYMENT.className,
-        amount: data.amountDueAtBooking,
-        amountLabel: 'Còn thanh toán đặt lịch',
-      };
-    } else if (data.amountDueBeforeHandover > 0) {
-      nextAction = {
-        label: 'Còn cần thu trước bàn giao',
-        className: handoverStatusConfig.PENDING_PAYMENT.className,
-        amount: data.amountDueBeforeHandover,
-        amountLabel: 'Còn thanh toán trước bàn giao',
-      };
-    } else {
-      nextAction = {
-        label: 'Sẵn sàng bàn giao',
-        className: handoverStatusConfig.READY.className,
-      };
-    }
-  } else if (data.returnStatus === 'RETURNED') {
-    nextAction = {
-      label: 'Chờ kiểm tra máy',
-      className: returnStatusConfig.RETURNED.className,
-    };
-  } else {
-    nextAction = {
-      label: 'Đang cho thuê',
-      className: handoverStatusConfig.HANDED_OVER.className,
-    };
-  }
 
   return (
     <div className="grid w-[min(22rem,calc(100vw-1.5rem))] gap-3 p-3 text-xs">
@@ -272,30 +186,26 @@ function AvailabilityGanttEventTooltip({ occurrence, timeLabel }: AvailabilityGa
         </div>
       </div>
 
-      {nextAction ? (
-        <div className="grid gap-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-background/60">Tiếp theo</span>
-            <Badge variant="outline" className={cn('max-w-52 text-right', nextAction.className)}>
-              {nextAction.label}
-            </Badge>
-          </div>
-          {nextAction.amount !== undefined ? (
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-background/60">{nextAction.amountLabel ?? "Khoản tiền cần xử lý"}</span>
-              <strong className="font-semibold text-background">
-                {formatCurrency(nextAction.amount, { noDecimals: true })}
-              </strong>
-            </div>
-          ) : null}
-          <div className="flex items-center justify-between gap-2 text-background/60">
-            <span>Đã thu</span>
-            <span className="font-medium text-background/85">
-              {formatCurrency(data.paidTotal, { noDecimals: true })}
-            </span>
-          </div>
+      <div className="grid gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-background/60">Tiếp theo</span>
+          <Badge variant="outline" className={cn('max-w-52 text-right', settlementStatusConfig[nextAction.financial.badgeStatus].className)}>
+            {nextAction.label}
+          </Badge>
         </div>
-      ) : null}
+        {financialSummary.amount > 0 ? (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-background/60">{financialSummary.amountLabel}</span>
+            <strong className="font-semibold text-background">
+              {formatCurrency(financialSummary.amount, { noDecimals: true })}
+            </strong>
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between gap-2 text-background/60">
+          <span>Đã thu</span>
+          <span className="font-medium text-background/85">{formatCurrency(data.paidTotal, { noDecimals: true })}</span>
+        </div>
+      </div>
 
       {note ? (
         <p className="line-clamp-2 border-t border-background/15 pt-2 text-background/70">
@@ -391,8 +301,6 @@ export function AvailabilityGantt() {
   );
   const action: RentalOrderAction | null = isRentalOrderAction ? (open as RentalOrderAction) : null;
 
-  const rangeStart = query.data?.pages[0]?.startDate;
-  const rangeEnd = query.data?.pages[0]?.endDate;
   const isEmpty = !query.isLoading && !query.isError && products.length === 0;
 
   return (
@@ -402,25 +310,17 @@ export function AvailabilityGantt() {
           <div className="grid auto-rows-min gap-1.5">
             <CardTitle className="flex items-center gap-2 text-xl leading-none">Lịch thiết bị</CardTitle>
             <CardDescription className="max-w-2xl leading-snug">
-              Theo dõi thiết bị đang được thuê và trạng thái đơn trong khung thời gian. Rê chuột để xem ghi chú, bấm để
-              mở chi tiết đơn.
+              Theo dõi thiết bị đang được thuê và trạng thái đơn trong khung thời gian. Di chuyển chuột vào đơn xem tổng
+              quan đơn thuê, bấm để mở chi tiết đơn.
             </CardDescription>
-            <div className="flex items-center gap-2">
-              <Clock className="size-4 text-muted-foreground" />
-              <span className="text-primary font-medium">
-                {rangeStart && rangeEnd
-                  ? formatAvailabilityRange(rangeStart, rangeEnd)
-                  : 'Đang xác định khoảng thời gian...'}
-              </span>
-            </div>
           </div>
           <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:w-auto lg:flex-nowrap lg:justify-end lg:justify-self-end">
             <ProductCombobox syncToUrl placeholder="Lọc theo sản phẩm..." className="w-full sm:w-[230px]" />
             <DebouncedSearchInput
               value={search}
               onDebouncedChange={handleSearchChange}
-              placeholder="Tìm sản phẩm, SKU, serial, mã đơn..."
-              className="w-full h-8 sm:w-[280px]"
+              placeholder="Mã đơn, khách hàng..."
+              className="w-full h-8 sm:w-[300px]"
             />
             <Button variant="outline" disabled={query.isFetching} onClick={() => void query.refetch()}>
               <IconRefresh aria-hidden="true" data-icon="inline-start" />

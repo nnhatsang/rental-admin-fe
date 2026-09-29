@@ -13,6 +13,7 @@ import type { RowSelectionState } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
+import { RentalOrderContextMenuItems } from '../components/actions';
 import { columns } from '../columns';
 import type { IGetRentalOrdersParams, RentalOrderListItem } from '../model';
 import { useRentalOrders } from '../rental-orders-provider';
@@ -147,6 +148,8 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     manualPagination: true,
     manualSorting: true,
     manualFiltering: true,
+    enableRowContextMenu: true,
+    renderRowContextMenuItems: ({ row }) => <RentalOrderContextMenuItems row={row} />,
     hasExternalFilters: hasActiveFilters,
     onClearExternalFilters: clearAllFilters,
     enableRowSelection: true,

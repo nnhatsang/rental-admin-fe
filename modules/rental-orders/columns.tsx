@@ -1,32 +1,10 @@
 'use client';
 
-import { ProtectedAction } from '@/components/shared/protected-action';
 import { CopyText } from '@/components/shared/copy-text';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { PermissionCode } from '@/utils/consts/rbac.const';
-import {
-  IconDots,
-  IconEdit,
-  IconEye,
-  IconPackageExport,
-  IconPackageImport,
-  IconReceipt,
-  IconRotateClockwise,
-  IconTool,
-  IconWallet,
-  IconX,
-} from '@tabler/icons-react';
-import type { ColumnDef, Row } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
+import { RentalOrderActionsCell } from './components/actions';
 import { RentalOrderBadge } from './components/status-badge';
 import {
   handoverStatusConfig,
@@ -41,8 +19,12 @@ import {
   settlementStatusConfig,
   settlementStatusOptions,
 } from './display-config';
+import {
+  getRentalOrderFinancialSummary,
+  getRentalOrderOperationalBadges,
+  type RentalOrderOperationalBadge,
+} from './display-semantics';
 import { formatRentalDuration, getRentalOrderScheduleBadge } from './display-utils';
-import { useRentalOrders, type RentalOrderDialogType } from './rental-orders-provider';
 import type { RentalOrderListItem } from './model';
 
 function useCurrentTime() {
@@ -91,184 +73,51 @@ function RentalPeriodCell({ order }: { order: RentalOrderListItem }) {
   );
 }
 
+function OperationalBadge({ badge }: { badge: RentalOrderOperationalBadge }) {
+  if (badge.kind === 'handover') {
+    return <RentalOrderBadge config={handoverStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  if (badge.kind === 'return') {
+    return <RentalOrderBadge config={returnStatusConfig[badge.status]} label={badge.label} />;
+  }
+
+  return <RentalOrderBadge config={settlementStatusConfig[badge.status]} label={badge.label} />;
+}
+
 function OperationStatusCell({ order }: { order: RentalOrderListItem }) {
+  const badges = getRentalOrderOperationalBadges(order);
+
   return (
-    <div className="min-w-[170px] grid gap-1">
+    <div className="grid min-w-[190px] gap-1.5">
       <RentalOrderBadge config={orderStatusConfig[order.status]} />
-      <div className="text-xs text-muted-foreground">Bàn giao: {handoverStatusConfig[order.handoverStatus].label}</div>
-      <div className="text-xs text-muted-foreground">Trả máy: {returnStatusConfig[order.returnStatus].label}</div>
+      <div className="flex flex-wrap gap-1">
+        {badges.map((badge) => (
+          <OperationalBadge key={badge.kind} badge={badge} />
+        ))}
+      </div>
     </div>
   );
 }
 
 function SettlementCell({ order }: { order: RentalOrderListItem }) {
+  const summary = getRentalOrderFinancialSummary(order);
+
   return (
-    <div className="min-w-[165px] grid gap-1">
-      <RentalOrderBadge config={settlementStatusConfig[order.settlementStatus]} />
+    <div className="grid min-w-[205px] gap-1">
+      <RentalOrderBadge config={settlementStatusConfig[summary.badgeStatus]} label={summary.label} />
+      {summary.amount > 0 ? (
+        <div className="text-xs font-medium text-foreground">
+          {summary.amountLabel}: {formatCurrency(summary.amount)}
+        </div>
+      ) : null}
       <div className="text-xs text-muted-foreground">
         Đã thu {formatCurrency(order.paidTotal)} / Tổng {formatCurrency(order.totalCustomerObligation)}
       </div>
       {order.bookingHoldTotal > 0 ? (
-        <div className="text-xs text-muted-foreground">Đặt lịch {formatCurrency(order.bookingHoldTotal)}</div>
+        <div className="text-xs text-muted-foreground">Tiền giữ lịch {formatCurrency(order.bookingHoldTotal)}</div>
       ) : null}
     </div>
-  );
-}
-
-function DueCell({ order }: { order: RentalOrderListItem }) {
-  if (order.refundDue > 0) {
-    return (
-      <div className="min-w-[135px]">
-        <RentalOrderBadge config={settlementStatusConfig.REFUND_DUE} label="Cần hoàn" />
-        <div className="mt-1 font-medium">{formatCurrency(order.refundDue)}</div>
-      </div>
-    );
-  }
-
-  if (order.additionalChargeDue > 0) {
-    return (
-      <div className="min-w-[135px]">
-        <RentalOrderBadge config={settlementStatusConfig.PAYMENT_DUE} label="Cần thu thêm" />
-        <div className="mt-1 font-medium">{formatCurrency(order.additionalChargeDue)}</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-w-[135px]">
-      <RentalOrderBadge
-        config={order.amountDueBeforeHandover > 0 ? handoverStatusConfig.PENDING_PAYMENT : handoverStatusConfig.READY}
-        label={order.amountDueBeforeHandover > 0 ? 'Còn trước bàn giao' : 'Đủ điều kiện bàn giao'}
-      />
-      <div className="mt-1 text-sm text-muted-foreground">{formatCurrency(order.amountDueBeforeHandover)}</div>
-    </div>
-  );
-}
-
-function ActionsCell({ row }: { row: Row<RentalOrderListItem> }) {
-  const { setCurrentRow, setOpen } = useRentalOrders();
-  const order = row.original;
-  const open = (dialog: RentalOrderDialogType) => {
-    setCurrentRow(order);
-    setOpen(dialog);
-  };
-
-  const canRecordPayment =
-    order.status !== 'DONE' &&
-    order.status !== 'CANCELLED' &&
-    (order.settlementStatus === 'PAYMENT_DUE' || order.amountDueBeforeHandover > 0 || order.additionalChargeDue > 0);
-  const canRefund = order.refundDue > 0;
-  const canInspect = order.status === 'RETURNED' && order.returnStatus === 'RETURNED';
-  const canSettle =
-    order.status === 'RETURNED' && order.returnStatus === 'INSPECTED' && order.settlementStatus === 'SETTLED';
-
-  return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Thao tác đơn ${order.code}`}
-          className="data-[state=open]:bg-muted"
-        >
-          <IconDots aria-hidden="true" data-icon="inline-start" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuGroup>
-          <ProtectedAction permission={PermissionCode.OrdersRead}>
-            <DropdownMenuItem onClick={() => open('detail')}>
-              <IconEye aria-hidden="true" data-icon="inline-start" />
-              Xem chi tiết
-            </DropdownMenuItem>
-          </ProtectedAction>
-          {order.status === 'CREATED' ? (
-            <ProtectedAction permission={PermissionCode.OrdersUpdate}>
-              <DropdownMenuItem onClick={() => open('update')}>
-                <IconEdit aria-hidden="true" data-icon="inline-start" />
-                Sửa đơn thuê
-              </DropdownMenuItem>
-            </ProtectedAction>
-          ) : null}
-        </DropdownMenuGroup>
-
-        {canRecordPayment ? (
-          <>
-            <DropdownMenuSeparator />
-            <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
-              <DropdownMenuItem onClick={() => open('payment')}>
-                <IconWallet aria-hidden="true" data-icon="inline-start" />
-                Ghi nhận thanh toán
-              </DropdownMenuItem>
-            </ProtectedAction>
-          </>
-        ) : null}
-
-        {order.status === 'CONFIRMED' ? (
-          <>
-            <DropdownMenuSeparator />
-            <ProtectedAction permission={PermissionCode.OrdersUpdateStatus} actionType="disable">
-              <DropdownMenuItem
-                disabled={order.handoverStatus !== 'READY'}
-                onClick={() => open('handover')}
-                title={order.handoverStatus !== 'READY' ? 'Cần thanh toán đủ trước khi bàn giao' : undefined}
-              >
-                <IconPackageExport aria-hidden="true" data-icon="inline-start" />
-                Bàn giao máy
-              </DropdownMenuItem>
-            </ProtectedAction>
-          </>
-        ) : null}
-
-        {order.status === 'RENTING' ? (
-          <>
-            <DropdownMenuSeparator />
-            <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
-              <DropdownMenuItem onClick={() => open('return')}>
-                <IconPackageImport aria-hidden="true" data-icon="inline-start" />
-                Nhận trả máy
-              </DropdownMenuItem>
-            </ProtectedAction>
-          </>
-        ) : null}
-
-        {canInspect || canSettle ? <DropdownMenuSeparator /> : null}
-        {canInspect ? (
-          <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
-            <DropdownMenuItem onClick={() => open('inspection')}>
-              <IconTool aria-hidden="true" data-icon="inline-start" />
-              Kiểm tra thiết bị
-            </DropdownMenuItem>
-          </ProtectedAction>
-        ) : null}
-        {canSettle ? (
-          <ProtectedAction permission={PermissionCode.OrdersUpdateStatus}>
-            <DropdownMenuItem onClick={() => open('settle')}>
-              <IconReceipt aria-hidden="true" data-icon="inline-start" />
-              Đóng đơn
-            </DropdownMenuItem>
-          </ProtectedAction>
-        ) : null}
-
-        {canRefund || order.status === 'CREATED' || order.status === 'CONFIRMED' ? <DropdownMenuSeparator /> : null}
-        {canRefund ? (
-          <ProtectedAction permission={PermissionCode.OrdersRefund}>
-            <DropdownMenuItem onClick={() => open('refund')}>
-              <IconRotateClockwise aria-hidden="true" data-icon="inline-start" />
-              Hoàn tiền
-            </DropdownMenuItem>
-          </ProtectedAction>
-        ) : null}
-        {order.status === 'CREATED' || order.status === 'CONFIRMED' ? (
-          <ProtectedAction permission={PermissionCode.OrdersCancel}>
-            <DropdownMenuItem variant="destructive" onClick={() => open('cancel')}>
-              <IconX aria-hidden="true" data-icon="inline-start" />
-              Hủy đơn
-            </DropdownMenuItem>
-          </ProtectedAction>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -328,33 +177,27 @@ export const columns: ColumnDef<RentalOrderListItem>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Vận hành',
+    header: 'Trạng thái đơn',
     cell: ({ row }) => <OperationStatusCell order={row.original} />,
     meta: {
-      label: 'Trạng thái',
+      label: 'Trạng thái đơn',
       variant: 'select',
       options: orderStatusOptions,
     },
   },
   {
     accessorKey: 'settlementStatus',
-    header: 'Thanh toán',
+    header: 'Tài chính',
     cell: ({ row }) => <SettlementCell order={row.original} />,
     meta: {
-      label: 'Thanh toán',
+      label: 'Tài chính',
       variant: 'select',
       options: settlementStatusOptions,
     },
   },
   {
-    accessorKey: 'amountDueBeforeHandover',
-    header: 'Công nợ',
-    cell: ({ row }) => <DueCell order={row.original} />,
-    enableColumnFilter: false,
-  },
-  {
     id: 'actions',
-    cell: ActionsCell,
+    cell: RentalOrderActionsCell,
     meta: { disableColumnActions: true, isActionsColumn: true },
     size: 70,
   },
