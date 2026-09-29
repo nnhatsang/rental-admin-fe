@@ -487,7 +487,10 @@ function GanttView({ className, asChild = false, interval: intervalProp, ...prop
       } else {
         groups.push({
           key: weekKey,
-          label: `${settings.i18n.labels.week(weekNumber)} ${format(weekStart, 'MMM d', { locale: settings.locale })} - ${format(addDays(weekStart, 6), 'd', { locale: settings.locale })}`,
+          label: `${settings.i18n.labels.week(weekNumber)} ${settings.i18n.functions.formatDayRange(
+            { start: weekStart, end: addDays(weekStart, 7) },
+            settings.locale,
+          )}`,
           span: weight,
         });
       }
