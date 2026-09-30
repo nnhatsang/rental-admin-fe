@@ -11,6 +11,7 @@ import {
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
+  IconTags,
   IconTimeline,
   IconUsers
 } from '@tabler/icons-react';
@@ -79,6 +80,18 @@ export const sidebarItems: NavGroup[] = [
         url: '/products',
         icon: IconCamera,
         requiredPermissions: [Permission.ProductsRead],
+      },
+      {
+        title: 'Danh mục',
+        url: '/categories',
+        icon: IconTags,
+        requiredPermissions: [Permission.CategoriesRead],
+      },
+      {
+        title: 'Thương hiệu',
+        url: '/brands',
+        icon: IconTags,
+        requiredPermissions: [Permission.BrandsRead],
       },
       {
         title: 'Thiết bị trong kho',

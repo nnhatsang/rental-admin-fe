@@ -64,7 +64,7 @@ const parseListParam = <T extends string>(value: string | null): T[] =>
         .filter(Boolean) as T[]
     : [];
 
-const toListParam = (value: string[]) => (value.length ? value.join(',') : undefined);
+const toUrlListParam = (value: string[]) => (value.length ? value.join(',') : undefined);
 
 const parseBooleanParam = (value: string | null): boolean | undefined =>
   value === 'true' ? true : value === 'false' ? false : undefined;
@@ -137,15 +137,15 @@ export const useAvailabilityGanttLogic = () => {
     (updates: Partial<AvailabilityGanttFilters>) => {
       const next = { ...filters, ...updates };
       replaceParams({
-        orderStatuses: toListParam(next.orderStatuses),
-        allocationStatuses: toListParam(next.allocationStatuses),
-        handoverStatuses: toListParam(next.handoverStatuses),
-        returnStatuses: toListParam(next.returnStatuses),
-        settlementStatuses: toListParam(next.settlementStatuses),
-        pickupMethods: toListParam(next.pickupMethods),
-        assetStatuses: toListParam(next.assetStatuses),
-        assetConditions: toListParam(next.assetConditions),
-      assetActive: next.assetActive === undefined ? undefined : String(next.assetActive),
+        orderStatuses: toUrlListParam(next.orderStatuses),
+        allocationStatuses: toUrlListParam(next.allocationStatuses),
+        handoverStatuses: toUrlListParam(next.handoverStatuses),
+        returnStatuses: toUrlListParam(next.returnStatuses),
+        settlementStatuses: toUrlListParam(next.settlementStatuses),
+        pickupMethods: toUrlListParam(next.pickupMethods),
+        assetStatuses: toUrlListParam(next.assetStatuses),
+        assetConditions: toUrlListParam(next.assetConditions),
+        assetActive: next.assetActive === undefined ? undefined : String(next.assetActive),
         includeCancelled: next.includeCancelled ? 'true' : undefined,
       });
     },
@@ -207,16 +207,16 @@ export const useAvailabilityGanttLogic = () => {
       limit: DEFAULT_GANTT_LIMIT,
       search: search || undefined,
       productId,
-      orderStatuses: toListParam(filters.orderStatuses),
-      allocationStatuses: toListParam(filters.allocationStatuses),
-      handoverStatuses: toListParam(filters.handoverStatuses),
-      returnStatuses: toListParam(filters.returnStatuses),
-      settlementStatuses: toListParam(filters.settlementStatuses),
-      pickupMethods: toListParam(filters.pickupMethods),
-      assetStatuses: toListParam(filters.assetStatuses),
-      assetConditions: toListParam(filters.assetConditions),
-      assetActive: filters.assetActive === undefined ? undefined : String(filters.assetActive),
-      includeCancelled: filters.includeCancelled ? 'true' : undefined,
+        orderStatuses: filters.orderStatuses.length ? filters.orderStatuses : undefined,
+        allocationStatuses: filters.allocationStatuses.length ? filters.allocationStatuses : undefined,
+        handoverStatuses: filters.handoverStatuses.length ? filters.handoverStatuses : undefined,
+        returnStatuses: filters.returnStatuses.length ? filters.returnStatuses : undefined,
+        settlementStatuses: filters.settlementStatuses.length ? filters.settlementStatuses : undefined,
+        pickupMethods: filters.pickupMethods.length ? filters.pickupMethods : undefined,
+        assetStatuses: filters.assetStatuses.length ? filters.assetStatuses : undefined,
+        assetConditions: filters.assetConditions.length ? filters.assetConditions : undefined,
+        assetActive: filters.assetActive,
+        includeCancelled: filters.includeCancelled ? true : undefined,
     }),
     [endDate, filters, productId, search, startDate],
   );

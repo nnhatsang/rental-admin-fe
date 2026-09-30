@@ -4,6 +4,7 @@ import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000/api';
 const AUTH_REFRESH_URL = '/admin/auth/refresh';
+const queryParamsSerializer = { indexes: null as null };
 
 type RetryableAxiosRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
@@ -47,6 +48,7 @@ const normalizeApiError = (error: unknown) => {
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  paramsSerializer: queryParamsSerializer,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -55,6 +57,7 @@ const apiClient: AxiosInstance = axios.create({
 const apiAuth: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  paramsSerializer: queryParamsSerializer,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

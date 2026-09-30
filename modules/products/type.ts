@@ -42,7 +42,7 @@ export type IProductOut = {
   description: string | null;
   includedAccessories: string | null;
   usageGuide: string | null;
-  category: IProductRelationOut | null;
+  categories: IProductRelationOut[];
   brand: IProductRelationOut | null;
   assetUnitCount: number;
   dailyPrice: number;
@@ -60,7 +60,7 @@ export type IProductOut = {
 };
 
 export interface IGetProductsParams extends DefaultParamsRequest {
-  categoryId?: string;
+  categoryIds?: string[];
   brandId?: string;
   isActive?: boolean;
   sortBy?: ProductSortBy;
@@ -72,7 +72,7 @@ export interface ICreateProductReq {
   description?: string;
   includedAccessories?: string;
   usageGuide?: string;
-  categoryId?: string;
+  categoryIds?: string[];
   brandId?: string;
   dailyPrice: number;
   halfDayPrice: number;

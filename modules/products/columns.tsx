@@ -118,16 +118,37 @@ export const columns: ColumnDef<IProductOut>[] = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: 'category',
+    accessorKey: 'categoryIds',
     header: productText.TABLE.CATEGORY,
-    cell: ({ row }) => row.original.category?.name ?? <span className="text-muted-foreground">-</span>,
+    cell: ({ row }) =>
+      row.original.categories.length ? (
+        <div className="flex max-w-64 flex-wrap gap-1">
+          {row.original.categories.map((category) => (
+            <Badge key={category.id} variant="secondary" className="max-w-full truncate font-normal">
+              {category.name}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      ),
+    meta: {
+      label: productText.TABLE.CATEGORY,
+      variant: 'multi-select',
+      filterMode: 'equals',
+    },
     enableSorting: false,
     enableColumnFilter: false,
   },
   {
-    accessorKey: 'brand',
+    accessorKey: 'brandId',
     header: productText.TABLE.BRAND,
     cell: ({ row }) => row.original.brand?.name ?? <span className="text-muted-foreground">-</span>,
+    meta: {
+      label: productText.TABLE.BRAND,
+      variant: 'select',
+      filterMode: 'equals',
+    },
     enableSorting: false,
     enableColumnFilter: false,
   },

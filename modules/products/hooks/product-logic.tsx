@@ -3,6 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { useDataTable, type DataTableInstance } from '@/components/ui/data-table';
 import { useTableQueryState } from '@/hooks/use-table-query-state';
+import { BrandCombobox } from '@/modules/brands/brand-combobox';
+import { CategoryCombobox } from '@/modules/categories/category-combobox';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
@@ -14,6 +16,16 @@ import { useGetProducts } from './use-get-products';
 
 export interface IProductsLogic {
   table: DataTableInstance<IProductOut>;
+}
+
+function getStringFilterValue(filters: { id: string; value: unknown }[], id: string) {
+  const value = filters.find((filter) => filter.id === id)?.value;
+  return typeof value === 'string' ? value : '';
+}
+
+function getStringArrayFilterValue(filters: { id: string; value: unknown }[], id: string) {
+  const value = filters.find((filter) => filter.id === id)?.value;
+  return Array.isArray(value) ? value.map(String) : [];
 }
 
 export const useProductsLogic = (): IProductsLogic => {
@@ -65,8 +77,22 @@ export const useProductsLogic = (): IProductsLogic => {
     onSortingChange,
     onColumnFiltersChange,
     onGlobalFilterChange,
-    renderToolbarActions: () => (
-      <div className="flex flex-wrap items-center gap-2">
+    renderToolbarActions: ({ table }) => (
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <CategoryCombobox
+          value={getStringArrayFilterValue(columnFilters, 'categoryIds')}
+          onChange={(nextValue) =>
+            table.getColumn('categoryIds')?.setFilterValue(nextValue.length > 0 ? nextValue : undefined)
+          }
+          placeholder="Lọc theo danh mục"
+          className="w-full sm:w-60"
+        />
+        <BrandCombobox
+          value={getStringFilterValue(columnFilters, 'brandId')}
+          onChange={(nextValue) => table.getColumn('brandId')?.setFilterValue(nextValue || undefined)}
+          placeholder="Lọc theo thương hiệu"
+          className="w-full sm:w-52"
+        />
         <Button
           onClick={() => {
             setCurrentRow(null);

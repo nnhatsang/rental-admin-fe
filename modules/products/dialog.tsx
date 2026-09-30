@@ -16,11 +16,14 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { BrandCombobox } from '@/modules/brands/brand-combobox';
+import { CategoryCombobox } from '@/modules/categories/category-combobox';
 import { TITLE_PAGE } from '@/utils/consts/title-page.const';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconLoader, IconPlus, IconTrash } from '@tabler/icons-react';
 import type { Table } from '@tanstack/react-table';
 import { Controller, useFieldArray, useForm, type Resolver } from 'react-hook-form';
+import { useState } from 'react';
 import { useCreateProduct } from './hooks/use-create-product';
 import { useDeleteProducts } from './hooks/use-delete-products';
 import { useUpdateProduct } from './hooks/use-update-product';
@@ -44,6 +47,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const isPending = isEdit ? updateMutation.isPending : createMutation.isPending;
+  const [comboboxPortalContainer, setComboboxPortalContainer] = useState<HTMLDivElement | null>(null);
 
   const {
     reset,
@@ -62,7 +66,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           dailyPrice: currentRow.dailyPrice,
           halfDayPrice: toNumberOrZero(currentRow.halfDayPrice),
           hourlyOveragePrice: toNumberOrZero(currentRow.hourlyOveragePrice),
-          categoryId: currentRow.category?.id ?? undefined,
+          categoryIds: currentRow.categories.map((category) => category.id),
           brandId: currentRow.brand?.id ?? undefined,
           rentalPriceTiers: currentRow.rentalPriceTiers.map((tier) => ({
             minDays: tier.minDays,
@@ -83,7 +87,7 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           dailyPrice: 0,
           halfDayPrice: 0,
           hourlyOveragePrice: 0,
-          categoryId: '',
+          categoryIds: [],
           brandId: '',
           rentalPriceTiers: [],
           depositAmount: 0,
@@ -132,7 +136,8 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-4xl ring-0">
+        <div ref={setComboboxPortalContainer} className="pointer-events-none absolute inset-0" />
         <DialogHeader>
           <DialogTitle>{isEdit ? text.DIALOG.FORM_EDIT_TITLE : text.DIALOG.FORM_CREATE_TITLE}</DialogTitle>
           <DialogDescription>
@@ -140,9 +145,9 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
           </DialogDescription>
         </DialogHeader>
 
-        <form id="product-form" onSubmit={handleSubmit(onSubmit)}>
-          <ScrollArea className="h-[60dvh] max-h-[calc(100dvh-220px)]">
-            <div className="pr-4 py-2 grid gap-4">
+        <form id="product-form" onSubmit={handleSubmit(onSubmit)} className="min-h-0">
+          <ScrollArea className="h-[calc(60dvh-105px)] min-h-0">
+            <div className="py-2 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
                   control={control}
@@ -183,16 +188,18 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
                   control={control}
-                  name="categoryId"
+                  name="categoryIds"
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>{text.FORM.CATEGORY}</FieldLabel>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        aria-invalid={fieldState.invalid}
-                        placeholder={text.FORM.CATEGORY_PLACEHOLDER}
+                      <CategoryCombobox
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                        placeholder="Chọn một hoặc nhiều danh mục"
                         disabled={readOnly}
+                        ariaInvalid={fieldState.invalid}
+                        portalContainer={comboboxPortalContainer}
+                        fetchEnabled={open}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
@@ -204,12 +211,14 @@ function ProductFormDialog({ currentRow, open, onOpenChange, readOnly = false }:
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor={field.name}>{text.FORM.BRAND}</FieldLabel>
-                      <Input
-                        {...field}
-                        id={field.name}
-                        aria-invalid={fieldState.invalid}
-                        placeholder={text.FORM.BRAND_PLACEHOLDER}
+                      <BrandCombobox
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        placeholder="Chọn thương hiệu"
                         disabled={readOnly}
+                        ariaInvalid={fieldState.invalid}
+                        portalContainer={comboboxPortalContainer}
+                        fetchEnabled={open}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
