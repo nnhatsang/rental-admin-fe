@@ -138,10 +138,10 @@ export function DataTable<TData extends RowData>({
         {hasHeader && (
           <CardHeader
             className={cn(
-              'border-b has-data-[slot=card-action]:grid-cols-1 lg:has-data-[slot=card-action]:grid-cols-[1fr_auto]',
+              'border-b has-data-[slot=card-action]:grid-cols-1! xl:has-data-[slot=card-action]:grid-cols-[minmax(0,1fr)_minmax(0,auto)]!',
             )}
           >
-            <div className="grid auto-rows-min gap-1.5">
+            <div className="grid min-w-0 max-w-full auto-rows-min gap-1.5">
               {typeof title === 'string' ? <CardTitle className="text-xl leading-none">{title}</CardTitle> : title}
 
               {description &&
@@ -153,7 +153,7 @@ export function DataTable<TData extends RowData>({
             </div>
 
             {positionToolbarActions === 'top-right' && !readOnly && renderToolbarActions && (
-              <CardAction className="col-start-1 row-start-auto flex w-full flex-wrap justify-start gap-2 justify-self-stretch lg:col-start-2 md:row-span-2 lg:row-start-1 lg:w-auto lg:justify-end lg:justify-self-end">
+              <CardAction className="col-start-1! row-span-1! row-start-auto! flex min-w-0 w-full max-w-full flex-wrap justify-start gap-2 justify-self-stretch! xl:col-start-2! xl:row-span-2! xl:row-start-1! xl:w-auto xl:justify-end xl:justify-self-end!">
                 {renderToolbarActions({ table })}
               </CardAction>
             )}
