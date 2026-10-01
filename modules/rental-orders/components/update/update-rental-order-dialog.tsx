@@ -395,40 +395,40 @@ export function UpdateRentalOrderDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-6xl">
-        <div ref={setPortalContainer} className="contents">
-          <DialogHeader>
-            <DialogTitle className="flex flex-wrap items-center gap-2">
-              <span>Sửa đơn thuê</span>
-              {displayOrderCode ? (
-                <CopyText text={String(displayOrderCode)} className="py-1 font-bold text-primary underline">
-                  <span>#{displayOrderCode}</span>
-                </CopyText>
-              ) : null}
-            </DialogTitle>
-            <DialogDescription>
-              {order ? (
-                <>
-                  <span>{order.code} · snapshot khách được lưu riêng trên đơn; lịch và sản phẩm sẽ được quote lại.</span>
-                  <span className="block text-xs">
-                    {formatRentalPeriod(startDate, endDate)} · {formatRentalDuration(startDate, endDate)} · Tiền thuê hiện tại{' '}
-                    {formatCurrency(order.financials.rentalFeeTotal)}
-                  </span>
-                </>
-              ) : displayOrderCode ? (
-                `#${displayOrderCode} · đang tải thông tin đơn thuê…`
-              ) : (
-                'Đang tải thông tin đơn thuê…'
-              )}
-            </DialogDescription>
-          </DialogHeader>
+        <div ref={setPortalContainer} className="pointer-events-none absolute inset-0" />
+        <DialogHeader>
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            <span>Sửa đơn thuê</span>
+            {displayOrderCode ? (
+              <CopyText text={String(displayOrderCode)} className="py-1 font-bold text-primary underline">
+                <span>#{displayOrderCode}</span>
+              </CopyText>
+            ) : null}
+          </DialogTitle>
+          <DialogDescription>
+            {order ? (
+              <>
+                <span>{order.code} · snapshot khách được lưu riêng trên đơn; lịch và sản phẩm sẽ được quote lại.</span>
+                <span className="block text-xs">
+                  {formatRentalPeriod(startDate, endDate)} · {formatRentalDuration(startDate, endDate)} · Tiền thuê hiện tại{' '}
+                  {formatCurrency(order.financials.rentalFeeTotal)}
+                </span>
+              </>
+            ) : displayOrderCode ? (
+              `#${displayOrderCode} · đang tải thông tin đơn thuê…`
+            ) : (
+              'Đang tải thông tin đơn thuê…'
+            )}
+          </DialogDescription>
+        </DialogHeader>
 
-          {orderQuery.isError ? (
-            <Alert variant="destructive" className="mt-5">
-              <AlertTitle>Không tải được đơn thuê</AlertTitle>
-              <AlertDescription>Vui lòng đóng dialog và thử mở lại.</AlertDescription>
-            </Alert>
-          ) : order ? (
-            <form id="rental-order-update-form" onSubmit={handleFormSubmit}>
+        {orderQuery.isError ? (
+          <Alert variant="destructive" className="mt-5">
+            <AlertTitle>Không tải được đơn thuê</AlertTitle>
+            <AlertDescription>Vui lòng đóng dialog và thử mở lại.</AlertDescription>
+          </Alert>
+        ) : order ? (
+          <form id="rental-order-update-form" onSubmit={handleFormSubmit}>
               <ScrollArea className="h-[60dvh] max-h-[calc(100dvh-220px)]">
                 <div className="py-2">
                   <FieldGroup className="gap-4">
@@ -706,16 +706,15 @@ export function UpdateRentalOrderDialog({
                   </Button>
                 )}
               </DialogFooter>
-            </form>
-          ) : orderQuery.isLoading ? (
-            <UpdateDialogLoading />
-          ) : (
-            <Alert variant="destructive" className="mx-6 my-5">
-              <AlertTitle>Không tìm thấy đơn thuê</AlertTitle>
-              <AlertDescription>Đơn có thể đã bị xoá hoặc không còn quyền truy cập.</AlertDescription>
-            </Alert>
-          )}
-        </div>
+          </form>
+        ) : orderQuery.isLoading ? (
+          <UpdateDialogLoading />
+        ) : (
+          <Alert variant="destructive" className="mx-6 my-5">
+            <AlertTitle>Không tìm thấy đơn thuê</AlertTitle>
+            <AlertDescription>Đơn có thể đã bị xoá hoặc không còn quyền truy cập.</AlertDescription>
+          </Alert>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -147,16 +147,16 @@ export function CreateRentalOrderDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-5xl ring-0">
-          <div ref={setPortalContainer} className="contents">
-            <DialogHeader>
-              <DialogTitle>Tạo đơn thuê</DialogTitle>
-              <DialogDescription>
-                Chọn khách hàng, thời gian thuê, sản phẩm và số lượng. Hệ thống sẽ tự tìm và tính toán thiết bị khả dụng
-                để thuê
-              </DialogDescription>
-            </DialogHeader>
+          <div ref={setPortalContainer} className="pointer-events-none absolute inset-0" />
+          <DialogHeader>
+            <DialogTitle>Tạo đơn thuê</DialogTitle>
+            <DialogDescription>
+              Chọn khách hàng, thời gian thuê, sản phẩm và số lượng. Hệ thống sẽ tự tìm và tính toán thiết bị khả dụng
+              để thuê
+            </DialogDescription>
+          </DialogHeader>
 
-            <form onSubmit={form.handleSubmit(submitQuote)}>
+          <form onSubmit={form.handleSubmit(submitQuote)}>
               <ScrollArea className="h-[calc(60dvh-105px)]">
                 <FieldGroup className="gap-5 py-2">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -408,8 +408,7 @@ export function CreateRentalOrderDialog({
                   )}
                 </DialogFooter>
               </>
-            </form>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 

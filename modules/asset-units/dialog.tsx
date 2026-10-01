@@ -157,25 +157,25 @@ function AssetUnitFormDialog({
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? onOpenChange(true) : handleClose())}>
       <DialogContent className="sm:max-w-2xl">
-        <div ref={setComboboxPortalContainer} className="contents">
-          <DialogHeader>
-            <DialogTitle>
-              {readOnly
-                ? text.DIALOG.FORM_VIEW_TITLE
-                : isEdit
-                  ? text.DIALOG.FORM_EDIT_TITLE
-                  : text.DIALOG.FORM_CREATE_TITLE}
-            </DialogTitle>
-            <DialogDescription>
-              {readOnly
-                ? text.DIALOG.FORM_VIEW_DESCRIPTION
-                : isEdit
-                  ? text.DIALOG.FORM_EDIT_DESCRIPTION
-                  : text.DIALOG.FORM_CREATE_DESCRIPTION}
-            </DialogDescription>
-          </DialogHeader>
+        <div ref={setComboboxPortalContainer} className="pointer-events-none absolute inset-0" />
+        <DialogHeader>
+          <DialogTitle>
+            {readOnly
+              ? text.DIALOG.FORM_VIEW_TITLE
+              : isEdit
+                ? text.DIALOG.FORM_EDIT_TITLE
+                : text.DIALOG.FORM_CREATE_TITLE}
+          </DialogTitle>
+          <DialogDescription>
+            {readOnly
+              ? text.DIALOG.FORM_VIEW_DESCRIPTION
+              : isEdit
+                ? text.DIALOG.FORM_EDIT_DESCRIPTION
+                : text.DIALOG.FORM_CREATE_DESCRIPTION}
+          </DialogDescription>
+        </DialogHeader>
 
-          <form id="asset-unit-form" onSubmit={handleSubmit(onSubmit)}>
+        <form id="asset-unit-form" onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-4 py-2">
               <Controller
                 control={control}
@@ -295,8 +295,7 @@ function AssetUnitFormDialog({
                 </Button>
               )}
             </DialogFooter>
-          </form>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
