@@ -107,7 +107,7 @@ export const columns: ColumnDef<IAssetUnitOut>[] = [
     enableColumnFilter: false,
   },
   {
-    accessorKey: 'product',
+    accessorKey: 'productId',
     header: text.TABLE.PRODUCT,
     // cell: ({ row }) => row.original.product.name,
     cell: ({ row }) => (
@@ -119,13 +119,18 @@ export const columns: ColumnDef<IAssetUnitOut>[] = [
         )}
       </div>
     ),
+    meta: {
+      label: text.TABLE.PRODUCT,
+      variant: 'select',
+      filterMode: 'equals',
+    },
     enableSorting: false,
     enableColumnFilter: false,
   },
   {
     accessorKey: 'status',
     header: text.TABLE.STATUS,
-          cell: ({ row }) => <BadgeCustom status={row.original.status} config={assetStatusConfig} />,
+    cell: ({ row }) => <BadgeCustom status={row.original.status} config={assetStatusConfig} />,
     meta: {
       label: text.TABLE.STATUS,
       variant: 'select',
