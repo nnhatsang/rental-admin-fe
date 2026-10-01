@@ -13,6 +13,7 @@ import type {
   GanttResource,
   GanttScale,
 } from '@/components/reui/gantt/gantt-types';
+import { TZDate } from '@date-fns/tz';
 import { format } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -44,13 +45,16 @@ export type AvailabilityGanttEventData = IAvailabilityGanttBlock & {
   sku: string;
 };
 
-const toLocalDateTimeParam = (date: Date) => format(date, "yyyy-MM-dd'T'HH:mm");
+const toLocalDateTimeParam = (date: Date) =>
+  format(new TZDate(date.getTime(), RENTAL_GANTT_TIME_ZONE), "yyyy-MM-dd'T'HH:mm");
 
 const parseDateParam = (value: string | null) => {
   if (!value) return undefined;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
+
+const isFullTimelineParam = (value: string) => value.length > 16;
 
 const parseScaleParam = (value: string | null): GanttScale | undefined => {
   return GANTT_SCALES.includes(value as GanttScale) ? (value as GanttScale) : undefined;
@@ -127,6 +131,30 @@ export const useAvailabilityGanttLogic = () => {
     },
     [pathname, router, searchParams],
   );
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    let hasCanonicalized = false;
+
+    for (const key of ['date', 'startDate', 'endDate']) {
+      const currentValue = params.get(key);
+      if (!currentValue || !isFullTimelineParam(currentValue)) continue;
+
+      const parsed = parseDateParam(currentValue);
+      if (!parsed) continue;
+
+      const normalized = toLocalDateTimeParam(parsed);
+      if (normalized === currentValue) continue;
+
+      params.set(key, normalized);
+      hasCanonicalized = true;
+    }
+
+    if (!hasCanonicalized) return;
+
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   const handleSearchChange = useCallback(
     (value: string | undefined) => replaceParams({ search: value }),

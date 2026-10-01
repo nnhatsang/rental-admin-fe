@@ -114,7 +114,7 @@ function UserFormDialog({ currentRow, open, onOpenChange, readOnly = false }: Us
         </DialogHeader>
 
         <form id="user-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <ScrollArea className="h-[25dvh] max-h-[calc(100dvh-220px)]">
+          <ScrollArea className="h-[24dvh] max-h-[calc(100dvh-220px)]">
             <div className="py-2 grid gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Controller
@@ -251,7 +251,7 @@ function UserResetPasswordDialog({ currentRow, open, onOpenChange }: UserResetPa
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <Controller
             control={form.control}
             name="newPassword"

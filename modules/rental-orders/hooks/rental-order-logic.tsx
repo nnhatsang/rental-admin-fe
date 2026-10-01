@@ -10,9 +10,9 @@ import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import type { RowSelectionState } from '@tanstack/react-table';
-import { format } from 'date-fns';
+import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RentalOrderContextMenuItems } from '../components/actions';
 import { columns } from '../columns';
 import type { IGetRentalOrdersParams, RentalOrderListItem } from '../model';
@@ -30,6 +30,16 @@ const parseDateFilter = (value: string) => {
 };
 
 const toDateFilterParam = (date: Date | undefined) => (date ? format(date, 'yyyy-MM-dd') : undefined);
+const RENTAL_ORDER_WEEK_STARTS_ON = 1 as const;
+
+const getCurrentWeekRange = () => {
+  const today = new Date();
+
+  return {
+    from: startOfWeek(today, { weekStartsOn: RENTAL_ORDER_WEEK_STARTS_ON }),
+    to: endOfWeek(today, { weekStartsOn: RENTAL_ORDER_WEEK_STARTS_ON }),
+  };
+};
 
 export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderListItem> } {
   const { setCurrentRow, setOpen } = useRentalOrders();
@@ -38,11 +48,18 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
   const searchParams = useSearchParams();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const defaultWeekRange = useMemo(getCurrentWeekRange, []);
+  const defaultWeekFromDate = toDateFilterParam(defaultWeekRange.from) ?? '';
+  const defaultWeekToDate = toDateFilterParam(defaultWeekRange.to) ?? '';
+  const defaultWeekSyncedRef = useRef(false);
   const tableState = useTableQueryState<IGetRentalOrdersParams>({ defaultPageSize: 10, columns });
 
   const customerIdInput = searchParams.get('customerId') ?? '';
   const fromDateInput = searchParams.get('fromDate') ?? '';
   const toDateInput = searchParams.get('toDate') ?? '';
+  const hasExplicitDateFilter = Boolean(fromDateInput || toDateInput);
+  const effectiveFromDateInput = fromDateInput || (!hasExplicitDateFilter ? defaultWeekFromDate : '');
+  const effectiveToDateInput = toDateInput || (!hasExplicitDateFilter ? defaultWeekToDate : '');
   const selectedCustomerQuery = useGetCustomerById(customerIdInput || undefined);
   const selectedCustomer = useMemo<CustomerOption | null>(() => {
     const customer = selectedCustomerQuery.data;
@@ -51,23 +68,37 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
 
   const dateRangeFilter = useMemo<DateTimeRange>(
     () => ({
-      from: parseDateFilter(fromDateInput),
-      to: parseDateFilter(toDateInput),
+      from: parseDateFilter(effectiveFromDateInput),
+      to: parseDateFilter(effectiveToDateInput),
     }),
-    [fromDateInput, toDateInput],
+    [effectiveFromDateInput, effectiveToDateInput],
   );
 
   const rentalOrderQueryParams = useMemo<IGetRentalOrdersParams>(
     () => ({
       ...tableState.queryParams,
       customerId: customerIdInput || undefined,
-      fromDate: fromDateInput ? `${fromDateInput}T00:00:00.000` : undefined,
-      toDate: toDateInput ? `${toDateInput}T23:59:59.999` : undefined,
+      fromDate: effectiveFromDateInput ? `${effectiveFromDateInput}T00:00:00.000` : undefined,
+      toDate: effectiveToDateInput ? `${effectiveToDateInput}T23:59:59.999` : undefined,
     }),
-    [customerIdInput, fromDateInput, tableState.queryParams, toDateInput],
+    [customerIdInput, effectiveFromDateInput, effectiveToDateInput, tableState.queryParams],
   );
 
   const { data, isLoading, isFetching, refetch } = useGetRentalOrders(rentalOrderQueryParams);
+
+  useEffect(() => {
+    if (defaultWeekSyncedRef.current) return;
+    defaultWeekSyncedRef.current = true;
+
+    if (hasExplicitDateFilter) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('fromDate', defaultWeekFromDate);
+    params.set('toDate', defaultWeekToDate);
+
+    const nextQuery = params.toString();
+    router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+  }, [defaultWeekFromDate, defaultWeekToDate, hasExplicitDateFilter, pathname, router, searchParams]);
 
   const setCustomerFilter = useCallback(
     (customerId: string) => {
