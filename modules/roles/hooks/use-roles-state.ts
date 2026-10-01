@@ -89,8 +89,6 @@ export const useRolesState = (): IRolesState => {
     enableColumnFilters: false,
     enableColumnFilterModes: false,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'roles',
     isLoading,
     showLoadingOverlay: isFetching,
     onPaginationChange: tableQuery.onPaginationChange,

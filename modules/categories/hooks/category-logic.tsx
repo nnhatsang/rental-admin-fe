@@ -35,8 +35,6 @@ export const useCategoriesLogic = (): ICategoriesLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'categories',
     title: text.INDEX,
     description: text.DESCRIPTION,
     isLoading,

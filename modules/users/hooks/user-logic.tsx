@@ -56,8 +56,6 @@ export const useUsersLogic = (): IUsersLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'users',
     title: TITLE_PAGE.USERS.INDEX,
     description: TITLE_PAGE.USERS.DESCRIPTION,
     isLoading,

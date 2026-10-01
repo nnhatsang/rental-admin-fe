@@ -154,8 +154,6 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     onClearExternalFilters: clearAllFilters,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'rental-orders',
     title: 'Quản lý đơn thuê',
     description: 'Theo dõi lịch thuê, trạng thái vận hành, thanh toán và quyết toán',
     isLoading,

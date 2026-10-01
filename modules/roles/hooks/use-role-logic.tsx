@@ -51,8 +51,6 @@ export const useRoleLogic = (): IRoleLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'roles',
     title: TITLE_PAGE.ROLES.INDEX,
     description: TITLE_PAGE.ROLES.DESCRIPTION,
     isLoading,

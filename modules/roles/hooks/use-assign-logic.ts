@@ -67,7 +67,6 @@ export const useAssignLogic = ({ roleCode }: UseAssignLogicProps): UseAssignLogi
     enableColumnActions: false,
     enableFullscreenToggle: false,
     enableDensityToggle: false,
-    exportFileName: '',
     enableStickyHeader: true,
     enableStickyFooter: true,
     // initialState: {

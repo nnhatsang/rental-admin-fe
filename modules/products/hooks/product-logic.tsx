@@ -66,8 +66,6 @@ export const useProductsLogic = (): IProductsLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'products',
     title: text.INDEX,
     description: text.DESCRIPTION,
     isLoading,

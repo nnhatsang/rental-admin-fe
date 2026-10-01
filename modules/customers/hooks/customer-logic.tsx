@@ -54,8 +54,6 @@ export const useCustomersLogic = (): ICustomersLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'customers',
     title: text.INDEX,
     description: text.DESCRIPTION,
     isLoading,

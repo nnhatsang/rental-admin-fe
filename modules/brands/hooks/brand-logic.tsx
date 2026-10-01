@@ -35,8 +35,6 @@ export const useBrandsLogic = (): IBrandsLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'brands',
     title: text.INDEX,
     description: text.DESCRIPTION,
     isLoading,

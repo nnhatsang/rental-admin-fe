@@ -59,8 +59,6 @@ export const useAssetUnitsLogic = (): IAssetUnitsLogic => {
     manualFiltering: true,
     enableRowSelection: true,
     enableGlobalFilter: true,
-    enableExport: true,
-    exportFileName: 'asset-units',
     title: text.INDEX,
     description: text.DESCRIPTION,
     isLoading,
