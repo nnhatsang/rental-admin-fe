@@ -35,6 +35,7 @@ function fallbackCategory(id: string): ICategoryOut {
     id,
     name: id,
     slug: null,
+    order: 0,
     isActive: true,
     productCount: 0,
     createdAt: '',

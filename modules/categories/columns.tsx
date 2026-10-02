@@ -62,6 +62,15 @@ function CategoryActions({ row }: { row: Row<ICategoryOut> }) {
 
 export const columns: ColumnDef<ICategoryOut>[] = [
   {
+    accessorKey: 'order',
+    header: 'Thứ tự',
+    meta: { label: 'Thứ tự' },
+    cell: ({ row }) => <span className="tabular-nums">{row.original.order + 1}</span>,
+    enableSorting: false,
+    enableColumnFilter: false,
+    size: 80,
+  },
+  {
     accessorKey: 'name',
     header: text.TABLE.NAME,
     meta: { label: text.TABLE.NAME },

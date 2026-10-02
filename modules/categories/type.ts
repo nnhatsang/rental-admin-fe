@@ -1,6 +1,7 @@
 import type { DefaultParamsRequest } from '@/types/api';
 
 export enum CategorySortBy {
+  ORDER = 'order',
   CREATED_AT = 'createdAt',
   UPDATED_AT = 'updatedAt',
   NAME = 'name',
@@ -11,6 +12,7 @@ export type ICategoryOut = {
   id: string;
   name: string;
   slug: string | null;
+  order: number;
   isActive: boolean;
   productCount: number;
   createdAt: string;
@@ -33,6 +35,10 @@ export type IUpdateCategoryReq = Partial<ICreateCategoryReq>;
 
 export type IUpdateCategoryStatusReq = {
   isActive: boolean;
+};
+
+export type IReorderCategoriesReq = {
+  categoryIds: string[];
 };
 
 export type ICategoryActionRes = {

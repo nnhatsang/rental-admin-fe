@@ -247,6 +247,36 @@ const table = useDataTable({
 
 Lưu ý: row ordering không phù hợp với row virtualization.
 
+Chuẩn hóa row ordering cho dữ liệu server-side:
+
+- chỉ bật khi data hiện tại chứa toàn bộ tập cần sắp xếp;
+- đặt enablePagination: false và không bật row virtualization;
+- tắt kéo-thả khi search, filter hoặc sort khác thứ tự mặc định đang hoạt động;
+- cập nhật local data trước để UI phản hồi ngay, sau đó gọi API bằng toàn bộ id
+  theo thứ tự mới;
+- khi API lỗi, rollback về mảng trước thao tác và hiển thị lỗi;
+- endpoint reorder nên nhận một payload duy nhất, validate đủ id và cập nhật
+  trong transaction, không gọi PATCH từng row từ FE.
+
+~~~tsx
+const table = useDataTable({
+  data,
+  columns,
+  getRowId: (row) => row.id,
+  enableRowOrdering: canReorder && !isSaving,
+  enablePagination: false,
+  isSaving,
+  onRowOrderChange: (activeRowId, overRowId) => {
+    const next = moveRow(data, activeRowId, overRowId);
+    setData(next);
+    reorderMutation.mutate(
+      { categoryIds: next.map((row) => row.id) },
+      { onError: () => setData(data) },
+    );
+  },
+});
+~~~
+
 ## Config grouping/expanding/detail
 
 | Option | Default | Dùng khi nào | Ghi chú |

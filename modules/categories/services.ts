@@ -6,6 +6,7 @@ import type {
   ICategoryOut,
   ICreateCategoryReq,
   IGetCategoriesParams,
+  IReorderCategoriesReq,
   IUpdateCategoryReq,
   IUpdateCategoryStatusReq,
 } from './type';
@@ -60,6 +61,17 @@ export const requestDeleteCategories = (
     method: 'DELETE',
     url,
     data: { categoryIds: ids },
+  };
+  return apiAuth(config);
+};
+
+export const requestReorderCategories = (
+  data: IReorderCategoriesReq,
+): Promise<AxiosResponse<DefaultResponse<ICategoryActionRes>>> => {
+  const config: AxiosRequestConfig = {
+    method: 'PATCH',
+    url: `${url}/order`,
+    data,
   };
   return apiAuth(config);
 };
