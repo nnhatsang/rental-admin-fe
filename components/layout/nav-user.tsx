@@ -15,6 +15,7 @@ import { useAuthStore } from '@/modules/auth/store';
 import { ERROR_MESSAGES } from '@/utils/consts/message-error.const';
 import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
 import { IconLogout, IconMessage2, IconUserCircle } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
 import { UserAvatar } from '../ui/user-avatar';
@@ -33,6 +34,7 @@ type NavUserProps = {
 
 export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, className }: NavUserProps) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
@@ -95,7 +97,7 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => router.push('/account')}>
             <IconUserCircle /> Tài khoản
           </DropdownMenuItem>
 
@@ -111,13 +113,13 @@ export function NavUser({ variant = 'sidebar', side, align = 'end', showEmail, c
     </DropdownMenu>
   );
 
-  if (!isSidebar) {
-    return menu;
-  }
-
-  return (
+  const content = isSidebar ? (
     <SidebarMenu>
       <SidebarMenuItem>{menu}</SidebarMenuItem>
     </SidebarMenu>
+  ) : (
+    menu
   );
+
+  return content;
 }
