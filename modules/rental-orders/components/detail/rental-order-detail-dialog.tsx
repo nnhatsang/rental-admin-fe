@@ -33,6 +33,7 @@ import { getRentalOrderFinancialSummary, getRentalOrderNextAction, getRentalOrde
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import {
   IconEdit,
+  IconLock,
   IconPackageExport,
   IconPackageImport,
   IconReceipt,
@@ -233,10 +234,10 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
               helper="Sau kiểm tra trả máy"
             />
             <DetailMetric
-              label="Còn phải hoàn"
-              value={formatCurrency(financials.refundDue)}
-              valueClassName={financials.refundDue > 0 ? 'text-chart-5' : undefined}
-              helper="Khoản còn phải chuyển cho khách"
+              label="Còn được hoàn"
+              value={formatCurrency(financials.refundableRemaining)}
+              valueClassName={financials.refundableRemaining > 0 ? 'text-chart-5' : undefined}
+              helper="Có thể tạo yêu cầu hoàn tiếp theo"
             />
             <DetailMetric
               label="Đang chờ hoàn"
@@ -622,18 +623,27 @@ function RentalOrderDetailFooterSummary({ order }: { order?: RentalOrderDetail }
 
   const pendingRefunds = order.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
   const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
+  const refundableRemaining = order.financials.refundableRemaining;
   const nextAction = getRentalOrderNextAction(order);
+  const financialLabel = pendingRefundTotal > 0 ? 'Đang chờ xác nhận hoàn' : nextAction.financial.label;
+  const financialAmount = pendingRefundTotal > 0 ? pendingRefundTotal : nextAction.financial.amount;
   const message =
-    order.status === 'CANCELLED' && order.notes.cancelReason
-      ? `Lý do hủy: ${order.notes.cancelReason}`
-      : nextAction.financial.amount > 0
-        ? `${nextAction.financial.label}: ${formatCurrency(nextAction.financial.amount)}`
+    pendingRefundTotal > 0
+      ? `Xác nhận khoản này trước khi hoàn tiếp hoặc chốt phần còn lại.${refundableRemaining > 0 ? ` Còn có thể xử lý thêm ${formatCurrency(refundableRemaining)}.` : ''}`
+      : order.status === 'CANCELLED' && order.notes.cancelReason
+        ? `Lý do hủy: ${order.notes.cancelReason}`
         : nextAction.description;
 
   return (
     <div className="min-w-0 flex-1 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">Bước tiếp theo: {nextAction.label}</span>
-      <span className="mt-0.5 block truncate">{message}</span>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="font-medium text-foreground">Tài chính</span>
+        <span>{financialLabel}</span>
+        {financialAmount > 0 ? (
+          <span className="font-semibold tabular-nums text-foreground">{formatCurrency(financialAmount)}</span>
+        ) : null}
+      </div>
+      <span className="mt-0.5 block truncate">Bước tiếp theo: {nextAction.label} · {message}</span>
     </div>
   );
 }
@@ -653,9 +663,8 @@ export function RentalOrderDetailDialog({
   const actions = useRentalOrderActions();
   const pendingRefunds = order?.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING') ?? [];
   const pendingRefund = pendingRefunds[0];
-  const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
   const pendingPayments = order?.payments.filter((payment) => payment.direction === 'INBOUND' && payment.status === 'PENDING') ?? [];
-  const remainingRefundDue = order ? Math.max(0, order.financials.refundDue - pendingRefundTotal) : 0;
+  const remainingRefundDue = order?.financials.refundableRemaining ?? 0;
   const openAction = (action: Parameters<typeof setOpen>[0]) => setOpen(action);
 
   const canRecordPayment = Boolean(
@@ -824,11 +833,19 @@ export function RentalOrderDetailDialog({
                 </Button>
               </ProtectedAction>
             ) : null}
-            {order && remainingRefundDue > 0 ? (
+            {order && remainingRefundDue > 0 && pendingRefunds.length === 0 ? (
               <ProtectedAction permission={PermissionCode.OrdersRefund}>
                 <Button variant="outline" onClick={() => openAction('refund')}>
                   <IconRotateClockwise data-icon="inline-start" />
-                  Hoàn thêm {formatCurrency(remainingRefundDue)}
+                  Tạo yêu cầu hoàn
+                </Button>
+              </ProtectedAction>
+            ) : null}
+            {order?.status === 'CANCELLED' && remainingRefundDue > 0 && pendingRefunds.length === 0 ? (
+              <ProtectedAction permission={PermissionCode.OrdersRefund}>
+                <Button variant="destructive" onClick={() => openAction('close-cancellation')}>
+                  <IconLock data-icon="inline-start" />
+                  Chốt giữ lại {formatCurrency(remainingRefundDue)}
                 </Button>
               </ProtectedAction>
             ) : null}
@@ -837,9 +854,13 @@ export function RentalOrderDetailDialog({
                 <Button
                   variant="outline"
                   disabled={actions.confirmRefund.isPending}
-                  onClick={() =>
-                    currentRow && actions.confirmRefund.mutate({ id: currentRow.id, refundId: pendingRefund.id })
-                  }
+                  onClick={() => {
+                    if (!currentRow) return;
+                    const shouldConfirm = window.confirm(
+                      `Xác nhận đã chuyển ${formatCurrency(pendingRefund.amount)} cho khách? Sau xác nhận, số tiền này sẽ được ghi nhận là đã hoàn thực tế.`,
+                    );
+                    if (shouldConfirm) actions.confirmRefund.mutate({ id: currentRow.id, refundId: pendingRefund.id });
+                  }}
                 >
                   <IconRotateClockwise data-icon="inline-start" />
                   Xác nhận đã hoàn {formatCurrency(pendingRefund.amount)}

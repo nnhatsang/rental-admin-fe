@@ -18,6 +18,8 @@ export type RentalOrderFinancialDisplayInput = {
   amountDueAtBooking?: number;
   amountDueBeforeHandover: number;
   refundDue: number;
+  pendingRefundTotal?: number;
+  refundableRemaining?: number;
   additionalChargeDue: number;
   actualRefundTotal?: number;
   paidTotal: number;
@@ -178,7 +180,8 @@ export function getRentalOrderOperationalBadges(
 
 export function getRentalOrderFinancialSummary(order: RentalOrderFinancialSource): RentalOrderFinancialSummary {
   const values = getFinancialValues(order);
-  const pendingRefundTotal = getPendingRefundTotal(values.refunds);
+  const pendingRefundTotal = values.pendingRefundTotal ?? getPendingRefundTotal(values.refunds);
+  const refundableRemaining = values.refundableRemaining ?? Math.max(0, values.refundDue - pendingRefundTotal);
   const pendingPaymentTotal = getPendingPaymentTotal(values.payments);
   const actualRefundTotal = values.actualRefundTotal ?? 0;
 
@@ -235,15 +238,31 @@ export function getRentalOrderFinancialSummary(order: RentalOrderFinancialSource
       );
     }
 
-    if (values.refundDue > 0) {
+    if (refundableRemaining > 0) {
       return summary(
         'REFUND_DUE',
         'Còn phải hoàn',
         'Đơn đã hủy nhưng vẫn còn khoản tiền hợp lệ cần hoàn cho khách.',
-        values.refundDue,
+        refundableRemaining,
         'Còn phải hoàn',
         'REFUND_DUE',
         true,
+      );
+    }
+
+    if (values.settlementStatus === 'SETTLED') {
+      const fullyRefunded = values.paidTotal > 0 && actualRefundTotal >= values.paidTotal;
+      return summary(
+        fullyRefunded ? 'REFUNDED' : 'SETTLED',
+        fullyRefunded ? 'Đã hoàn đủ' : 'Đã chốt tài chính',
+        fullyRefunded
+          ? 'Đã hoàn toàn bộ số tiền khách đã thanh toán.'
+          : actualRefundTotal > 0
+            ? 'Đã hoàn một phần và chốt phần còn lại; không được tạo thêm yêu cầu hoàn.'
+            : 'Đơn đã hủy và đã khóa xử lý hoàn tiền.',
+        actualRefundTotal,
+        actualRefundTotal > 0 ? 'Đã hoàn' : null,
+        'SETTLED',
       );
     }
 
@@ -279,12 +298,12 @@ export function getRentalOrderFinancialSummary(order: RentalOrderFinancialSource
       );
     }
 
-    if (values.refundDue > 0) {
+    if (refundableRemaining > 0) {
       return summary(
         'REFUND_DUE',
         'Còn phải hoàn',
         'Sau đối soát, đơn còn khoản tiền cần hoàn cho khách.',
-        values.refundDue,
+        refundableRemaining,
         'Còn phải hoàn',
         'REFUND_DUE',
         true,

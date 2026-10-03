@@ -38,7 +38,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RentalOrderBadge } from '../status-badge';
 
-export type RentalOrderAction = 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel';
+export type RentalOrderAction = 'payment' | 'refund' | 'handover' | 'return' | 'inspection' | 'settle' | 'cancel' | 'close-cancellation';
 
 function getRentalOrderActionErrorMessage(error: unknown, action: RentalOrderAction | null): string {
   if (error instanceof ApiClientError) {
@@ -62,7 +62,7 @@ function getRentalOrderActionErrorMessage(error: unknown, action: RentalOrderAct
           case 'payment':
             return 'Không thể ghi nhận thanh toán vì đơn không còn ở trạng thái cho phép thanh toán.';
           case 'refund':
-            return 'Không thể tạo yêu cầu hoàn tiền vì đơn chưa đủ điều kiện hoặc số tiền hoàn không còn phù hợp.';
+            return 'Không thể tạo yêu cầu hoàn tiền: đơn đã chốt tài chính, đang chờ xác nhận một khoản hoàn khác hoặc không còn số tiền được hoàn.';
           case 'handover':
             return 'Không thể bàn giao thiết bị. Vui lòng kiểm tra trạng thái đơn, số tiền đã thu và số máy đã được phân bổ.';
           case 'return':
@@ -71,6 +71,8 @@ function getRentalOrderActionErrorMessage(error: unknown, action: RentalOrderAct
             return 'Không thể lưu biên bản kiểm tra vì đơn chưa ghi nhận trả máy hoặc dữ liệu kiểm tra chưa hợp lệ.';
           case 'settle':
             return 'Chưa thể quyết toán vì đơn vẫn còn khoản phải thu hoặc khoản tiền cần hoàn.';
+          case 'close-cancellation':
+            return 'Chưa thể chốt phần còn lại vì đơn còn yêu cầu hoàn đang chờ xử lý hoặc trạng thái tài chính chưa phù hợp.';
           default:
             return 'Thông tin thao tác không còn phù hợp với trạng thái hiện tại của đơn.';
         }
@@ -91,6 +93,7 @@ const actionTitle: Record<RentalOrderAction, string> = {
   inspection: 'Kiểm tra khi trả',
   settle: 'Quyết toán đơn thuê',
   cancel: 'Hủy đơn thuê',
+  'close-cancellation': 'Chốt phần còn lại',
 };
 
 const actionFooterClass = 'shrink-0';
@@ -256,11 +259,9 @@ export function RentalOrderActionDialog({
   const detailQuery = useGetRentalOrderById(orderId, open && Boolean(orderId));
   const order = detailQuery.data;
   const actions = useRentalOrderActions();
-  const pendingRefundTotal =
-    order?.refunds
-      .filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING')
-      .reduce((total, refund) => total + refund.amount, 0) ?? 0;
-  const remainingRefundDue = order ? Math.max(0, order.financials.refundDue - pendingRefundTotal) : 0;
+  const financialSummary = order ? getRentalOrderFinancialSummary(order) : null;
+  const pendingRefundTotal = financialSummary?.pendingRefundTotal ?? 0;
+  const remainingRefundDue = order?.financials.refundableRemaining ?? 0;
   const paymentForm = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: { amount: 0, method: 'CASH', status: 'SUCCESS', referenceCode: '', note: '' },
@@ -271,6 +272,14 @@ export function RentalOrderActionDialog({
   const [reason, setReason] = useState('');
   const [allowRefund, setAllowRefund] = useState(false);
   const [inspectionItems, setInspectionItems] = useState<InspectionDraft[]>([]);
+  const cancellationRefundLimit = order
+    ? Math.max(
+        0,
+        order.financials.paidTotal -
+          order.financials.actualRefundTotal -
+          pendingRefundTotal,
+      )
+    : 0;
   const mutationByAction = {
     payment: actions.payment,
     refund: actions.refund,
@@ -279,6 +288,7 @@ export function RentalOrderActionDialog({
     inspection: actions.inspect,
     settle: actions.settle,
     cancel: actions.cancel,
+    'close-cancellation': actions.closeCancellation,
   } as const;
   const activeMutation = action ? mutationByAction[action] : undefined;
 
@@ -290,7 +300,13 @@ export function RentalOrderActionDialog({
   useEffect(() => {
     if (!open || !order) return;
 
-    setAmount(action === 'refund' ? remainingRefundDue : order.financials.refundDue || order.financials.paidTotal);
+    setAmount(
+      action === 'refund'
+        ? remainingRefundDue
+        : action === 'cancel'
+          ? cancellationRefundLimit
+          : order.financials.refundDue || order.financials.paidTotal,
+    );
     setNote('');
     setReason('');
     setAllowRefund(false);
@@ -306,7 +322,7 @@ export function RentalOrderActionDialog({
       ),
     );
     paymentForm.reset({ amount: 0, method: 'CASH', status: 'SUCCESS', referenceCode: '', note: '' });
-  }, [action, open, order, paymentForm, remainingRefundDue]);
+  }, [action, cancellationRefundLimit, open, order, paymentForm, remainingRefundDue]);
 
   const pending = Boolean(activeMutation?.isPending);
   const close = () => onOpenChange(false);
@@ -357,11 +373,17 @@ export function RentalOrderActionDialog({
       );
     }
     if (action === 'settle') actions.settle.mutate({ id: order.id, note: note || undefined }, { onSuccess: close });
+    if (action === 'close-cancellation') actions.closeCancellation.mutate({ id: order.id, note }, { onSuccess: close });
     if (action === 'cancel') {
       actions.cancel.mutate(
         {
           id: order.id,
-          data: { reason, allowRefund, refundAmount: allowRefund ? amount : undefined, note: note || undefined },
+          data: {
+            reason,
+            allowRefund,
+            refundAmount: allowRefund ? amount : undefined,
+            note: note || undefined,
+          },
         },
         { onSuccess: close },
       );
@@ -510,6 +532,28 @@ export function RentalOrderActionDialog({
                     <Field>
                       <FieldLabel>Ghi chú</FieldLabel>
                       <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {order && action === 'close-cancellation' ? (
+                  <div className="grid gap-4">
+                    <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+                      <div className="font-medium">Chốt không hoàn phần còn lại</div>
+                      <p className="mt-1 text-muted-foreground">
+                        Phần còn lại {formatCurrency(remainingRefundDue)} sẽ được ghi nhận thành phí hủy. Sau khi chốt, đơn chuyển sang đã quyết toán và không thể tạo thêm yêu cầu hoàn.
+                      </p>
+                    </div>
+                    <Field>
+                      <FieldLabel htmlFor="rental-order-close-cancellation-note">Lý do chốt</FieldLabel>
+                      <Textarea
+                        id="rental-order-close-cancellation-note"
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        placeholder="Bắt buộc, ví dụ: Khách đồng ý giữ lại phần còn lại theo chính sách hủy sát giờ"
+                        required
+                      />
+                      <FieldDescription>Ghi chú này giúp đối soát vì số tiền còn lại sẽ không được hoàn cho khách.</FieldDescription>
                     </Field>
                   </div>
                 ) : null}
@@ -666,13 +710,18 @@ export function RentalOrderActionDialog({
                       <Checkbox
                         id="rental-order-allow-refund"
                         checked={allowRefund}
-                        onCheckedChange={(checked) => setAllowRefund(checked === true)}
+                        onCheckedChange={(checked) => {
+                          const nextValue = checked === true;
+                          setAllowRefund(nextValue);
+                          if (nextValue) {
+                            setAmount(cancellationRefundLimit);
+                          }
+                        }}
                       />
                       <FieldContent>
-                        <FieldLabel htmlFor="rental-order-allow-refund">Cho phép hoàn tiền</FieldLabel>
+                        <FieldLabel htmlFor="rental-order-allow-refund">Tạo yêu cầu hoàn tiền ngay</FieldLabel>
                         <FieldDescription>
-                          Bật nếu khoản đã thu được phép hoàn theo lý do hủy. Số tiền thực tế sẽ được backend kiểm tra
-                          theo chính sách.
+                          Bật để tạo một yêu cầu hoàn đang chờ xác nhận. Hệ thống không tự chuyển tiền cho khách.
                         </FieldDescription>
                       </FieldContent>
                     </Field>
@@ -685,7 +734,19 @@ export function RentalOrderActionDialog({
                           value={amount}
                           onValueChange={setAmount}
                         />
-                        <FieldDescription>Đã thu: {formatCurrency(order.financials.paidTotal)}.</FieldDescription>
+                        <FieldDescription>
+                          Có thể hoàn tùy ý trong phạm vi còn được hoàn, tối đa {formatCurrency(cancellationRefundLimit)}. Đã thu:{' '}
+                          {formatCurrency(order.financials.paidTotal)} · Đã hoàn: {formatCurrency(order.financials.actualRefundTotal)} · Đang chờ:{' '}
+                          {formatCurrency(pendingRefundTotal)}.
+                          <span className="mt-1 block">
+                            Nếu muốn giữ lại phần còn dư, hãy xác nhận khoản hoàn trước rồi dùng “Chốt phần còn lại”.
+                          </span>
+                        </FieldDescription>
+                        {amount > cancellationRefundLimit ? (
+                          <FieldError>
+                            Số tiền hoàn không được vượt số tiền khách đã thanh toán và chưa được hoàn.
+                          </FieldError>
+                        ) : null}
                       </Field>
                     ) : null}
                     <Field>
@@ -712,6 +773,16 @@ export function RentalOrderActionDialog({
                 label="Tạo yêu cầu hoàn"
               />
             ) : null}
+            {action === 'close-cancellation' ? (
+              <ActionFooter
+                onCancel={close}
+                onConfirm={handleSubmit}
+                pending={pending}
+                disabled={!note.trim() || remainingRefundDue <= 0}
+                label="Chốt phần còn lại"
+                destructive
+              />
+            ) : null}
             {action === 'handover' || action === 'return' || action === 'settle' ? (
               <ActionFooter
                 onCancel={close}
@@ -728,7 +799,7 @@ export function RentalOrderActionDialog({
                 onCancel={close}
                 onConfirm={handleSubmit}
                 pending={pending}
-                disabled={!reason.trim()}
+                disabled={!reason.trim() || (allowRefund && (amount <= 0 || amount > cancellationRefundLimit))}
                 label="Hủy đơn"
                 destructive
               />

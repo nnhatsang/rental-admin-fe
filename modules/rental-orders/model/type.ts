@@ -64,6 +64,9 @@ export interface RentalOrderListItem {
   paidTotal: number;
   amountDueBeforeHandover: number;
   refundDue: number;
+  actualRefundTotal: number;
+  pendingRefundTotal: number;
+  refundableRemaining: number;
   additionalChargeDue: number;
   createdAt: string;
   updatedAt: string;
@@ -111,6 +114,8 @@ export interface RentalOrderFinancials {
   amountDueAtBooking: number;
   amountDueBeforeHandover: number;
   refundDue: number;
+  pendingRefundTotal: number;
+  refundableRemaining: number;
   additionalChargeDue: number;
   actualRefundTotal: number;
 }

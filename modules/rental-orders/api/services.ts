@@ -33,7 +33,10 @@ export const requestUpdateRentalOrder = (id: string, data: UpdateRentalOrderInpu
 export const requestDeleteRentalOrders = (rentalOrderIds: string[]) =>
   request<DefaultResponse<{ success: true }>>({ method: 'DELETE', url: rentalOrdersUrl, data: { rentalOrderIds } });
 
-export const requestCancelRentalOrder = (id: string, data: { reason: string; allowRefund?: boolean; refundAmount?: number; note?: string }) =>
+export const requestCancelRentalOrder = (
+  id: string,
+  data: { reason: string; allowRefund?: boolean; refundAmount?: number; note?: string },
+) =>
   request<DefaultResponse<RentalOrderDetail>>({ method: 'POST', url: `${rentalOrdersUrl}/${id}/cancel`, data });
 
 export const requestRecordRentalOrderPayment = (id: string, data: { amount: number; method: string; status: string; referenceCode?: string; note?: string; idempotencyKey?: string }) =>
@@ -50,6 +53,9 @@ export const requestCreateRentalOrderRefund = (id: string, data: { amount: numbe
 
 export const requestConfirmRentalOrderRefund = (id: string, refundId: string) =>
   request<DefaultResponse<RentalOrderDetail>>({ method: 'POST', url: `${rentalOrdersUrl}/${id}/refunds/${refundId}/confirm` });
+
+export const requestCloseCancelledRentalOrder = (id: string, data: { note: string }) =>
+  request<DefaultResponse<RentalOrderDetail>>({ method: 'POST', url: `${rentalOrdersUrl}/${id}/close-cancellation`, data });
 
 export const requestHandoverRentalOrder = (id: string, data: { actualPickupDate?: string; note?: string }) =>
   request<DefaultResponse<RentalOrderDetail>>({ method: 'POST', url: `${rentalOrdersUrl}/${id}/handover`, data });
