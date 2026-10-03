@@ -69,6 +69,7 @@ apiAuth.interceptors.request.use((config) => {
 });
 let refreshPromise: Promise<void> | null = null;
 let isRedirectingToAuth = false;
+const AUTH_REFRESH_LOCK = 'rental-admin-auth-refresh';
 
 const clearAuthAndRedirect = () => {
   const { clearAuth } = useAuthStore.getState();
@@ -85,7 +86,11 @@ const clearAuthAndRedirect = () => {
 
 const refreshSession = () => {
   if (!refreshPromise) {
-    refreshPromise = requestRefreshToken()
+    const refresh = typeof navigator !== 'undefined' && navigator.locks
+      ? navigator.locks.request(AUTH_REFRESH_LOCK, () => requestRefreshToken())
+      : requestRefreshToken();
+
+    refreshPromise = refresh
       .then(() => undefined)
       .finally(() => {
         refreshPromise = null;
