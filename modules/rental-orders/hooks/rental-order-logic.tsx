@@ -52,11 +52,14 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
   const defaultWeekFromDate = toDateFilterParam(defaultWeekRange.from) ?? '';
   const defaultWeekToDate = toDateFilterParam(defaultWeekRange.to) ?? '';
   const defaultWeekSyncedRef = useRef(false);
+  const detailDeepLinkRef = useRef<string | null>(null);
   const tableState = useTableQueryState<IGetRentalOrdersParams>({ defaultPageSize: 10, columns });
 
   const customerIdInput = searchParams.get('customerId') ?? '';
   const fromDateInput = searchParams.get('fromDate') ?? '';
   const toDateInput = searchParams.get('toDate') ?? '';
+  const detailOrderIdInput = searchParams.get('detailOrderId') ?? '';
+  const detailOrderCodeInput = searchParams.get('detailOrderCode') ?? '';
   const hasExplicitDateFilter = Boolean(fromDateInput || toDateInput);
   const effectiveFromDateInput = fromDateInput || (!hasExplicitDateFilter ? defaultWeekFromDate : '');
   const effectiveToDateInput = toDateInput || (!hasExplicitDateFilter ? defaultWeekToDate : '');
@@ -99,6 +102,20 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     const nextQuery = params.toString();
     router.replace(`${pathname}?${nextQuery}`, { scroll: false });
   }, [defaultWeekFromDate, defaultWeekToDate, hasExplicitDateFilter, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (!detailOrderIdInput || detailDeepLinkRef.current === detailOrderIdInput) return;
+
+    detailDeepLinkRef.current = detailOrderIdInput;
+    setCurrentRow({ id: detailOrderIdInput, code: detailOrderCodeInput || detailOrderIdInput });
+    setOpen('detail');
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('detailOrderId');
+    params.delete('detailOrderCode');
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [detailOrderCodeInput, detailOrderIdInput, pathname, router, searchParams, setCurrentRow, setOpen]);
 
   const setCustomerFilter = useCallback(
     (customerId: string) => {
