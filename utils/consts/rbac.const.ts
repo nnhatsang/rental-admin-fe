@@ -46,6 +46,11 @@ export const PermissionCode = {
   SettingsRead: 'settings.read',
   SettingsUpdate: 'settings.update',
 
+  EmailTemplatesRead: 'email_templates.read',
+  EmailTemplatesUpdate: 'email_templates.update',
+  EmailTemplatesPreview: 'email_templates.preview',
+  EmailTemplatesSendTest: 'email_templates.send_test',
+
   ReportsRead: 'reports.read',
 } as const;
 

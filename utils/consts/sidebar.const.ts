@@ -2,18 +2,19 @@ import { NavGroup } from '@/components/layout/types';
 import { PermissionCode as Permission, PermissionCode } from '@/utils/consts/rbac.const';
 
 import {
-  IconCamera,
+  IconAddressBook,
+  IconCalendarTime,
   IconClipboardList,
   IconDashboard,
   IconDevices,
-  IconExclamationMarkOff,
+  IconMail,
   IconPackages,
   IconReportAnalytics,
   IconSettings,
   IconShieldLock,
-  IconTags,
-  IconTimeline,
-  IconUsers
+  IconListTree,
+  IconTrademark,
+  IconUserShield,
 } from '@tabler/icons-react';
 
 export const sidebarItems: NavGroup[] = [
@@ -23,29 +24,27 @@ export const sidebarItems: NavGroup[] = [
     items: [
       {
         title: 'Dashboard',
-        url: '/',
+        url: '/dashboard',
         icon: IconDashboard,
+        requiredPermissions: [Permission.OrdersRead],
       },
+    ],
+  },
+
+  {
+    id: 2,
+    label: 'Phân tích',
+    items: [
       {
         title: 'Báo cáo',
         url: '/reports',
         icon: IconReportAnalytics,
         requiredPermissions: [Permission.ReportsRead],
+        comingSoon: true,
       },
     ],
   },
-  {
-    id: 2,
-    label: 'Lịch khả dụng',
-    items: [
-      {
-        title: 'Lịch thiết bị',
-        url: '/availability',
-        icon: IconTimeline,
-        requiredPermissions: [Permission.OrdersRead],
-      },
-    ],
-  },
+
   {
     id: 3,
     label: 'Vận hành thuê',
@@ -57,44 +56,44 @@ export const sidebarItems: NavGroup[] = [
         requiredPermissions: [Permission.OrdersRead],
       },
       {
-        title: 'Danh sách đen',
-        url: '/blacklist',
-        icon: IconExclamationMarkOff,
-        requiredPermissions: [Permission.CustomersRead, Permission.CustomersUpdate],
+        title: 'Lịch & đặt thuê',
+        url: '/availability',
+        icon: IconCalendarTime,
+        requiredPermissions: [Permission.OrdersRead],
       },
 
       {
         title: 'Khách hàng',
         url: '/customers',
-        icon: IconUsers,
+        icon: IconAddressBook,
         requiredPermissions: [Permission.CustomersRead],
       },
     ],
   },
   {
     id: 4,
-    label: 'Kho thiết bị',
+    label: 'Danh mục & kho',
     items: [
       {
         title: 'Sản phẩm',
         url: '/products',
-        icon: IconCamera,
+        icon: IconPackages,
         requiredPermissions: [Permission.ProductsRead],
       },
       {
         title: 'Danh mục',
         url: '/categories',
-        icon: IconTags,
+        icon: IconListTree,
         requiredPermissions: [Permission.CategoriesRead],
       },
       {
         title: 'Thương hiệu',
         url: '/brands',
-        icon: IconTags,
+        icon: IconTrademark,
         requiredPermissions: [Permission.BrandsRead],
       },
       {
-        title: 'Thiết bị trong kho',
+        title: 'Thiết bị vật lý',
         url: '/asset-units',
         icon: IconDevices,
         requiredPermissions: [Permission.AssetsRead],
@@ -103,19 +102,26 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 5,
-    label: 'Quản trị',
+    label: 'Quản trị hệ thống',
     items: [
       {
         title: 'Người dùng',
         url: '/users',
-        icon: IconUsers,
+        icon: IconUserShield,
         requiredPermissions: [Permission.UsersRead],
       },
       {
-        title: 'Vai trò',
+        title: 'Vai trò & quyền',
         url: '/roles',
         icon: IconShieldLock,
         requiredPermissions: [Permission.RolesRead],
+      },
+      {
+        title: 'Mẫu email',
+        url: '/mail-templates',
+        icon: IconMail,
+        requiredPermissions: [Permission.EmailTemplatesRead],
+        comingSoon: true,
       },
 
       {

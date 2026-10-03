@@ -39,7 +39,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link prefetch={false} href="/">
+              <Link prefetch={false} href="/dashboard">
                 <IconCamera />
                 <span className="font-semibold text-base">Rental Admin</span>
               </Link>
