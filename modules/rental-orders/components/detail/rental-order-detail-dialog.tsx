@@ -3,6 +3,7 @@
 import { ProtectedAction } from '@/components/shared/protected-action';
 import { CopyText } from '@/components/shared/copy-text';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -54,17 +55,31 @@ import {
   rentalOrderAllocationStatusConfig,
   rentalOrderPaymentStatusConfig,
   rentalOrderRefundStatusConfig,
+  rentalOrderScheduleBadgeConfig,
   returnStatusConfig,
   settlementStatusConfig,
 } from '../../display-config';
 import type { PaymentMethod, RentalOrderDetail } from '../../model';
 import { RentalOrderBadge } from '../status-badge';
 import { useRentalOrders } from '../../rental-orders-provider';
+import { useEffect, useState } from 'react';
+import { formatRentalDuration, getRentalOrderScheduleBadge } from '../../display-utils';
 
 const paymentMethodLabel = (method: PaymentMethod) =>
   paymentMethods.find((option) => option.value === method)?.label ?? method;
 
 const detailSurfaceClass = 'bg-card shadow-xs border border-accent shadow-none ring-0';
+
+function useCurrentTime() {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return now;
+}
 
 function DetailMetric({
   label,
@@ -128,17 +143,31 @@ function SocialContactValue({ value }: { value?: string | null }) {
   );
 }
 
+function FinancialBreakdownCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid min-w-0 gap-3 rounded-xl border border-accent/60 bg-muted/20 p-4 shadow-none">
+      <div className="grid gap-1">
+        <h4 className="text-sm font-medium">{title}</h4>
+        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function RentalChargeBreakdown({ charges }: { charges: RentalOrderDetail['charges'] }) {
   return (
-    <div className="grid gap-3 border-t border-accent/60 pt-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="grid gap-1">
-          <h4 className="text-sm font-medium">Chi tiết các khoản phí</h4>
-          <p className="text-xs text-muted-foreground">Theo dõi trạng thái thanh toán và khả năng hoàn của từng khoản.</p>
-        </div>
-        <span className="text-xs text-muted-foreground">{charges.length} khoản</span>
-      </div>
-
+    <div className="grid gap-3">
       {charges.length ? (
         <div className="divide-y divide-accent/60 rounded-lg border border-accent/60">
           {charges.map((charge) => {
@@ -150,7 +179,7 @@ function RentalChargeBreakdown({ charges }: { charges: RentalOrderDetail['charge
                 <div className="grid min-w-0 gap-1">
                   <span className="truncate text-sm font-medium">{kindConfig.label}</span>
                   <span className="text-xs text-muted-foreground">
-                    {charge.refundable ? 'Có thể hoàn' : 'Không hoàn'}
+                    {charge.refundable ? 'Có thể hoàn theo chính sách' : 'Không hoàn'}
                   </span>
                 </div>
                 <RentalOrderBadge config={statusConfig} />
@@ -178,83 +207,131 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
       <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
         <div className="grid gap-1">
           <CardTitle>Tài chính</CardTitle>
-          <CardDescription>Chi tiết nghĩa vụ, phát sinh và dòng tiền của đơn thuê.</CardDescription>
+          <CardDescription>Tóm tắt số tiền cần đối soát; chi tiết từng khoản nằm bên dưới.</CardDescription>
         </div>
         <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
       </CardHeader>
       <CardContent className="grid gap-5">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DetailMetric
-            label="Tổng nghĩa vụ"
-            value={formatCurrency(financials.totalCustomerObligation)}
-            valueClassName="text-primary"
-          />
-          <DetailMetric label="Đã thu" value={formatCurrency(financials.paidTotal)} valueClassName="text-primary" />
-          <DetailMetric
-            label="Tài chính cần xử lý"
-            value={financialSummary.amount > 0 ? formatCurrency(financialSummary.amount) : 'Không cần xử lý'}
-            valueClassName={financialSummary.isActionRequired ? 'text-destructive' : undefined}
-            helper={`${financialSummary.label} · ${financialSummary.description}`}
-          />
-          <DetailMetric
-            label="Đã thu / Tổng nghĩa vụ"
-            value={`${formatCurrency(financials.paidTotal)} / ${formatCurrency(financials.totalCustomerObligation)}`}
-            helper="Chỉ giao máy khi đủ khoản phải thu theo chính sách."
-          />
-        </div>
-
-        <div className="grid gap-3 border-t border-accent/60 pt-4">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Cấu phần nghĩa vụ</div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DetailMetric label="Tiền thuê" value={formatCurrency(financials.rentalFeeTotal)} />
-            <DetailMetric label="Phí giao máy" value={formatCurrency(financials.deliveryFeeTotal)} />
-            <DetailMetric label="Giữ lịch" value={formatCurrency(financials.bookingHoldTotal)} />
-            <DetailMetric label="Tiền cọc" value={formatCurrency(financials.securityDepositTotal)} />
+        <div className="grid gap-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div className="grid gap-1">
+              <h4 className="text-sm font-medium">Tóm tắt thanh toán</h4>
+              <p className="text-xs text-muted-foreground">Các con số dùng để quyết định thu thêm, hoàn tiền hoặc chốt đơn.</p>
+            </div>
+            {financialSummary.isActionRequired ? (
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">{financialSummary.description}</span>
+            ) : null}
           </div>
-        </div>
-
-        <div className="grid gap-3 border-t border-accent/60 pt-4">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Khoản phát sinh</div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <DetailMetric label="Phí trễ hạn" value={formatCurrency(financials.lateFeeTotal)} />
-            <DetailMetric label="Bồi thường hư hỏng" value={formatCurrency(financials.damageCompensationTotal)} />
-            <DetailMetric label="Phí hủy" value={formatCurrency(financials.cancellationFeeTotal)} />
-            <DetailMetric label="Phí khác" value={formatCurrency(otherChargeTotal)} />
-          </div>
-        </div>
-
-        <div className="grid gap-3 border-t border-accent/60 pt-4">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Đối soát thu và hoàn</div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <DetailMetric label="Còn cần thu khi đặt lịch" value={formatCurrency(financials.amountDueAtBooking)} />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <DetailMetric
-              label="Cần thu thêm"
-              value={formatCurrency(financials.additionalChargeDue)}
-              valueClassName={financials.additionalChargeDue > 0 ? 'text-destructive' : undefined}
-              helper="Sau kiểm tra trả máy"
+              label="Tổng khách cần thanh toán"
+              value={formatCurrency(financials.totalCustomerObligation)}
+              valueClassName="text-primary"
             />
             <DetailMetric
-              label="Còn được hoàn"
+              label="Đã thu"
+              value={formatCurrency(financials.paidTotal)}
+              valueClassName="text-emerald-700 dark:text-emerald-300"
+            />
+            <DetailMetric
+              label="Còn phải thu trước bàn giao"
+              value={formatCurrency(financials.amountDueBeforeHandover)}
+              valueClassName={financials.amountDueBeforeHandover > 0 ? 'text-destructive' : undefined}
+              helper="Chỉ áp dụng trước khi giao máy"
+            />
+            <DetailMetric
+              label="Còn có thể hoàn"
               value={formatCurrency(financials.refundableRemaining)}
-              valueClassName={financials.refundableRemaining > 0 ? 'text-chart-5' : undefined}
-              helper="Có thể tạo yêu cầu hoàn tiếp theo"
+              valueClassName={financials.refundableRemaining > 0 ? 'text-amber-700 dark:text-amber-300' : undefined}
+              helper="Chưa tính khoản đang chờ xác nhận"
             />
             <DetailMetric
               label="Đang chờ hoàn"
               value={formatCurrency(financialSummary.pendingRefundTotal)}
-              valueClassName={financialSummary.pendingRefundTotal > 0 ? 'text-chart-5' : undefined}
-              helper="Đã tạo yêu cầu, chưa xác nhận đã chuyển"
+              valueClassName={financialSummary.pendingRefundTotal > 0 ? 'text-amber-700 dark:text-amber-300' : undefined}
+              helper="Đã tạo yêu cầu, chưa xác nhận chuyển"
             />
             <DetailMetric
               label="Đã hoàn thực tế"
               value={formatCurrency(financials.actualRefundTotal)}
-              valueClassName={financials.actualRefundTotal > 0 ? 'text-primary' : undefined}
+              valueClassName={financials.actualRefundTotal > 0 ? 'text-emerald-700 dark:text-emerald-300' : undefined}
               helper="Đã xác nhận hoàn cho khách"
             />
           </div>
         </div>
 
-        <RentalChargeBreakdown charges={order.charges} />
+        <div className="grid gap-4 xl:grid-cols-2">
+          <FinancialBreakdownCard
+            title="Cấu thành số tiền"
+            description="Tiền cọc là khoản bảo đảm; phí giao máy có thể là khoản thu hộ bên vận chuyển."
+          >
+            <DetailMetric
+              label="Tiền thuê"
+              value={formatCurrency(financials.rentalFeeTotal)}
+              helper="Khoản dịch vụ thuê thiết bị"
+            />
+            <DetailMetric
+              label="Phí giao máy"
+              value={formatCurrency(financials.deliveryFeeTotal)}
+              helper="Có thể đối soát với đơn vị vận chuyển bên ngoài"
+            />
+            <DetailMetric
+              label="Tiền giữ lịch"
+              value={formatCurrency(financials.bookingHoldTotal)}
+              helper="Đối soát theo chính sách hủy đơn"
+            />
+            <DetailMetric
+              label="Tiền cọc"
+              value={formatCurrency(financials.securityDepositTotal)}
+              helper="Khoản bảo đảm, có thể hoàn hoặc khấu trừ khi quyết toán"
+            />
+          </FinancialBreakdownCard>
+
+          <FinancialBreakdownCard
+            title="Khoản phát sinh cần đối soát"
+            description="Các khoản có thể cần thu thêm, khấu trừ hoặc xử lý sau khi giao và trả máy."
+          >
+            <DetailMetric
+              label="Còn cần thu khi đặt lịch"
+              value={formatCurrency(financials.amountDueAtBooking)}
+              valueClassName={financials.amountDueAtBooking > 0 ? 'text-destructive' : undefined}
+              helper="Khoản giữ lịch chưa được xác nhận"
+            />
+            <DetailMetric
+              label="Cần thu thêm"
+              value={formatCurrency(financials.additionalChargeDue)}
+              valueClassName={financials.additionalChargeDue > 0 ? 'text-destructive' : undefined}
+              helper="Phát sinh sau khi kiểm tra trả máy"
+            />
+            <DetailMetric
+              label="Phí trễ hạn"
+              value={formatCurrency(financials.lateFeeTotal)}
+              helper="Phát sinh do trả máy trễ"
+            />
+            <DetailMetric
+              label="Bồi thường hư hỏng"
+              value={formatCurrency(financials.damageCompensationTotal)}
+              helper="Khoản bồi thường sau kiểm tra thiết bị"
+            />
+            {otherChargeTotal > 0 ? (
+              <DetailMetric label="Phí khác" helper="Khoản phát sinh bổ sung" value={formatCurrency(otherChargeTotal)} />
+            ) : null}
+          </FinancialBreakdownCard>
+        </div>
+
+        <Accordion type="single" collapsible className="border-t border-accent/60 pt-1">
+          <AccordionItem value="charges" className="border-b-0">
+            <AccordionTrigger className="py-3 text-sm hover:no-underline">
+              <span className="flex items-center gap-2">
+                Chi tiết từng khoản phí
+                <span className="text-xs font-normal text-muted-foreground">{order.charges.length} khoản</span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="pb-0">
+              <RentalChargeBreakdown charges={order.charges} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
@@ -305,6 +382,17 @@ function DetailLoading() {
 function OverviewTab({ order }: { order: RentalOrderDetail }) {
   const totalDevices = order.lines.reduce((sum, line) => sum + line.quantity, 0);
   const totalAllocations = order.lines.reduce((sum, line) => sum + line.allocations.length, 0);
+  const now = useCurrentTime();
+  const scheduleBadge = getRentalOrderScheduleBadge(
+    {
+      status: order.status,
+      startDate: order.rentalPeriod.startDate,
+      endDate: order.rentalPeriod.endDate,
+      isOverdue: order.isOverdue,
+      overdueHours: order.overdueHours,
+    },
+    now,
+  );
 
   return (
     <div className="grid gap-4">
@@ -333,6 +421,16 @@ function OverviewTab({ order }: { order: RentalOrderDetail }) {
           <CardContent className="grid gap-3">
             <DetailField label="Bắt đầu">{formatDate(order.rentalPeriod.startDate, 'shortDateTime')}</DetailField>
             <DetailField label="Kết thúc">{formatDate(order.rentalPeriod.endDate, 'shortDateTime')}</DetailField>
+            <DetailField label="Thời lượng">
+              {formatRentalDuration(order.rentalPeriod.startDate, order.rentalPeriod.endDate)}
+            </DetailField>
+            {scheduleBadge ? (
+              <RentalOrderBadge
+                config={rentalOrderScheduleBadgeConfig[scheduleBadge.kind]}
+                label={scheduleBadge.label}
+                className="mt-1 w-fit"
+              />
+            ) : null}
             <DetailField label="Nhận máy thực tế">
               {order.rentalPeriod.actualPickupDate
                 ? formatDate(order.rentalPeriod.actualPickupDate, 'shortDateTime')
@@ -751,10 +849,9 @@ export function RentalOrderDetailDialog({
           </div>
         </ScrollArea>
 
-        <DialogFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <DialogFooter className="flex-col items-stretch gap-3 border-t border-accent/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
           <RentalOrderDetailFooterSummary order={order} />
-          <div className="flex flex-wrap justify-end gap-2">
-            <div className="flex flex-wrap justify-end gap-2">
+          <div className="flex min-w-0 flex-wrap justify-end gap-2">
             {order?.status === 'CREATED' ? (
               <ProtectedAction permission={PermissionCode.OrdersUpdate}>
                 <Button variant="outline" onClick={() => openAction('update')}>
@@ -875,7 +972,6 @@ export function RentalOrderDetailDialog({
                 </Button>
               </ProtectedAction>
             ) : null}
-            </div>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Đóng
             </Button>
