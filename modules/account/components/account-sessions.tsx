@@ -119,7 +119,7 @@ function SessionRow({ session, onRevoke }: { session: IAuthSession; onRevoke: (s
 
   return (
     <Card className={cn('shadow-none border-0', session.isCurrent && 'bg-muted/40')}>
-      <CardContent className="flex items-start gap-3">
+      <CardContent className="flex items-center gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
           <SessionIcon className="size-5" aria-hidden="true" />
         </div>
