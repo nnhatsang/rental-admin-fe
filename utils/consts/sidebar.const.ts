@@ -75,12 +75,6 @@ export const sidebarItems: NavGroup[] = [
     label: 'Danh mục & kho',
     items: [
       {
-        title: 'Sản phẩm',
-        url: '/products',
-        icon: IconPackages,
-        requiredPermissions: [Permission.ProductsRead],
-      },
-      {
         title: 'Danh mục',
         url: '/categories',
         icon: IconListTree,
@@ -91,6 +85,12 @@ export const sidebarItems: NavGroup[] = [
         url: '/brands',
         icon: IconTrademark,
         requiredPermissions: [Permission.BrandsRead],
+      },
+      {
+        title: 'Sản phẩm',
+        url: '/products',
+        icon: IconPackages,
+        requiredPermissions: [Permission.ProductsRead],
       },
       {
         title: 'Thiết bị vật lý',
