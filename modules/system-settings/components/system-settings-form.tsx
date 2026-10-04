@@ -48,9 +48,7 @@ export function SystemSettingsForm({ canEdit }: SystemSettingsFormProps) {
     });
   }, [form, settings]);
 
-  const refreshAction = (
-    <SettingsRefreshButton isFetching={query.isFetching} onRefresh={() => void query.refetch()} />
-  );
+  const refreshAction = <SettingsRefreshButton isFetching={query.isFetching} onRefresh={() => void query.refetch()} />;
 
   if (query.isLoading) {
     return (
@@ -76,9 +74,9 @@ export function SystemSettingsForm({ canEdit }: SystemSettingsFormProps) {
       <div className="flex flex-col gap-4">
         <div className="flex justify-end">{refreshAction}</div>
         <Alert variant="destructive">
-        <IconSettings aria-hidden="true" />
-        <AlertTitle>Không tải được quy tắc thuê</AlertTitle>
-        <AlertDescription>Kiểm tra quyền truy cập hoặc thử tải lại trang.</AlertDescription>
+          <IconSettings aria-hidden="true" />
+          <AlertTitle>Không tải được quy tắc thuê</AlertTitle>
+          <AlertDescription>Kiểm tra quyền truy cập hoặc thử tải lại trang.</AlertDescription>
         </Alert>
       </div>
     );
@@ -96,7 +94,7 @@ export function SystemSettingsForm({ canEdit }: SystemSettingsFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <CardContent className="p-4 pt-0">
           <FieldGroup className="gap-5">
-            <div className="grid gap-5 md:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-3">
               <Controller
                 control={form.control}
                 name="bookingHoldPricePerUnit"
@@ -122,9 +120,7 @@ export function SystemSettingsForm({ canEdit }: SystemSettingsFormProps) {
                 name="bookingBufferTimeMinutes"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} data-disabled={!canEdit}>
-                    <FieldLabel htmlFor={field.name}>
-                      Khoảng cách thời gian giữa các lần đơn thuê được phép cho thuê
-                    </FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Thời gian buffer cho thuê</FieldLabel>
                     <Input
                       {...field}
                       id={field.name}

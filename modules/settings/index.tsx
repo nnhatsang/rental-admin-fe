@@ -13,6 +13,7 @@ import { StoreClosuresPanel } from '@/modules/store-closures/components/store-cl
 import { SystemSettingsForm } from '@/modules/system-settings/components/system-settings-form';
 import { cn } from '@/lib/utils';
 import { PermissionCode } from '@/utils/consts/rbac.const';
+import { Separator } from '@/components/ui/separator';
 
 const tabs = [
   { id: 'rental', label: 'Quy tắc cho thuê', icon: IconSettings },
@@ -39,13 +40,15 @@ export default function Settings() {
   return (
     <main className="@container/main flex min-w-0 flex-col gap-5">
       <Card className="flex min-w-0 flex-col gap-2">
-        <CardHeader className="border-b">
+        <CardHeader>
           <div className="grid min-w-0 max-w-full auto-rows-min gap-1.5">
             <h1 className="text-xl leading-none font-semibold">Cài đặt hệ thống</h1>
             <p className="max-w-2xl text-sm leading-snug text-muted-foreground">
               Quản lý quy tắc thuê, giờ hoạt động và lịch đóng cửa của cửa hàng.
             </p>
           </div>
+          <Separator className="mt-2 h-px w-full bg-border/50" />
+
           <CardAction>
             <Badge variant={canEdit ? 'secondary' : 'outline'}>
               <IconShieldLock data-icon="inline-start" />
@@ -54,7 +57,7 @@ export default function Settings() {
           </CardAction>
         </CardHeader>
 
-        <CardContent className="flex min-w-0 flex-col gap-5 p-4 sm:p-6">
+        <CardContent className="p-6 pt-0">
           {!canEdit ? (
             <Alert className="bg-muted/20">
               <IconShieldLock aria-hidden="true" />
@@ -65,7 +68,7 @@ export default function Settings() {
           <Tabs
             defaultValue="rental"
             orientation={isMobile ? 'horizontal' : 'vertical'}
-            className="flex min-w-0 flex-col gap-4 md:flex-row md:gap-6"
+            className="flex min-w-0 flex-col gap-4 md:flex-row"
           >
             <TabsList
               variant="line"
@@ -94,7 +97,7 @@ export default function Settings() {
               })}
             </TabsList>
 
-            <div className="max-md:border-t min-w-0 flex-1">
+            <div className="min-w-0 flex-1 mt-2">
               <TabsContent value="rental" className="mt-0 min-w-0 focus-visible:outline-none">
                 <SystemSettingsForm canEdit={canEdit} />
               </TabsContent>
