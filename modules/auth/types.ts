@@ -6,6 +6,18 @@ export interface ILoginReq {
 export interface IAuthRes {
   user: IUser;
 }
+
+export interface IAuthSession {
+  sessionId: string;
+  deviceName?: string | null;
+  browser?: string | null;
+  ipAddress?: string | null;
+  createdAt: string;
+  lastUsedAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
 export interface IUser {
   id: string;
   email: string;

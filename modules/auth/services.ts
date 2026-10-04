@@ -2,6 +2,7 @@ import { apiAuth, apiClient } from '@/axios';
 import { DefaultResponse } from '@/types/api';
 import {
   IAuthRes,
+  IAuthSession,
   IChangePasswordReq,
   IForgotPasswordReq,
   ILoginReq,
@@ -81,13 +82,45 @@ const requestChangePassword = (data: IChangePasswordReq): Promise<AxiosResponse<
   return apiAuth(config);
 };
 
+const requestGetAuthSessions = (): Promise<AxiosResponse<DefaultResponse<IAuthSession[]>>> => {
+  const config: AxiosRequestConfig = {
+    method: 'GET',
+    url: `${url}/sessions`,
+  };
+
+  return apiAuth(config);
+};
+
+const requestRevokeAuthSession = (
+  sessionId: string,
+): Promise<AxiosResponse<DefaultResponse<{ success: true; isCurrent: boolean }>>> => {
+  const config: AxiosRequestConfig = {
+    method: 'DELETE',
+    url: `${url}/sessions/${sessionId}`,
+  };
+
+  return apiAuth(config);
+};
+
+const requestRevokeOtherAuthSessions = (): Promise<AxiosResponse<DefaultResponse<{ success: true; revokedCount: number }>>> => {
+  const config: AxiosRequestConfig = {
+    method: 'POST',
+    url: `${url}/sessions/revoke-others`,
+  };
+
+  return apiAuth(config);
+};
+
 export {
   requestChangePassword,
   requestForgotPassword,
+  requestGetAuthSessions,
   requestGetProfile,
   requestLogin,
   requestLogout,
   requestRefreshToken,
+  requestRevokeAuthSession,
+  requestRevokeOtherAuthSessions,
   requestResetPassword,
   requestUpdateProfile,
 };
