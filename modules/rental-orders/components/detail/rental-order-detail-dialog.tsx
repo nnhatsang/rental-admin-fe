@@ -3,7 +3,6 @@
 import { ProtectedAction } from '@/components/shared/protected-action';
 import { CopyText } from '@/components/shared/copy-text';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -30,7 +29,12 @@ import {
   TimelineTitle,
 } from '@/components/reui/timeline';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import { getRentalOrderFinancialSummary, getRentalOrderNextAction, getRentalOrderOperationalBadges, type RentalOrderOperationalBadge } from '../../display-semantics';
+import {
+  getRentalOrderFinancialSummary,
+  getRentalOrderNextAction,
+  getRentalOrderOperationalBadges,
+  type RentalOrderOperationalBadge,
+} from '../../display-semantics';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import {
   IconEdit,
@@ -49,8 +53,6 @@ import { paymentMethods, sourceLabel } from '../../constants';
 import {
   handoverStatusConfig,
   orderStatusConfig,
-  rentalOrderChargeKindConfig,
-  rentalOrderChargeStatusConfig,
   rentalInspectionConditionConfig,
   rentalOrderAllocationStatusConfig,
   rentalOrderPaymentStatusConfig,
@@ -132,12 +134,7 @@ function SocialContactValue({ value }: { value?: string | null }) {
   const href = /^https?:\/\//i.test(socialContact) ? socialContact : `https://${socialContact}`;
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="break-all text-primary underline underline-offset-4"
-    >
+    <a href={href} target="_blank" rel="noreferrer" className="break-all text-primary underline underline-offset-4">
       {socialContact}
     </a>
   );
@@ -153,45 +150,15 @@ function FinancialBreakdownCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-w-0 gap-3 rounded-xl border border-accent/60 bg-muted/20 p-4 shadow-none">
-      <div className="grid gap-1">
-        <h4 className="text-sm font-medium">{title}</h4>
-        <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function RentalChargeBreakdown({ charges }: { charges: RentalOrderDetail['charges'] }) {
-  return (
-    <div className="grid gap-3">
-      {charges.length ? (
-        <div className="divide-y divide-accent/60 rounded-lg border border-accent/60">
-          {charges.map((charge) => {
-            const kindConfig = rentalOrderChargeKindConfig[charge.kind];
-            const statusConfig = rentalOrderChargeStatusConfig[charge.status];
-
-            return (
-              <div key={charge.id} className="grid gap-2 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
-                <div className="grid min-w-0 gap-1">
-                  <span className="truncate text-sm font-medium">{kindConfig.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {charge.refundable ? 'Có thể hoàn theo chính sách' : 'Không hoàn'}
-                  </span>
-                </div>
-                <RentalOrderBadge config={statusConfig} />
-                <span className="text-sm font-semibold sm:text-right">{formatCurrency(charge.amount)}</span>
-              </div>
-            );
-          })}
+    <Card className={detailSurfaceClass}>
+      <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
+        <div className="grid gap-1">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </div>
-      ) : (
-        <div className="rounded-lg bg-muted/20 px-3 py-4 text-sm text-muted-foreground">Chưa phát sinh khoản phí nào.</div>
-      )}
-    </div>
+      </CardHeader>
+      <CardContent className="grid gap-5 sm:grid-cols-2">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -207,19 +174,26 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
       <CardHeader className="gap-3 sm:flex sm:flex-row sm:items-start sm:justify-between">
         <div className="grid gap-1">
           <CardTitle>Tài chính</CardTitle>
-          <CardDescription>Tóm tắt số tiền cần đối soát; chi tiết từng khoản nằm bên dưới.</CardDescription>
+          <CardDescription>Tóm tắt số tiền cần đối soát và các khoản phát sinh của đơn thuê.</CardDescription>
         </div>
-        <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
+        <RentalOrderBadge
+          config={settlementStatusConfig[financialSummary.badgeStatus]}
+          label={financialSummary.label}
+        />
       </CardHeader>
       <CardContent className="grid gap-5">
         <div className="grid gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div className="grid gap-1">
               <h4 className="text-sm font-medium">Tóm tắt thanh toán</h4>
-              <p className="text-xs text-muted-foreground">Các con số dùng để quyết định thu thêm, hoàn tiền hoặc chốt đơn.</p>
+              <p className="text-xs text-muted-foreground">
+                Các con số dùng để quyết định thu thêm, hoàn tiền hoặc chốt đơn.
+              </p>
             </div>
             {financialSummary.isActionRequired ? (
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">{financialSummary.description}</span>
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                {financialSummary.description}
+              </span>
             ) : null}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -248,7 +222,9 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
             <DetailMetric
               label="Đang chờ hoàn"
               value={formatCurrency(financialSummary.pendingRefundTotal)}
-              valueClassName={financialSummary.pendingRefundTotal > 0 ? 'text-amber-700 dark:text-amber-300' : undefined}
+              valueClassName={
+                financialSummary.pendingRefundTotal > 0 ? 'text-amber-700 dark:text-amber-300' : undefined
+              }
               helper="Đã tạo yêu cầu, chưa xác nhận chuyển"
             />
             <DetailMetric
@@ -314,24 +290,15 @@ function RentalOrderFinancialSummary({ order }: { order: RentalOrderDetail }) {
               helper="Khoản bồi thường sau kiểm tra thiết bị"
             />
             {otherChargeTotal > 0 ? (
-              <DetailMetric label="Phí khác" helper="Khoản phát sinh bổ sung" value={formatCurrency(otherChargeTotal)} />
+              <DetailMetric
+                label="Phí khác"
+                helper="Khoản phát sinh bổ sung"
+                value={formatCurrency(otherChargeTotal)}
+              />
             ) : null}
           </FinancialBreakdownCard>
         </div>
 
-        <Accordion type="single" collapsible className="border-t border-accent/60 pt-1">
-          <AccordionItem value="charges" className="border-b-0">
-            <AccordionTrigger className="py-3 text-sm hover:no-underline">
-              <span className="flex items-center gap-2">
-                Chi tiết từng khoản phí
-                <span className="text-xs font-normal text-muted-foreground">{order.charges.length} khoản</span>
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="pb-0">
-              <RentalChargeBreakdown charges={order.charges} />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
       </CardContent>
     </Card>
   );
@@ -345,18 +312,29 @@ function RentalOrderNotesCard({ order }: { order: RentalOrderDetail }) {
       <CardHeader>
         <CardTitle>{hasCancellation ? 'Ghi chú và thông tin hủy' : 'Ghi chú đơn thuê'}</CardTitle>
         <CardDescription>
-          {hasCancellation ? 'Lý do hủy và các ghi chú được lưu cùng đơn.' : 'Thông tin trao đổi và ghi chú vận hành của đơn.'}
+          {hasCancellation
+            ? 'Lý do hủy và các ghi chú được lưu cùng đơn.'
+            : 'Thông tin trao đổi và ghi chú vận hành của đơn.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-3">
         <DetailField label="Ghi chú khách hàng">
-          <p className="whitespace-pre-wrap break-words text-sm font-normal">{order.notes.customerNote || 'Chưa có ghi chú'}</p>
+          <p className="whitespace-pre-wrap break-words text-sm font-normal">
+            {order.notes.customerNote || 'Chưa có ghi chú'}
+          </p>
         </DetailField>
         <DetailField label="Ghi chú nội bộ">
-          <p className="whitespace-pre-wrap break-words text-sm font-normal">{order.notes.internalNote || 'Chưa có ghi chú'}</p>
+          <p className="whitespace-pre-wrap break-words text-sm font-normal">
+            {order.notes.internalNote || 'Chưa có ghi chú'}
+          </p>
         </DetailField>
         <DetailField label="Lý do hủy">
-          <p className={cn('whitespace-pre-wrap break-words text-sm font-normal', order.notes.cancelReason && 'text-destructive')}>
+          <p
+            className={cn(
+              'whitespace-pre-wrap break-words text-sm font-normal',
+              order.notes.cancelReason && 'text-destructive',
+            )}
+          >
             {order.notes.cancelReason || 'Đơn chưa bị hủy'}
           </p>
         </DetailField>
@@ -719,7 +697,9 @@ function RentalOrderDetailFooterSummary({ order }: { order?: RentalOrderDetail }
     return <div className="min-w-0 flex-1 text-xs text-muted-foreground">Đang tải trạng thái đơn thuê…</div>;
   }
 
-  const pendingRefunds = order.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING');
+  const pendingRefunds = order.refunds.filter(
+    (refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING',
+  );
   const pendingRefundTotal = pendingRefunds.reduce((total, refund) => total + refund.amount, 0);
   const refundableRemaining = order.financials.refundableRemaining;
   const nextAction = getRentalOrderNextAction(order);
@@ -741,7 +721,9 @@ function RentalOrderDetailFooterSummary({ order }: { order?: RentalOrderDetail }
           <span className="font-semibold tabular-nums text-foreground">{formatCurrency(financialAmount)}</span>
         ) : null}
       </div>
-      <span className="mt-0.5 block truncate">Bước tiếp theo: {nextAction.label} · {message}</span>
+      <span className="mt-0.5 block truncate">
+        Bước tiếp theo: {nextAction.label} · {message}
+      </span>
     </div>
   );
 }
@@ -759,9 +741,11 @@ export function RentalOrderDetailDialog({
   const financialSummary = order ? getRentalOrderFinancialSummary(order) : null;
   const orderCode = order?.code ?? currentRow?.code;
   const actions = useRentalOrderActions();
-  const pendingRefunds = order?.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING') ?? [];
+  const pendingRefunds =
+    order?.refunds.filter((refund) => refund.status === 'PENDING' || refund.status === 'PROCESSING') ?? [];
   const pendingRefund = pendingRefunds[0];
-  const pendingPayments = order?.payments.filter((payment) => payment.direction === 'INBOUND' && payment.status === 'PENDING') ?? [];
+  const pendingPayments =
+    order?.payments.filter((payment) => payment.direction === 'INBOUND' && payment.status === 'PENDING') ?? [];
   const remainingRefundDue = order?.financials.refundableRemaining ?? 0;
   const openAction = (action: Parameters<typeof setOpen>[0]) => setOpen(action);
 
@@ -780,7 +764,7 @@ export function RentalOrderDetailDialog({
     order?.status === 'RETURNED' && order.returnStatus === 'INSPECTED' && order.settlementStatus === 'SETTLED';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-7xl">
         <DialogHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -804,7 +788,10 @@ export function RentalOrderDetailDialog({
               <div className="flex flex-wrap gap-2 mr-4">
                 <RentalOrderBadge config={orderStatusConfig[order.status]} />
                 {financialSummary ? (
-                  <RentalOrderBadge config={settlementStatusConfig[financialSummary.badgeStatus]} label={financialSummary.label} />
+                  <RentalOrderBadge
+                    config={settlementStatusConfig[financialSummary.badgeStatus]}
+                    label={financialSummary.label}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -862,29 +849,29 @@ export function RentalOrderDetailDialog({
             ) : null}
             {order
               ? pendingPayments.map((payment) => (
-              <ProtectedAction key={payment.id} permission={PermissionCode.OrdersRecordPayment}>
-                <div className="flex flex-wrap gap-1">
-                  <Button
-                    disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
-                    onClick={() => actions.confirmPayment.mutate({ id: order.id, paymentId: payment.id })}
-                  >
-                    <IconWallet data-icon="inline-start" />
-                    Xác nhận thu {formatCurrency(payment.amount)}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
-                    onClick={() => {
-                      if (!window.confirm('Từ chối giao dịch đang chờ xác nhận này?')) return;
-                      actions.rejectPayment.mutate({ id: order.id, paymentId: payment.id });
-                    }}
-                  >
-                    <IconX data-icon="inline-start" />
-                    Từ chối
-                  </Button>
-                </div>
-              </ProtectedAction>
-              ))
+                  <ProtectedAction key={payment.id} permission={PermissionCode.OrdersRecordPayment}>
+                    <div className="flex flex-wrap gap-1">
+                      <Button
+                        disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
+                        onClick={() => actions.confirmPayment.mutate({ id: order.id, paymentId: payment.id })}
+                      >
+                        <IconWallet data-icon="inline-start" />
+                        Xác nhận thu {formatCurrency(payment.amount)}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={actions.confirmPayment.isPending || actions.rejectPayment.isPending}
+                        onClick={() => {
+                          if (!window.confirm('Từ chối giao dịch đang chờ xác nhận này?')) return;
+                          actions.rejectPayment.mutate({ id: order.id, paymentId: payment.id });
+                        }}
+                      >
+                        <IconX data-icon="inline-start" />
+                        Từ chối
+                      </Button>
+                    </div>
+                  </ProtectedAction>
+                ))
               : null}
             {canRecordPayment ? (
               <ProtectedAction permission={PermissionCode.OrdersRecordPayment}>
