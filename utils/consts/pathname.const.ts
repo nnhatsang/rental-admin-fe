@@ -1,5 +1,6 @@
 export const PATHNAME = {
   AUTH: '/auth',
-  HOME: '/',
+  HOME: '/dashboard',
+  DASHBOARD: '/dashboard',
   NOT_FOUND: '/not-found',
 };

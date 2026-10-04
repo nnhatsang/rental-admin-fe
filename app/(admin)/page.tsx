@@ -1,18 +1,6 @@
-'use client';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { PATHNAME } from '@/utils/consts/pathname.const';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  // return redirect('/dashboard');
-  const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace('/dashboard');
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [router]);
-
-  return <div>Đang chuyển hướng...</div>;
+  redirect(PATHNAME.DASHBOARD);
 }

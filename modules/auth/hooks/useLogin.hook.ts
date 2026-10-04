@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { applyApiFormErrors } from '@/utils/form-error';
 import { SUCCESS_MESSAGES } from '@/utils/consts/messages-success.const';
+import { PATHNAME } from '@/utils/consts/pathname.const';
 
 export const useLogin = () => {
   const searchParams = useSearchParams();
@@ -31,7 +32,10 @@ export const useLogin = () => {
     },
     onSuccess: () => {
       const redirect = searchParams.get('redirect');
-      const nextPath = redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : '/';
+      const nextPath =
+        redirect && redirect !== '/' && redirect.startsWith('/') && !redirect.startsWith('//')
+          ? redirect
+          : PATHNAME.DASHBOARD;
 
       window.location.href = nextPath;
       toast.success(SUCCESS_MESSAGES.AUTH.LOGIN);

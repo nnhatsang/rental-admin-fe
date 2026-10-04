@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AUTH_REFRESH_COOKIE } from './utils/consts/token.const';
+import { PATHNAME } from './utils/consts/pathname.const';
 
 const PUBLIC_ROUTES = ['/auth/login', '/auth/forgot-password', '/auth/reset-password'];
 
@@ -17,7 +18,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute && token) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL(PATHNAME.DASHBOARD, request.url));
   }
 
   return NextResponse.next();

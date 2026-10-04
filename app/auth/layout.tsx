@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuthStore } from '@/modules/auth/store';
+import { PATHNAME } from '@/utils/consts/pathname.const';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Image from 'next/image';
@@ -11,7 +12,7 @@ const AuthLayout: React.FC<Readonly<{ children: React.ReactNode }>> = ({ childre
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/');
+      router.replace(PATHNAME.DASHBOARD);
     }
   }, [isAuthenticated, router]);
   return (
