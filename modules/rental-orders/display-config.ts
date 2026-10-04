@@ -9,12 +9,17 @@ import {
   IconCircleCheck,
   IconClock,
   IconCreditCard,
+  IconEdit,
+  IconLock,
   IconPackage,
+  IconPackageExport,
   IconPackageImport,
   IconPlus,
+  IconReceipt,
   IconRefresh,
   IconTool,
   IconTruckDelivery,
+  IconWallet,
   IconWorld,
   IconShieldCheck,
   IconX,
@@ -263,6 +268,25 @@ export const rentalOrderScheduleBadgeConfig = {
     className: danger,
   },
 } satisfies Record<RentalOrderScheduleBadge['kind'], RentalStatusDisplayConfig>;
+
+/** Visual labels for the detail activity log. Status transitions stay in the status timeline. */
+export const rentalOrderActivityLogConfig: Record<string, DisplayConfig> = {
+  CREATE_ORDER: { label: 'Tạo đơn', icon: IconPlus, className: chartBlue },
+  UPDATE_ORDER: { label: 'Cập nhật đơn', icon: IconEdit, className: chartBlue },
+  DELETE_ORDER: { label: 'Xóa đơn', icon: IconX, className: neutral },
+  CANCEL_ORDER: { label: 'Hủy đơn', icon: IconBan, className: danger },
+  RECORD_PAYMENT: { label: 'Ghi nhận thanh toán', icon: IconReceipt, className: chartBlue },
+  CONFIRM_PAYMENT: { label: 'Xác nhận thanh toán', icon: IconCircleCheck, className: chartGreen },
+  REJECT_PAYMENT: { label: 'Từ chối thanh toán', icon: IconX, className: danger },
+  CREATE_REFUND: { label: 'Tạo yêu cầu hoàn', icon: IconRefresh, className: chartAmber },
+  CONFIRM_REFUND: { label: 'Xác nhận hoàn tiền', icon: IconCircleCheck, className: chartGreen },
+  CLOSE_CANCELLED_ORDER: { label: 'Chốt tài chính đơn hủy', icon: IconLock, className: neutral },
+  AUTO_CONFIRM_ORDER: { label: 'Tự động xác nhận đơn', icon: IconCheck, className: chartGreen },
+  HANDOVER_ORDER: { label: 'Bàn giao thiết bị', icon: IconPackageExport, className: chartGreen },
+  RETURN_ORDER: { label: 'Ghi nhận trả thiết bị', icon: IconPackageImport, className: chartTeal },
+  INSPECT_ORDER: { label: 'Kiểm tra thiết bị', icon: IconTool, className: chartAmber },
+  SETTLE_ORDER: { label: 'Quyết toán đơn', icon: IconWallet, className: chartGreen },
+};
 
 export const rentalOrderAllocationStatusConfig = {
   REQUESTED: {

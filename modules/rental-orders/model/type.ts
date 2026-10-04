@@ -155,6 +155,17 @@ export interface RentalInspection {
   items: RentalInspectionItem[];
 }
 
+export interface RentalOrderActivityLog {
+  id: string;
+  action: string;
+  entity: string;
+  changes: unknown;
+  note: string | null;
+  actorId: string | null;
+  actorSnapshot: { id?: string; email?: string; fullName?: string; roles?: string[] } | null;
+  createdAt: string;
+}
+
 export interface RentalOrderDetail {
   id: string;
   code: string;
@@ -179,6 +190,7 @@ export interface RentalOrderDetail {
   refunds: RentalOrderRefund[];
   inspections: RentalInspection[];
   statusHistories: Array<{ id: string; fromStatus: RentalOrderStatus | null; toStatus: RentalOrderStatus; note: string | null; createdAt: string }>;
+  activityLogs: RentalOrderActivityLog[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

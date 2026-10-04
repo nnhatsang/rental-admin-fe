@@ -1,5 +1,5 @@
 import { formatDate, parseDate } from '@/lib/utils';
-import type { RentalOrderListItem } from './model';
+import type { RentalOrderActivityLog, RentalOrderListItem } from './model';
 
 export type RentalOrderScheduleBadge = {
   kind: 'STARTING_SOON' | 'START_OVERDUE' | 'RETURNING_SOON' | 'RETURN_OVERDUE';
@@ -83,3 +83,25 @@ export const getRentalOrderScheduleBadge = (
 
   return null;
 };
+
+const rentalOrderActivityDescription: Record<string, string> = {
+  CREATE_ORDER: 'Đơn được tạo từ báo giá.',
+  UPDATE_ORDER: 'Thông tin đơn được cập nhật.',
+  DELETE_ORDER: 'Đơn đã được xóa mềm.',
+  CANCEL_ORDER: 'Đơn đã được hủy.',
+  RECORD_PAYMENT: 'Đã ghi nhận giao dịch thanh toán.',
+  CONFIRM_PAYMENT: 'Đã xác nhận giao dịch thanh toán.',
+  REJECT_PAYMENT: 'Giao dịch thanh toán đã bị từ chối.',
+  CREATE_REFUND: 'Đã tạo yêu cầu hoàn tiền.',
+  CONFIRM_REFUND: 'Đã xác nhận hoàn tiền.',
+  CLOSE_CANCELLED_ORDER: 'Đã chốt phần tài chính còn lại của đơn hủy.',
+  AUTO_CONFIRM_ORDER: 'Đơn được tự động xác nhận sau khi đủ điều kiện.',
+  HANDOVER_ORDER: 'Đã ghi nhận bàn giao thiết bị.',
+  RETURN_ORDER: 'Đã ghi nhận khách trả thiết bị.',
+  INSPECT_ORDER: 'Đã ghi nhận kết quả kiểm tra thiết bị.',
+  SETTLE_ORDER: 'Đơn đã được quyết toán.',
+};
+
+export const getRentalOrderActivityDescription = (
+  log: Pick<RentalOrderActivityLog, 'action' | 'note'>,
+) => log.note || rentalOrderActivityDescription[log.action] || 'Đã ghi nhận thao tác trên đơn.';

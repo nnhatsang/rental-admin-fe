@@ -57,6 +57,7 @@ import {
   rentalOrderAllocationStatusConfig,
   rentalOrderPaymentStatusConfig,
   rentalOrderRefundStatusConfig,
+  rentalOrderActivityLogConfig,
   rentalOrderScheduleBadgeConfig,
   returnStatusConfig,
   settlementStatusConfig,
@@ -65,7 +66,11 @@ import type { PaymentMethod, RentalOrderDetail } from '../../model';
 import { RentalOrderBadge } from '../status-badge';
 import { useRentalOrders } from '../../rental-orders-provider';
 import { useEffect, useState } from 'react';
-import { formatRentalDuration, getRentalOrderScheduleBadge } from '../../display-utils';
+import {
+  formatRentalDuration,
+  getRentalOrderActivityDescription,
+  getRentalOrderScheduleBadge,
+} from '../../display-utils';
 
 const paymentMethodLabel = (method: PaymentMethod) =>
   paymentMethods.find((option) => option.value === method)?.label ?? method;
@@ -654,7 +659,8 @@ function PaymentsTab({ order }: { order: RentalOrderDetail }) {
 
 function TimelineTab({ order }: { order: RentalOrderDetail }) {
   return (
-    <Card className={detailSurfaceClass}>
+    <div className="grid gap-4">
+      <Card className={detailSurfaceClass}>
       <CardHeader>
         <CardTitle>Lịch sử trạng thái</CardTitle>
         <CardDescription>Theo dõi các lần chuyển trạng thái của đơn</CardDescription>
@@ -688,7 +694,50 @@ function TimelineTab({ order }: { order: RentalOrderDetail }) {
           </Empty>
         )}
       </CardContent>
-    </Card>
+      </Card>
+      <Card className={detailSurfaceClass}>
+        <CardHeader>
+          <CardTitle>Nhật ký thao tác</CardTitle>
+          <CardDescription>Ai đã thao tác gì trên đơn và thời điểm thực hiện.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {order.activityLogs.length ? (
+            <Timeline defaultValue={order.activityLogs.length} orientation="vertical" className="px-2 py-1">
+              {order.activityLogs.map((log, index) => {
+                const config = rentalOrderActivityLogConfig[log.action] ?? {
+                  label: log.action,
+                  className: 'border-muted-foreground/25 bg-muted text-muted-foreground',
+                };
+                const actor = log.actorSnapshot?.fullName || log.actorSnapshot?.email || (log.actorId ? 'Quản trị viên' : 'Hệ thống');
+                const description = getRentalOrderActivityDescription(log);
+
+                return (
+                  <TimelineItem key={log.id} step={index + 1}>
+                    <TimelineIndicator />
+                    <TimelineSeparator />
+                    <TimelineHeader>
+                      <TimelineDate dateTime={log.createdAt}>{formatDate(log.createdAt, 'shortDateTime')}</TimelineDate>
+                      <TimelineTitle className="flex flex-wrap items-center gap-2">
+                        <RentalOrderBadge config={config} />
+                        <span className="text-xs font-normal text-muted-foreground">{actor}</span>
+                      </TimelineTitle>
+                    </TimelineHeader>
+                    <TimelineContent>{description}</TimelineContent>
+                  </TimelineItem>
+                );
+              })}
+            </Timeline>
+          ) : (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>Chưa có nhật ký thao tác</EmptyTitle>
+                <EmptyDescription>Các thao tác trên đơn sẽ được ghi nhận ở đây.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
