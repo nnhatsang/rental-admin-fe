@@ -30,9 +30,6 @@ export const requestCreateRentalOrder = (data: CreateRentalOrderInput) =>
 export const requestUpdateRentalOrder = (id: string, data: UpdateRentalOrderInput) =>
   request<DefaultResponse<RentalOrderDetail>>({ method: 'PATCH', url: `${rentalOrdersUrl}/${id}`, data });
 
-export const requestDeleteRentalOrders = (rentalOrderIds: string[]) =>
-  request<DefaultResponse<{ success: true }>>({ method: 'DELETE', url: rentalOrdersUrl, data: { rentalOrderIds } });
-
 export const requestCancelRentalOrder = (
   id: string,
   data: { reason: string; allowRefund?: boolean; refundAmount?: number; note?: string },

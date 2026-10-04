@@ -9,7 +9,6 @@ import { useDataTable, type DataTableInstance } from '@/components/ui/data-table
 import { useTableQueryState } from '@/hooks/use-table-query-state';
 import { PermissionCode } from '@/utils/consts/rbac.const';
 import { IconPlus, IconRefresh } from '@tabler/icons-react';
-import type { RowSelectionState } from '@tanstack/react-table';
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,7 +45,6 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
   const defaultWeekRange = useMemo(getCurrentWeekRange, []);
   const defaultWeekFromDate = toDateFilterParam(defaultWeekRange.from) ?? '';
@@ -186,7 +184,6 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     pageCount: data?.pagination.totalPage ?? 1,
     state: {
       pagination: tableState.pagination,
-      rowSelection,
       sorting: tableState.sorting,
       columnFilters: tableState.columnFilters,
       globalFilter: tableState.globalFilter,
@@ -200,14 +197,12 @@ export function useRentalOrdersLogic(): { table: DataTableInstance<RentalOrderLi
     renderRowContextMenuItems: ({ row }) => <RentalOrderContextMenuItems row={row} />,
     hasExternalFilters: hasActiveFilters,
     onClearExternalFilters: clearAllFilters,
-    enableRowSelection: true,
     enableGlobalFilter: true,
     title: 'Quản lý đơn thuê',
     description: 'Theo dõi lịch thuê, trạng thái vận hành, thanh toán và quyết toán',
     isLoading,
     showLoadingOverlay: isFetching,
     onPaginationChange: tableState.onPaginationChange,
-    onRowSelectionChange: setRowSelection,
     onSortingChange: tableState.onSortingChange,
     onColumnFiltersChange: tableState.onColumnFiltersChange,
     onGlobalFilterChange: tableState.onGlobalFilterChange,

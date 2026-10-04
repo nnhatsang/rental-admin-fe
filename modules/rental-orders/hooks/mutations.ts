@@ -8,7 +8,6 @@ import {
   requestCreateRentalOrder,
   requestCreateRentalOrderRefund,
   requestCreateRentalQuote,
-  requestDeleteRentalOrders,
   requestHandoverRentalOrder,
   requestInspectRentalOrder,
   requestRecordRentalOrderPayment,
@@ -35,11 +34,6 @@ export const useCreateRentalOrder = () => {
 export const useUpdateRentalOrder = () => {
   const client = useQueryClient();
   return useMutation({ mutationFn: async ({ id, data }: { id: string; data: UpdateRentalOrderInput }) => (await requestUpdateRentalOrder(id, data)).data.data, onSuccess: (data) => { toast.success('Cập nhật đơn thuê thành công'); invalidate(client, data.id); } });
-};
-
-export const useDeleteRentalOrders = () => {
-  const client = useQueryClient();
-  return useMutation({ mutationFn: async (ids: string[]) => requestDeleteRentalOrders(ids), onSuccess: () => { toast.success('Xóa đơn thuê thành công'); invalidate(client); } });
 };
 
 export const useRentalOrderActions = () => {
