@@ -1,8 +1,9 @@
 'use client';
 
 import { useAuthStore } from '@/modules/auth/store';
+import { AuthBootstrapError, AuthBootstrapScreen } from '@/modules/auth/components/auth-bootstrap-screen';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const PUBLIC_ROUTES = ['/auth', '/auth/login', '/auth/forgot-password', '/auth/reset-password'];
 
@@ -13,33 +14,67 @@ const isPublicRoute = (pathname: string) => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const fetchProfile = useAuthStore((state) => state.fetchProfile);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
-  const [isProfileChecked, setIsProfileChecked] = useState(false);
-  const isPublic = useMemo(() => isPublicRoute(pathname), [pathname]);
+  const isPublic = isPublicRoute(pathname);
+  const scope = isPublic ? 'public' : 'private';
+  const [checkedScope, setCheckedScope] = useState<'public' | 'private' | null>(null);
+  const [bootstrapState, setBootstrapState] = useState<'checking' | 'ready' | 'error'>('checking');
+  const [retryCount, setRetryCount] = useState(0);
+  const profileRequestRef = useRef<Promise<void> | null>(null);
 
-  // 1. Đồng bộ profile khi vào trang private
+  const fetchProfileOnce = useCallback(() => {
+    if (!profileRequestRef.current) {
+      profileRequestRef.current = fetchProfile().finally(() => {
+        profileRequestRef.current = null;
+      });
+    }
+
+    return profileRequestRef.current;
+  }, [fetchProfile]);
+
   useEffect(() => {
-    const init = async () => {
-      if (!isPublic) {
-        try {
-          await fetchProfile();
-      } catch (err) {
-          console.error('Lỗi đồng bộ profile khi khởi tạo:', err);
-        }
-      }
-      setIsProfileChecked(true);
-    };
-    init();
-  }, [isPublic, fetchProfile]);
+    if (scope === 'public') {
+      setCheckedScope('public');
+      setBootstrapState('ready');
+      return;
+    }
 
-  // 2. Chặn render trước khi check xong
-  if (!isPublic && (!isProfileChecked || isLoading)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    );
+    let cancelled = false;
+    setBootstrapState('checking');
+
+    fetchProfileOnce()
+      .then(() => {
+        if (cancelled) return;
+
+        setCheckedScope('private');
+        setBootstrapState('ready');
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        console.error('Lỗi đồng bộ profile khi khởi tạo:', error);
+        setCheckedScope('private');
+        setBootstrapState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchProfileOnce, retryCount, scope]);
+
+  const retryBootstrap = () => {
+    setBootstrapState('checking');
+    setRetryCount((count) => count + 1);
+  };
+
+  if (!isPublic) {
+    if (checkedScope !== scope || bootstrapState === 'checking') {
+      return <AuthBootstrapScreen />;
+    }
+
+    if (bootstrapState === 'error') {
+      return <AuthBootstrapError onRetry={retryBootstrap} />;
+    }
   }
 
   return <>{children}</>;

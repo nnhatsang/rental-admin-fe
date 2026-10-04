@@ -29,7 +29,21 @@ interface IAuthActions {
 type IAuthStore = IAuthState & IAuthActions;
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Co loi xay ra';
+  return error instanceof Error ? error.message : 'Có lỗi xảy ra.';
+}
+
+function getErrorStatus(error: unknown) {
+  if (!error || typeof error !== 'object') return undefined;
+
+  const candidate = error as {
+    status?: unknown;
+    response?: { status?: unknown };
+  };
+
+  if (typeof candidate.status === 'number') return candidate.status;
+  if (typeof candidate.response?.status === 'number') return candidate.response.status;
+
+  return undefined;
 }
 
 export const useAuthStore = create<IAuthStore>()(
@@ -114,8 +128,13 @@ export const useAuthStore = create<IAuthStore>()(
           });
         } catch (error) {
           console.error('[Auth] Failed to fetch profile:', error);
-          get().clearAuth();
-          set({ error: getErrorMessage(error) });
+          const status = getErrorStatus(error);
+
+          if (status === 401 || status === 403) {
+            get().clearAuth();
+          }
+
+          set({ error: getErrorMessage(error), isLoading: false });
 
           throw error;
         }
@@ -133,6 +152,7 @@ export const useAuthStore = create<IAuthStore>()(
           error: null,
           permissions: [],
           roles: [],
+          isLoading: false,
         });
       },
     }),
