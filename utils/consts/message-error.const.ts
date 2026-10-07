@@ -48,4 +48,7 @@ export const ERROR_MESSAGES = {
     ASSIGN_USERS: 'Gán vai trò cho người dùng thất bại',
     DELETE: 'Xóa vai trò thất bại',
   },
+  FILES: {
+    UPLOAD: 'Tải tệp lên thất bại',
+  },
 } as const;

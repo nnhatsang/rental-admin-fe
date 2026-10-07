@@ -47,4 +47,7 @@ export const SUCCESS_MESSAGES = {
     ASSIGN_USERS: 'Gán vai trò cho người dùng thành công.',
     DELETE: 'Xóa vai trò thành công.',
   },
+  FILES: {
+    UPLOAD: 'Tải tệp lên thành công.',
+  },
 } as const;

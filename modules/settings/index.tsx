@@ -58,13 +58,6 @@ export default function Settings() {
         </CardHeader>
 
         <CardContent className="p-6 pt-0">
-          {!canEdit ? (
-            <Alert className="bg-muted/20">
-              <IconShieldLock aria-hidden="true" />
-              <AlertTitle>Chế độ chỉ xem</AlertTitle>
-              <AlertDescription>Các thay đổi trong cài đặt cần quyền settings.update.</AlertDescription>
-            </Alert>
-          ) : null}
           <Tabs
             defaultValue="rental"
             orientation={isMobile ? 'horizontal' : 'vertical'}
