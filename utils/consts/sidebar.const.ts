@@ -121,7 +121,6 @@ export const sidebarItems: NavGroup[] = [
         url: '/mail-templates',
         icon: IconMail,
         requiredPermissions: [Permission.EmailTemplatesRead],
-        comingSoon: true,
       },
 
       {
